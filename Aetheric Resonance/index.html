@@ -43,36 +43,37 @@
             height: 100%;
         }
 
-        /* The Overlay HUD layer */
         .hud-layer {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* Allows clicking "through" the HUD to the game */
+            pointer-events: none;
             z-index: 10;
         }
 
         .game-ui {
-            display: none; /* Toggled via setUIVisible() in ui.js */
+            display: none;
             width: 100%;
             height: 100%;
             position: relative;
         }
 
+        /* Updated Character Info: Keeps Portrait and Badge in a row */
         .char-info {
             position: absolute;
             bottom: 25px;
-            left: 30px;
+            left: 25px;
             display: flex;
             align-items: center;
+            /* Vertical alignment */
             gap: 15px;
         }
 
         .portrait {
-            width: 75px;
-            height: 75px;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
             background: rgba(25, 28, 35, 0.8);
             backdrop-filter: blur(8px);
@@ -89,23 +90,7 @@
             z-index: 2;
         }
 
-        .health-container {
-            width: 200px;
-            height: 12px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            overflow: hidden;
-        }
-
-        .health-bar {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, #bc8cf2, #ffffff);
-            box-shadow: 0 0 10px #bc8cf2;
-            transition: width 0.3s ease-out;
-        }
-
+        /* Skill Container: Visible on Desktop by default */
         .skills-container {
             position: absolute;
             bottom: 30px;
@@ -136,7 +121,41 @@
             opacity: 0.8;
         }
 
-        /* Mobile specific adjustments */
+        .level-badge {
+            background: rgba(25, 28, 35, 0.8);
+            padding: 4px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(188, 140, 242, 0.4);
+            backdrop-filter: blur(5px);
+        }
+
+        #level-text {
+            font-size: 13px;
+            letter-spacing: 1px;
+            font-weight: bold;
+            color: #f3e5ab;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .health-container {
+            width: 160px;
+            height: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .health-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #bc8cf2, #ffffff);
+            box-shadow: 0 0 10px #bc8cf2;
+            transition: width 0.3s ease-out;
+        }
+
+        /* Mobile Logic: Hides skill buttons and scales wrapper */
         @media (max-width: 850px) {
             #game-wrapper {
                 width: 100vw;
@@ -144,7 +163,16 @@
                 border: none;
                 border-radius: 0;
             }
-            .skill-key { display: none; }
+
+            /* Hides the HTML skills container on mobile */
+            .skills-container {
+                display: none !important;
+            }
+
+            .char-info {
+                bottom: 20px;
+                left: 20px;
+            }
         }
     </style>
 </head>
@@ -153,30 +181,36 @@
     <div id="master-container">
         <div id="game-wrapper">
             <div id="game-container"></div>
-            
+
             <div class="hud-layer">
                 <div class="game-ui">
                     <div class="char-info">
                         <div class="portrait">
-                            <svg width="75" height="75" style="position: absolute; transform: rotate(-90deg); top: 0; left: 0;">
-                                <circle cx="37.5" cy="37.5" r="35" stroke="rgba(255, 255, 255, 0.1)" stroke-width="5" fill="transparent" />
-                                <circle id="xp-circle" cx="37.5" cy="37.5" r="35" stroke="#bc8cf2" stroke-width="5"
-                                    fill="transparent" stroke-dasharray="220" stroke-dashoffset="220"
+                            <svg width="70" height="70"
+                                style="position: absolute; transform: rotate(-90deg); top: 0; left: 0;">
+                                <circle cx="35" cy="35" r="33" stroke="rgba(255, 255, 255, 0.1)" stroke-width="4"
+                                    fill="transparent" />
+                                <circle id="xp-circle" cx="35" cy="35" r="33" stroke="#bc8cf2" stroke-width="4"
+                                    fill="transparent" stroke-dasharray="207" stroke-dashoffset="207"
                                     style="transition: stroke-dashoffset 0.4s ease-out; stroke-linecap: round;" />
                             </svg>
                             <img src="https://cdn-icons-png.flaticon.com/512/11543/11543781.png" alt="portrait">
                         </div>
+
+                        <div class="level-badge">
+                            <span id="level-text" class="fw-bold">LVL 1</span>
+                        </div>
+
                         <div>
-                            <div id="level-text" class="fw-bold" style="font-size: 14px; margin-bottom: 4px; text-shadow: 1px 1px 2px black;">LVL 1</div>
                             <div class="health-container">
                                 <div id="burst-bar" class="health-bar"></div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="skills-container">
+                    <div class="skills-container desktop-only-ui">
                         <div class="skill-slot"><span>DASH</span><span class="skill-key">E</span></div>
-                        <div class="skill-slot" style="border-color: #00ffff; box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);">
+                        <div class="skill-slot" style="border-color: #00ffff;">
                             <span>BURST</span><span class="skill-key">Q</span>
                         </div>
                     </div>
