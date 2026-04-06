@@ -37,9 +37,11 @@ function drawPlayerStats(scene) {
     if (!playerGuiGraphics || !playerGuiGraphics.scene) return;
 
     playerGuiGraphics.clear();
-    const startX = 580; 
-    const startY = 20;
+
+    const gameWidth = scene.scale.width;
     const barWidth = 200;
+    const startX = gameWidth - barWidth - 20; // 20px padding from right
+    const startY = 20;
     const barHeight = 20;
 
     // HP Bar
@@ -48,6 +50,8 @@ function drawPlayerStats(scene) {
 
     if (!scene.hpNumText || !scene.hpNumText.active) {
         scene.hpNumText = scene.add.text(startX + 5, startY + 2, '', { fontSize: '14px', fill: '#000000', fontWeight: 'bold' }).setScrollFactor(0).setDepth(101);
+    } else {
+        scene.hpNumText.setPosition(startX + 5, startY + 2); // Update position if window resized
     }
     scene.hpNumText.setText(`${Math.ceil(playerStats.hp)} / ${playerStats.maxHp}`);
 
@@ -58,6 +62,8 @@ function drawPlayerStats(scene) {
 
     if (!scene.stamNumText || !scene.stamNumText.active) {
         scene.stamNumText = scene.add.text(startX + 5, stamY + 1, '', { fontSize: '12px', fill: '#000000', fontWeight: 'bold' }).setScrollFactor(0).setDepth(101);
+    } else {
+        scene.stamNumText.setPosition(startX + 5, stamY + 1); // Update position if window resized
     }
     scene.stamNumText.setText(`${Math.ceil(playerStats.currentStamina)} / ${playerStats.stamina}`);
 }
