@@ -223,6 +223,7 @@ class GameScene extends Phaser.Scene {
         hpBarGraphics = this.add.graphics();
         playerGuiGraphics = this.add.graphics().setScrollFactor(0).setDepth(100);
         keys = this.input.keyboard.addKeys('W,A,S,D,E,Q,SPACE,ESC');
+        setupMobileControls(this);
 
         this.smokeEmitter = this.add.particles(0, 0, 'smoke', {
             speed: { min: 50, max: 150 }, scale: { start: 0.4, end: 0 }, lifespan: 600, emitting: false
@@ -353,11 +354,68 @@ class GameScene extends Phaser.Scene {
     }
 }
 
+function setupMobileControls(scene) {
+    // Force check: If it's a desktop and NOT in touch-simulation mode, remove existing buttons and exit
+    const isMobile = scene.sys.game.device.os.android || scene.sys.game.device.os.iOS || scene.sys.game.device.input.touch;
+    if (!isMobile) return;
+
+    const centerX = 120, centerY = 480; 
+    const btnX = 680, btnY = 480;      
+
+    // --- MOVEMENT D-PAD ---
+    const createMoveBtn = (x, y, label, key) => {
+        const btn = scene.add.circle(x, y, 35, 0x000000, 0.5).setStrokeStyle(2, 0xbc8cf2).setInteractive().setScrollFactor(0).setDepth(1000);
+        scene.add.text(x, y, label, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
+        
+        btn.on('pointerdown', () => { keys[key].isDown = true; btn.setFillStyle(0xbc8cf2, 0.5); });
+        btn.on('pointerup', () => { keys[key].isDown = false; btn.setFillStyle(0x000000, 0.5); });
+        btn.on('pointerout', () => { keys[key].isDown = false; btn.setFillStyle(0x000000, 0.5); });
+    };
+
+    createMoveBtn(centerX - 60, centerY, '←', 'A');
+    createMoveBtn(centerX + 60, centerY, '→', 'D');
+    createMoveBtn(centerX, centerY - 60, '↑', 'W');
+
+    // --- ACTION BUTTONS ---
+    const createActionBtn = (x, y, label, color, callback) => {
+        const btn = scene.add.circle(x, y, 40, 0x000000, 0.6).setStrokeStyle(2, color).setInteractive().setScrollFactor(0).setDepth(1000);
+        scene.add.text(x, y, label, { fontSize: '18px', fill: '#fff', fontWeight: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
+        
+        btn.on('pointerdown', (pointer) => { 
+            pointer.event.stopPropagation(); // Prevents "ghost" clicks on the background
+            btn.setFillStyle(color, 0.4);
+            callback(pointer);
+        });
+        btn.on('pointerup', () => btn.setFillStyle(0x000000, 0.6));
+    };
+
+    createActionBtn(btnX, btnY + 40, 'SWORD', 0xffffff, () => performSwordSwing(scene));
+    
+    // FIX: Kunai target logic
+    createActionBtn(btnX + 70, btnY - 20, 'KUNAI', 0xbc8cf2, (p) => {
+        // If dummy exists, aim at dummy; otherwise aim at the pointer's location
+        const targetX = dummy && dummy.active ? dummy.x : p.worldX;
+        const targetY = dummy && dummy.active ? dummy.y : p.worldY;
+        throwKunai(scene, { worldX: targetX, worldY: targetY });
+    });
+
+    createActionBtn(btnX - 70, btnY - 20, 'DASH', 0x00ff00, () => performRaidenDash(scene));
+    createActionBtn(btnX, btnY - 80, 'BURST', 0x00ffff, () => useBurst(scene));
+}
+
 const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
     parent: 'game-container',
+    // --- ADD THIS SCALE SECTION ---
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+    },
+    input: {
+        activePointers: 3 
+    },
     physics: {
         default: 'arcade',
         arcade: { gravity: { y: 1000 }, debug: false }
