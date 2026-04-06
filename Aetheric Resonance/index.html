@@ -20,6 +20,14 @@
             color: white;
         }
 
+        #master-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+
         #game-wrapper {
             position: relative;
             width: 800px;
@@ -28,11 +36,6 @@
             box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
             border-radius: 8px;
             overflow: hidden;
-            /* Added for mobile responsiveness */
-            transform-origin: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
 
         #game-container {
@@ -40,20 +43,19 @@
             height: 100%;
         }
 
+        /* The Overlay HUD layer */
         .hud-layer {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
+            pointer-events: none; /* Allows clicking "through" the HUD to the game */
             z-index: 10;
-            /* Ensures HUD elements scale relative to this container on mobile */
-            container-type: size;
         }
 
         .game-ui {
-            display: none;
+            display: none; /* Toggled via setUIVisible() in ui.js */
             width: 100%;
             height: 100%;
             position: relative;
@@ -61,7 +63,7 @@
 
         .char-info {
             position: absolute;
-            bottom: 15px;
+            bottom: 25px;
             left: 30px;
             display: flex;
             align-items: center;
@@ -69,8 +71,8 @@
         }
 
         .portrait {
-            width: 70px;
-            height: 70px;
+            width: 75px;
+            height: 75px;
             border-radius: 50%;
             background: rgba(25, 28, 35, 0.8);
             backdrop-filter: blur(8px);
@@ -88,11 +90,11 @@
         }
 
         .health-container {
-            width: 180px;
+            width: 200px;
             height: 12px;
             background: rgba(0, 0, 0, 0.5);
             border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             overflow: hidden;
         }
 
@@ -106,7 +108,7 @@
 
         .skills-container {
             position: absolute;
-            bottom: 20px;
+            bottom: 30px;
             right: 40px;
             display: flex;
             gap: 20px;
@@ -116,7 +118,7 @@
             width: 55px;
             height: 55px;
             background: rgba(25, 28, 35, 0.6);
-            border: 1.5px solid rgba(243, 229, 171, 0.4);
+            border: 1.5px solid rgba(188, 140, 242, 0.4);
             border-radius: 50%;
             backdrop-filter: blur(5px);
             display: flex;
@@ -128,7 +130,13 @@
             color: #f3e5ab;
         }
 
-        /* --- UPDATED FOR MOBILE RESPONSIVENESS --- */
+        .skill-key {
+            color: white;
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* Mobile specific adjustments */
         @media (max-width: 850px) {
             #game-wrapper {
                 width: 100vw;
@@ -136,74 +144,41 @@
                 border: none;
                 border-radius: 0;
             }
-
-            #game-container canvas {
-                width: 100% !important;
-                height: 100% !important;
-            }
-
-            .char-info {
-                left: 10px;
-                bottom: 10px;
-                transform: scale(0.75);
-                transform-origin: left bottom;
-            }
-
-            .skills-container {
-                right: 10px;
-                bottom: 10px;
-                transform: scale(0.75);
-                transform-origin: right bottom;
-            }
-
-            .skill-key {
-                font-size: 14px;
-                margin-top: -2px;
-            }
-        }
-
-        /* Prevent vertical scrolling on landscape mobile */
-        @media (max-height: 500px) {
-
-            .char-info,
-            .skills-container {
-                bottom: 5px;
-                transform: scale(0.65);
-            }
+            .skill-key { display: none; }
         }
     </style>
 </head>
 
 <body>
-    <div id="game-wrapper">
-        <div id="game-container"></div>
-        <div class="hud-layer">
-            <div class="game-ui">
-                <div class="char-info">
-                    <div class="portrait">
-                        <svg width="70" height="70"
-                            style="position: absolute; transform: rotate(-90deg); top: 0; left: 0;">
-                            <circle cx="35" cy="35" r="34" stroke="rgba(0, 150, 255, 0.1)" stroke-width="8"
-                                fill="transparent" />
-                            <circle id="xp-circle" cx="35" cy="35" r="34" stroke="#0096ff" stroke-width="8"
-                                fill="transparent" stroke-dasharray="214" stroke-dashoffset="214"
-                                style="transition: stroke-dashoffset 0.4s ease-out; stroke-linecap: round;" />
-                        </svg>
-                        <img src="https://cdn-icons-png.flaticon.com/512/11543/11543781.png" alt="portrait">
-                    </div>
-                    <div>
-                        <div id="level-text" class="fw-bold"
-                            style="font-size: 14px; margin-bottom: 4px; text-shadow: 1px 1px 2px black;">LVL 1</div>
-                        <div class="health-container">
-                            <div id="burst-bar" class="health-bar"></div>
+    <div id="master-container">
+        <div id="game-wrapper">
+            <div id="game-container"></div>
+            
+            <div class="hud-layer">
+                <div class="game-ui">
+                    <div class="char-info">
+                        <div class="portrait">
+                            <svg width="75" height="75" style="position: absolute; transform: rotate(-90deg); top: 0; left: 0;">
+                                <circle cx="37.5" cy="37.5" r="35" stroke="rgba(255, 255, 255, 0.1)" stroke-width="5" fill="transparent" />
+                                <circle id="xp-circle" cx="37.5" cy="37.5" r="35" stroke="#bc8cf2" stroke-width="5"
+                                    fill="transparent" stroke-dasharray="220" stroke-dashoffset="220"
+                                    style="transition: stroke-dashoffset 0.4s ease-out; stroke-linecap: round;" />
+                            </svg>
+                            <img src="https://cdn-icons-png.flaticon.com/512/11543/11543781.png" alt="portrait">
+                        </div>
+                        <div>
+                            <div id="level-text" class="fw-bold" style="font-size: 14px; margin-bottom: 4px; text-shadow: 1px 1px 2px black;">LVL 1</div>
+                            <div class="health-container">
+                                <div id="burst-bar" class="health-bar"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="skills-container">
-                    <div class="skill-slot"><span>DASH</span><span class="skill-key">E</span></div>
-                    <div class="skill-slot"
-                        style="border-color: #bc8cf2; box-shadow: 0 0 10px rgba(188, 140, 242, 0.3);">
-                        <span>BURST</span><span class="skill-key">Q</span>
+
+                    <div class="skills-container">
+                        <div class="skill-slot"><span>DASH</span><span class="skill-key">E</span></div>
+                        <div class="skill-slot" style="border-color: #00ffff; box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);">
+                            <span>BURST</span><span class="skill-key">Q</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -214,7 +189,6 @@
     <script src="ui.js"></script>
     <script src="system.js"></script>
     <script src="game.js"></script>
-
 </body>
 
 </html>
