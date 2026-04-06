@@ -224,7 +224,7 @@ class GameScene extends Phaser.Scene {
         playerGuiGraphics = this.add.graphics().setScrollFactor(0).setDepth(100);
         keys = this.input.keyboard.addKeys('W,A,S,D,E,Q,SPACE,ESC');
 
-        
+
         if (this.sys.game.device.input.touch) {
             setupMobileControls(this);
         } else {
@@ -290,8 +290,14 @@ class GameScene extends Phaser.Scene {
 
         this.input.on('pointerdown', (p) => {
             if (menuPanel.visible || statsPanel.visible) return;
-            if (p.leftButtonDown()) performSwordSwing(this);
-            else if (p.rightButtonDown()) throwKunai(this, p);
+
+            // Pass 'this' as the first argument so the functions can access physics
+            if (p.leftButtonDown()) {
+                performSwordSwing(this);
+            } else if (p.rightButtonDown()) {
+                // Ensure we pass the pointer as the second argument
+                throwKunai(this, p);
+            }
         });
 
         this.input.keyboard.on('keydown-ESC', () => {
@@ -361,7 +367,7 @@ class GameScene extends Phaser.Scene {
 }
 
 function setupMobileControls(scene) {
-    // Force check: If it's a desktop and NOT in touch-simulation mode, remove existing buttons and exit
+    // Force check: If it's a desktop and NOT in touch-simulation mode, exit
     const isMobile = scene.sys.game.device.os.android || scene.sys.game.device.os.iOS || scene.sys.game.device.input.touch;
     if (!isMobile) return;
 
@@ -373,9 +379,22 @@ function setupMobileControls(scene) {
         const btn = scene.add.circle(x, y, 35, 0x000000, 0.5).setStrokeStyle(2, 0xbc8cf2).setInteractive().setScrollFactor(0).setDepth(1000);
         scene.add.text(x, y, label, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
 
-        btn.on('pointerdown', () => { keys[key].isDown = true; btn.setFillStyle(0xbc8cf2, 0.5); });
-        btn.on('pointerup', () => { keys[key].isDown = false; btn.setFillStyle(0x000000, 0.5); });
-        btn.on('pointerout', () => { keys[key].isDown = false; btn.setFillStyle(0x000000, 0.5); });
+        btn.on('pointerdown', () => {
+            keys[key].isDown = true;
+            btn.setFillStyle(0xbc8cf2, 0.5);
+        });
+
+        btn.on('pointerup', () => {
+            keys[key].isDown = false;
+            btn.setFillStyle(0x000000, 0.5);
+            if (player.active) player.anims.play('idle'); // Ensures animation resets
+        });
+
+        btn.on('pointerout', () => {
+            keys[key].isDown = false;
+            btn.setFillStyle(0x000000, 0.5);
+            if (player.active) player.anims.play('idle');
+        });
     };
 
     createMoveBtn(centerX - 60, centerY, '←', 'A');
@@ -388,21 +407,27 @@ function setupMobileControls(scene) {
         scene.add.text(x, y, label, { fontSize: '18px', fill: '#fff', fontWeight: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
 
         btn.on('pointerdown', (pointer) => {
-            pointer.event.stopPropagation(); // Prevents "ghost" clicks on the background
+            pointer.event.stopPropagation();
             btn.setFillStyle(color, 0.4);
             callback(pointer);
         });
         btn.on('pointerup', () => btn.setFillStyle(0x000000, 0.6));
     };
 
-    createActionBtn(btnX, btnY + 40, 'SWORD', 0xffffff, () => performSwordSwing(scene));
+    // SWORD: Added logic to face dummy on tap
+    createActionBtn(btnX, btnY + 40, 'SWORD', 0xffffff, () => {
+        if (dummy && dummy.active) player.setFlipX(dummy.x < player.x);
+        performSwordSwing(scene);
+    });
 
-    // FIX: Kunai target logic
+    // KUNAI: Updated to use {x, y} and face the target
     createActionBtn(btnX + 70, btnY - 20, 'KUNAI', 0xbc8cf2, (p) => {
-        // If dummy exists, aim at dummy; otherwise aim at the pointer's location
-        const targetX = dummy && dummy.active ? dummy.x : p.worldX;
-        const targetY = dummy && dummy.active ? dummy.y : p.worldY;
-        throwKunai(scene, { worldX: targetX, worldY: targetY });
+        const target = (dummy && dummy.active)
+            ? { x: dummy.x, y: dummy.y }
+            : { x: p.worldX, y: p.worldY };
+
+        player.setFlipX(target.x < player.x);
+        throwKunai(scene, target);
     });
 
     createActionBtn(btnX - 70, btnY - 20, 'DASH', 0x00ff00, () => performRaidenDash(scene));
