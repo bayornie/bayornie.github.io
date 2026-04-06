@@ -1,7 +1,7 @@
 function applyStageAssets() {
     if (!dummy || !background) return;
     const stage = enemies[currentStage - 1];
-    const act = stage.acts[currentAct - 1]; 
+    const act = stage.acts[currentAct - 1];
 
     dummy.setTint(act.color);
     dummy.setScale(act.scaleX, act.scaleY);
@@ -117,11 +117,11 @@ class ActSelect extends Phaser.Scene {
         // Generate buttons for each Act (Act 1 to Act 5)
         stageData.acts.forEach((act, index) => {
             const yPos = 180 + (index * 75);
-            
+
             // The Button Background (Glassmorphism style)
             const btn = this.add.rectangle(400, yPos, 450, 55, 0x000000, 0.7)
                 .setStrokeStyle(2, 0xbc8cf2);
-            
+
             // The Act Text
             const txt = this.add.text(400, yPos, `ACT ${index + 1}: ${act.name}`, {
                 fontSize: '20px',
@@ -184,7 +184,7 @@ class GameScene extends Phaser.Scene {
         setUIVisible(true);
         currentStage = selectedStage;
         currentAct = selectedAct; // Tracking Act level
-        
+
         background = this.add.image(400, 300, enemies[currentStage - 1].bg).setDisplaySize(800, 600);
 
         const platforms = this.physics.add.staticGroup();
@@ -223,7 +223,13 @@ class GameScene extends Phaser.Scene {
         hpBarGraphics = this.add.graphics();
         playerGuiGraphics = this.add.graphics().setScrollFactor(0).setDepth(100);
         keys = this.input.keyboard.addKeys('W,A,S,D,E,Q,SPACE,ESC');
-        setupMobileControls(this);
+
+        
+        if (this.sys.game.device.input.touch) {
+            setupMobileControls(this);
+        } else {
+            console.log("Desktop detected: Mobile controls hidden.")
+        };
 
         this.smokeEmitter = this.add.particles(0, 0, 'smoke', {
             speed: { min: 50, max: 150 }, scale: { start: 0.4, end: 0 }, lifespan: 600, emitting: false
@@ -359,14 +365,14 @@ function setupMobileControls(scene) {
     const isMobile = scene.sys.game.device.os.android || scene.sys.game.device.os.iOS || scene.sys.game.device.input.touch;
     if (!isMobile) return;
 
-    const centerX = 120, centerY = 480; 
-    const btnX = 680, btnY = 480;      
+    const centerX = 120, centerY = 480;
+    const btnX = 680, btnY = 480;
 
     // --- MOVEMENT D-PAD ---
     const createMoveBtn = (x, y, label, key) => {
         const btn = scene.add.circle(x, y, 35, 0x000000, 0.5).setStrokeStyle(2, 0xbc8cf2).setInteractive().setScrollFactor(0).setDepth(1000);
         scene.add.text(x, y, label, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
-        
+
         btn.on('pointerdown', () => { keys[key].isDown = true; btn.setFillStyle(0xbc8cf2, 0.5); });
         btn.on('pointerup', () => { keys[key].isDown = false; btn.setFillStyle(0x000000, 0.5); });
         btn.on('pointerout', () => { keys[key].isDown = false; btn.setFillStyle(0x000000, 0.5); });
@@ -380,8 +386,8 @@ function setupMobileControls(scene) {
     const createActionBtn = (x, y, label, color, callback) => {
         const btn = scene.add.circle(x, y, 40, 0x000000, 0.6).setStrokeStyle(2, color).setInteractive().setScrollFactor(0).setDepth(1000);
         scene.add.text(x, y, label, { fontSize: '18px', fill: '#fff', fontWeight: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
-        
-        btn.on('pointerdown', (pointer) => { 
+
+        btn.on('pointerdown', (pointer) => {
             pointer.event.stopPropagation(); // Prevents "ghost" clicks on the background
             btn.setFillStyle(color, 0.4);
             callback(pointer);
@@ -390,7 +396,7 @@ function setupMobileControls(scene) {
     };
 
     createActionBtn(btnX, btnY + 40, 'SWORD', 0xffffff, () => performSwordSwing(scene));
-    
+
     // FIX: Kunai target logic
     createActionBtn(btnX + 70, btnY - 20, 'KUNAI', 0xbc8cf2, (p) => {
         // If dummy exists, aim at dummy; otherwise aim at the pointer's location
@@ -403,18 +409,22 @@ function setupMobileControls(scene) {
     createActionBtn(btnX, btnY - 80, 'BURST', 0x00ffff, () => useBurst(scene));
 }
 
+// --- Inside game.js ---
+
 const config = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
     parent: 'game-container',
-    // --- ADD THIS SCALE SECTION ---
     scale: {
         mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: 800,
+        height: 600,
+        expandParent: true
     },
     input: {
-        activePointers: 3 
+        activePointers: 3 // CRITICAL for mobile: allows moving and attacking at the same time
     },
     physics: {
         default: 'arcade',
