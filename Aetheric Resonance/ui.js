@@ -51,10 +51,10 @@ function drawPlayerStats(scene) {
 
     playerGuiGraphics.clear();
 
-    const barWidth = 150;
-    // Shifted startX and startY so they don't cover your MENU/STATS buttons
-    const startX = 20;
-    const startY = 80; // Pushed down to clear the Menu/Stats buttons
+    const barWidth = 180; // A bit wider for better visibility on the right
+    // Pinned to the right: Screen width minus bar width minus 20px padding
+    const startX = scene.scale.width - barWidth - 20; 
+    const startY = 20; // Back to the top
     const barHeight = 15;
 
     // HP Bar
