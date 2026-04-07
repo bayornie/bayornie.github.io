@@ -370,8 +370,8 @@ function setupMobileControls(scene) {
     const isMobile = scene.sys.game.device.os.android || scene.sys.game.device.os.iOS || scene.sys.game.device.input.touch;
     if (!isMobile) return;
 
-    const centerX = 120, centerY = 700; 
-    const btnX = 680, btnY = 700;
+    const centerX = 120, centerY = 600; 
+    const btnX = 680, btnY = 600;
 
     // --- MOVEMENT D-PAD ---
     const createMoveBtn = (x, y, label, key) => {
