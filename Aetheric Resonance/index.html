@@ -57,7 +57,22 @@
             display: none;
             width: 100%;
             height: 100%;
-            position: relative;
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            pointer-events: none;
+        }
+
+        /* Mobile Specific Adjustment */
+        @media (max-width: 768px) {
+            .game-ui {
+                bottom: 20px;
+                /* Pulls it up only on mobile devices */
+            }
+        }
+
+        .game-ui * {
+            pointer-events: auto;
         }
 
         .char-info {
@@ -219,10 +234,10 @@
         </div>
     </div>
 
-    <script src="data.js?v=3"></script>
-    <script src="ui.js?v=3"></script>
-    <script src="system.js?v=3"></script>
-    <script src="game.js?v=3"></script>
+    <script src="data.js?v=8"></script>
+    <script src="ui.js?v=8"></script>
+    <script src="system.js?v=8"></script>
+    <script src="game.js?v=8"></script>
 </body>
 
 </html>
