@@ -370,8 +370,9 @@ function setupMobileControls(scene) {
     const isMobile = scene.sys.game.device.os.android || scene.sys.game.device.os.iOS || scene.sys.game.device.input.touch;
     if (!isMobile) return;
 
-    const centerX = 120, centerY = 570; 
-    const btnX = 680, btnY = 570;
+    // Increased centerY and btnY to 660 to move them below the game canvas
+    const centerX = 120, centerY = 660; 
+    const btnX = 680, btnY = 660;
 
     // --- MOVEMENT D-PAD ---
     const createMoveBtn = (x, y, label, key) => {
@@ -379,7 +380,6 @@ function setupMobileControls(scene) {
         scene.add.text(x, y, label, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
 
         btn.on('pointerdown', () => {
-            // Fix: Explicitly check for Jump if 'W' is pressed
             if (key === 'W' && player.body.blocked.down) {
                 player.setVelocityY(-550);
             }
@@ -417,13 +417,11 @@ function setupMobileControls(scene) {
         btn.on('pointerup', () => btn.setFillStyle(0x000000, 0.6));
     };
 
-    // SWORD: Positioned bottom center of action group
     createActionBtn(btnX, btnY + 40, 'SWORD', 0xffffff, () => {
         if (dummy && dummy.active) player.setFlipX(dummy.x < player.x);
         performSwordSwing(scene);
     });
 
-    // KUNAI: Positioned right
     createActionBtn(btnX + 70, btnY - 20, 'KUNAI', 0xbc8cf2, (p) => {
         const target = (dummy && dummy.active)
             ? { x: dummy.x, y: dummy.y }
