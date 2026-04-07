@@ -367,12 +367,12 @@ class GameScene extends Phaser.Scene {
 }
 
 function setupMobileControls(scene) {
-    // Force check: If it's a desktop and NOT in touch-simulation mode, exit
     const isMobile = scene.sys.game.device.os.android || scene.sys.game.device.os.iOS || scene.sys.game.device.input.touch;
     if (!isMobile) return;
 
-    const centerX = 120, centerY = 480;
-    const btnX = 680, btnY = 480;
+    // Lowered Y coordinates to sit just above the bottom UI
+    const centerX = 120, centerY = 500; 
+    const btnX = 680, btnY = 500;
 
     // --- MOVEMENT D-PAD ---
     const createMoveBtn = (x, y, label, key) => {
@@ -380,6 +380,10 @@ function setupMobileControls(scene) {
         scene.add.text(x, y, label, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
 
         btn.on('pointerdown', () => {
+            // Fix: Explicitly check for Jump if 'W' is pressed
+            if (key === 'W' && player.body.blocked.down) {
+                player.setVelocityY(-550);
+            }
             keys[key].isDown = true;
             btn.setFillStyle(0xbc8cf2, 0.5);
         });
@@ -387,7 +391,7 @@ function setupMobileControls(scene) {
         btn.on('pointerup', () => {
             keys[key].isDown = false;
             btn.setFillStyle(0x000000, 0.5);
-            if (player.active) player.anims.play('idle'); // Ensures animation resets
+            if (player.active) player.anims.play('idle');
         });
 
         btn.on('pointerout', () => {
@@ -399,12 +403,12 @@ function setupMobileControls(scene) {
 
     createMoveBtn(centerX - 60, centerY, '←', 'A');
     createMoveBtn(centerX + 60, centerY, '→', 'D');
-    createMoveBtn(centerX, centerY - 60, '↑', 'W');
+    createMoveBtn(centerX, centerY - 60, '↑', 'W'); // Now handles Jump correctly
 
     // --- ACTION BUTTONS ---
     const createActionBtn = (x, y, label, color, callback) => {
         const btn = scene.add.circle(x, y, 40, 0x000000, 0.6).setStrokeStyle(2, color).setInteractive().setScrollFactor(0).setDepth(1000);
-        scene.add.text(x, y, label, { fontSize: '18px', fill: '#fff', fontWeight: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
+        scene.add.text(x, y, label, { fontSize: '16px', fill: '#fff', fontWeight: 'bold' }).setOrigin(0.5).setScrollFactor(0).setDepth(1001);
 
         btn.on('pointerdown', (pointer) => {
             pointer.event.stopPropagation();
@@ -414,20 +418,20 @@ function setupMobileControls(scene) {
         btn.on('pointerup', () => btn.setFillStyle(0x000000, 0.6));
     };
 
-    // SWORD: Added logic to face dummy on tap
+    // SWORD: Positioned bottom center of action group
     createActionBtn(btnX, btnY + 40, 'SWORD', 0xffffff, () => {
         if (dummy && dummy.active) player.setFlipX(dummy.x < player.x);
         performSwordSwing(scene);
     });
 
-    // KUNAI: Updated to use {x, y} and face the target
+    // KUNAI: Positioned right (Fixed: Now calls throwKunai separately)
     createActionBtn(btnX + 70, btnY - 20, 'KUNAI', 0xbc8cf2, (p) => {
         const target = (dummy && dummy.active)
             ? { x: dummy.x, y: dummy.y }
             : { x: p.worldX, y: p.worldY };
 
         player.setFlipX(target.x < player.x);
-        throwKunai(scene, target);
+        throwKunai(scene, target); 
     });
 
     createActionBtn(btnX - 70, btnY - 20, 'DASH', 0x00ff00, () => performRaidenDash(scene));
