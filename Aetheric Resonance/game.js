@@ -370,9 +370,8 @@ function setupMobileControls(scene) {
     const isMobile = scene.sys.game.device.os.android || scene.sys.game.device.os.iOS || scene.sys.game.device.input.touch;
     if (!isMobile) return;
 
-    // Lowered Y coordinates to sit just above the bottom UI
-    const centerX = 120, centerY = 500; 
-    const btnX = 680, btnY = 500;
+    const centerX = 120, centerY = 570; 
+    const btnX = 680, btnY = 570;
 
     // --- MOVEMENT D-PAD ---
     const createMoveBtn = (x, y, label, key) => {
@@ -403,7 +402,7 @@ function setupMobileControls(scene) {
 
     createMoveBtn(centerX - 60, centerY, '←', 'A');
     createMoveBtn(centerX + 60, centerY, '→', 'D');
-    createMoveBtn(centerX, centerY - 60, '↑', 'W'); // Now handles Jump correctly
+    createMoveBtn(centerX, centerY - 60, '↑', 'W'); 
 
     // --- ACTION BUTTONS ---
     const createActionBtn = (x, y, label, color, callback) => {
@@ -424,7 +423,7 @@ function setupMobileControls(scene) {
         performSwordSwing(scene);
     });
 
-    // KUNAI: Positioned right (Fixed: Now calls throwKunai separately)
+    // KUNAI: Positioned right
     createActionBtn(btnX + 70, btnY - 20, 'KUNAI', 0xbc8cf2, (p) => {
         const target = (dummy && dummy.active)
             ? { x: dummy.x, y: dummy.y }
