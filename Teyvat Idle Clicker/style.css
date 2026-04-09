@@ -1,0 +1,152 @@
+:root {
+    --bg-dark: #0c0f12;
+    --panel-bg: #161a21;
+    --primo-blue: #ade5ff;
+    /* Back to Primogem Blue */
+    --primo-dark: #3b6291;
+    /* Deep Genshin Navy */
+    --accent-gold: #ece5d8;
+    /* Soft Ivory/Gold */
+    --text-gray: #bdc2c6;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--accent-gold);
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Sidebar Fixes */
+nav {
+    width: 160px;
+    background: var(--panel-bg);
+    padding: 20px 15px;
+    border-right: 1px solid var(--primo-dark);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.nav-item {
+    padding: 12px;
+    background: #232933;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s;
+    color: var(--text-gray);
+    border: 1px solid transparent;
+}
+
+.nav-item.active {
+    background: var(--primo-blue);
+    color: var(--bg-dark);
+    font-weight: bold;
+}
+
+/* Center Stage */
+main {
+    flex-grow: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, #1a232e 0%, #0c0f12 100%);
+}
+
+#top-stash {
+    position: absolute;
+    top: 30px;
+    width: 250px;
+    background: rgba(22, 26, 33, 0.9);
+    border: 1px solid var(--primo-blue);
+    border-radius: 12px;
+    text-align: center;
+    padding: 10px;
+    box-shadow: 0 0 15px rgba(173, 229, 255, 0.2);
+}
+
+/* Right Sidebar Stats */
+aside {
+    width: 240px;
+    background: var(--panel-bg);
+    border-left: 1px solid var(--primo-dark);
+    padding: 20px;
+}
+
+.stats-header {
+    background: var(--primo-dark);
+    color: var(--primo-blue);
+    padding: 8px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Floating Text Fix */
+.float-text {
+    position: fixed;
+    color: #ffffff;
+    font-weight: 900;
+    font-size: 1.8rem;
+    pointer-events: none;
+    z-index: 9999;
+
+    text-shadow:
+        -2px -2px 0 #000,
+        2px -2px 0 #000,
+        -2px 2px 0 #000,
+        2px 2px 0 #000,
+        0px 0px 10px rgba(173, 229, 255, 1);
+
+    animation: floatUp 0.8s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -120px) scale(1.2);
+    }
+}
+
+/* Primogem Object */
+.primogem-shape {
+    width: 200px;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 0 15px var(--primo-blue));
+    cursor: pointer;
+    transition: transform 0.05s;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-user-drag: none;
+}
+
+.primogem-img {
+    width: 100%;
+    height: auto;
+    user-select: none;
+    pointer-events: none;
+    -webkit-user-drag: none;
+    -user-drag: none;
+}
+
+/* Click Animation */
+#click-area:active .primogem-shape {
+    transform: scale(0.92);
+}
