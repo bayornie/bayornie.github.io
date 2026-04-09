@@ -141,7 +141,7 @@ function buyClickUpgrade(index) {
         game.clickPower += up.power;
         up.cost *= 1.5;
         updateUI();
-        saveCloudGame(); // Save on purchase
+        saveCloudGame(); 
     }
 }
 
@@ -152,7 +152,7 @@ function buyGenerator(index) {
         gen.count++;
         gen.cost *= 1.75;
         updateUI();
-        saveCloudGame(); // Save on purchase
+        saveCloudGame(); 
     }
 }
 
@@ -169,6 +169,12 @@ function spawnText(x, y, txt) {
 }
 
 // --- 5. AUTH & CLOUD SAVE LOGIC ---
+
+// Added this to open the overlay from your new button
+function openAuth() {
+    document.getElementById('auth-overlay').style.display = 'flex';
+}
+
 async function handleAuth(type) {
     const email = document.getElementById(type === 'login' ? 'username' : 'reg-username').value + "@game.com"; 
     const pass = document.getElementById(type === 'login' ? 'password' : 'reg-password').value;
@@ -192,12 +198,17 @@ async function handleAuth(type) {
     }
 }
 
+// Modified to stay hidden until the button is clicked
 auth.onAuthStateChanged((user) => {
+    const btn = document.getElementById('login-nav-btn');
     if (user) {
         document.getElementById('auth-overlay').style.display = 'none';
+        if(btn) btn.innerText = "Account: Synced";
         loadCloudGame(user.uid);
     } else {
-        document.getElementById('auth-overlay').style.display = 'flex';
+        // Keeps it hidden on load even if not logged in
+        document.getElementById('auth-overlay').style.display = 'none'; 
+        if(btn) btn.innerText = "Login / Register";
         updateUI(); 
     }
 });
@@ -223,6 +234,14 @@ function toggleAuth() {
     const isLogin = document.getElementById('login-form').style.display !== 'none';
     document.getElementById('login-form').style.display = isLogin ? 'none' : 'block';
     document.getElementById('register-form').style.display = isLogin ? 'block' : 'none';
+}
+
+// Close overlay if clicking outside the card
+window.onclick = function(event) {
+    const overlay = document.getElementById('auth-overlay');
+    if (event.target == overlay) {
+        overlay.style.display = "none";
+    }
 }
 
 setInterval(saveCloudGame, 60000);
