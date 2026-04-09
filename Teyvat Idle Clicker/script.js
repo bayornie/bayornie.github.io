@@ -3,18 +3,19 @@ let game = {
     primos: 0,
     totalPrimosEver: 0,
     prestigePoints: 0,
-    multiplier: 1.0, // Fixed: Starts at 1.0 to ensure +1 clicks at the start
-    clickPower: 1,   // Fixed: Starts at 1
+    multiplier: 1.0,
+    clickPower: 1,
     
     clickUpgrades: [
         { id: 'hands', name: 'Stronger Hands', cost: 10, power: 1, level: 0 },
-        { id: 'trowel', name: 'Steel Trowel', cost: 100, power: 5, level: 0 }
+        { id: 'trowel', name: 'Stone Trowel', cost: 150, power: 5, level: 0 },
+        { id: 'trowel', name: 'Steel Trowel', cost: 500, power: 10, level: 0 }
     ],
     
     generators: [
-        { id: 'flower', name: 'Sweet Flower', cost: 15, income: 0.1, count: 0 },
-        { id: 'lamp', name: 'Lamp Grass', cost: 150, income: 2.0, count: 0 },
-        { id: 'statue', name: 'Statue of Seven', cost: 2000, income: 15.0, count: 0 }
+        { id: 'flower', name: 'Sweet Flower', cost: 50, income: 0.25, count: 0 },
+        { id: 'lamp', name: 'Lamp Grass', cost: 500, income: 1, count: 0 },
+        { id: 'sunsettia', name: 'Sunsettia', cost: 1000, income: 5.0, count: 0 }
     ]
 };
 
@@ -52,7 +53,6 @@ function showPanel(panelId) {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     if(event && event.currentTarget) event.currentTarget.classList.add('active');
 
-    // Re-render lists when switching panels to update "disabled" states
     if (panelId === 'upgrades') renderList('click-upgrades', game.clickUpgrades, buyClickUpgrade);
     if (panelId === 'generators') renderList('gen-upgrades', game.generators, buyGenerator);
 }
@@ -70,13 +70,32 @@ function updateUI() {
     game.generators.forEach(g => totalPPS += (g.income * g.count));
     document.getElementById('stat-pps').innerText = (totalPPS * game.multiplier).toFixed(1);
 
-    // Refresh currently visible lists
-    if(document.getElementById('upgrades-panel').classList.contains('active')) {
-        renderList('click-upgrades', game.clickUpgrades, buyClickUpgrade);
-    }
-    if(document.getElementById('generators-panel').classList.contains('active')) {
-        renderList('gen-upgrades', game.generators, buyGenerator);
-    }
+    updateCardStates('click-upgrades', game.clickUpgrades);
+    updateCardStates('gen-upgrades', game.generators);
+}
+
+function updateCardStates(containerId, data) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const cards = container.querySelectorAll('.upgrade-card');
+    data.forEach((item, index) => {
+        if (cards[index]) {
+            if (game.primos < item.cost) {
+                cards[index].classList.add('disabled');
+            } else {
+                cards[index].classList.remove('disabled');
+            }
+            
+            // Update only the cost and level text inside the card
+            let displayLvl = item.level !== undefined ? item.level : item.count;
+            const costSpan = cards[index].querySelector('.cost-val');
+            const lvlSmall = cards[index].querySelector('.lvl-val');
+            
+            if (costSpan) costSpan.innerText = Math.floor(item.cost).toLocaleString();
+            if (lvlSmall) lvlSmall.innerText = displayLvl;
+        }
+    });
 }
 
 function renderList(containerId, data, clickFn) {
@@ -85,7 +104,6 @@ function renderList(containerId, data, clickFn) {
     container.innerHTML = '';
 
     data.forEach((item, index) => {
-        // Fix: Handles both .level and .count to prevent "undefined" display
         let displayLvl = item.level !== undefined ? item.level : item.count;
         
         const card = document.createElement('div');
@@ -96,8 +114,8 @@ function renderList(containerId, data, clickFn) {
                 <small>${item.power ? '+'+item.power+' Click' : '+'+item.income+'/s'}</small>
             </div>
             <div>
-                <span class="cost">Cost: ${Math.floor(item.cost).toLocaleString()}</span><br>
-                <small>Lvl: ${displayLvl}</small>
+                <span>Cost: <span class="cost-val">${Math.floor(item.cost).toLocaleString()}</span></span><br>
+                <small>Lvl: <span class="lvl-val">${displayLvl}</span></small>
             </div>
         `;
         card.onclick = () => clickFn(index);
@@ -123,7 +141,7 @@ function buyGenerator(index) {
     if (game.primos >= gen.cost) {
         game.primos -= gen.cost;
         gen.count++;
-        gen.cost *= 1.2;
+        gen.cost *= 2;
         updateUI();
     }
 }
