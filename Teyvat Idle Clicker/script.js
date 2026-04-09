@@ -59,7 +59,6 @@ setInterval(() => {
 }, 100);
 
 // --- 3. UI FUNCTIONS ---
-// New Toast Notification Function
 function showNotification(message) {
     const toast = document.getElementById('game-toast');
     if (!toast) return;
