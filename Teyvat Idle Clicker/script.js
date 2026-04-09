@@ -83,7 +83,7 @@ function showPanel(panelId) {
 }
 
 function updateUI() {
-    document.getElementById('primo-count').innerText = Math.floor(game.primos).toLocaleString();
+    document.getElementById('primogems').innerText = Math.floor(game.primos).toLocaleString();
     document.getElementById('stat-total').innerText = Math.floor(game.primos).toLocaleString();
     document.getElementById('stat-mult').innerText = game.multiplier.toFixed(2) + 'x';
     document.getElementById('stat-click').innerText = (game.clickPower * game.multiplier).toFixed(0);
