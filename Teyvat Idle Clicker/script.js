@@ -59,6 +59,18 @@ setInterval(() => {
 }, 100);
 
 // --- 3. UI FUNCTIONS ---
+// New Toast Notification Function
+function showNotification(message) {
+    const toast = document.getElementById('game-toast');
+    if (!toast) return;
+    toast.innerText = message;
+    toast.classList.add('show');
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
 function showPanel(panelId) {
     document.querySelectorAll('.game-panel').forEach(p => p.classList.remove('active'));
     const targetPanel = document.getElementById(`${panelId}-panel`);
@@ -170,9 +182,32 @@ function spawnText(x, y, txt) {
 
 // --- 5. AUTH & CLOUD SAVE LOGIC ---
 
-// Added this to open the overlay from your new button
 function openAuth() {
     document.getElementById('auth-overlay').style.display = 'flex';
+}
+
+function openProfile() {
+    const user = auth.currentUser;
+    if (user) {
+        if (document.getElementById('prof-primos')) {
+            document.getElementById('prof-primos').innerText = Math.floor(game.primos).toLocaleString();
+        }
+        
+        if (document.getElementById('prof-power')) {
+            document.getElementById('prof-power').innerText = (game.clickPower * game.multiplier).toFixed(0);
+        }
+        
+        // This shows the pop-up
+        document.getElementById('profile-overlay').style.display = 'flex';
+    } else {
+        showToast("Please login to view profile!");
+    }
+}
+
+function handleLogout() {
+    auth.signOut().then(() => {
+        location.reload(); 
+    });
 }
 
 async function handleAuth(type) {
@@ -180,7 +215,7 @@ async function handleAuth(type) {
     const pass = document.getElementById(type === 'login' ? 'password' : 'reg-password').value;
 
     if (pass.length < 6) {
-        alert("Password must be at least 6 characters!");
+        showNotification("Password must be at least 6 characters!");
         return;
     }
 
@@ -188,27 +223,33 @@ async function handleAuth(type) {
         if (type === 'register') {
             const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
             await db.collection("users").doc(userCredential.user.uid).set(game);
-            alert("Account Created!");
+            showNotification("Ad Astra Abyssosque Traveler! Account Created.");
         } else {
             await auth.signInWithEmailAndPassword(email, pass);
+            showNotification("Welcome back, Traveler!");
         }
         document.getElementById('auth-overlay').style.display = 'none';
     } catch (error) {
-        alert(error.message);
+        showNotification(error.message);
     }
 }
 
-// Modified to stay hidden until the button is clicked
 auth.onAuthStateChanged((user) => {
-    const btn = document.getElementById('login-nav-btn');
+    const loginTrigger = document.getElementById('login-nav-btn');
+    const userControls = document.getElementById('user-controls');
+    
     if (user) {
         document.getElementById('auth-overlay').style.display = 'none';
-        if(btn) btn.innerText = "Account: Synced";
+        if(loginTrigger) loginTrigger.style.display = 'none';
+        if(userControls) userControls.style.display = 'block';
         loadCloudGame(user.uid);
     } else {
-        // Keeps it hidden on load even if not logged in
         document.getElementById('auth-overlay').style.display = 'none'; 
-        if(btn) btn.innerText = "Login / Register";
+        if(loginTrigger) {
+            loginTrigger.style.display = 'block';
+            loginTrigger.innerText = "Login / Register";
+        }
+        if(userControls) userControls.style.display = 'none';
         updateUI(); 
     }
 });
@@ -236,12 +277,11 @@ function toggleAuth() {
     document.getElementById('register-form').style.display = isLogin ? 'block' : 'none';
 }
 
-// Close overlay if clicking outside the card
 window.onclick = function(event) {
-    const overlay = document.getElementById('auth-overlay');
-    if (event.target == overlay) {
-        overlay.style.display = "none";
-    }
+    const authOverlay = document.getElementById('auth-overlay');
+    const profOverlay = document.getElementById('profile-overlay');
+    if (event.target == authOverlay) authOverlay.style.display = "none";
+    if (event.target == profOverlay) profOverlay.style.display = "none";
 }
 
 setInterval(saveCloudGame, 60000);
