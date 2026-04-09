@@ -18,14 +18,14 @@
                 <input type="text" id="username" placeholder="Username">
                 <input type="password" id="password" placeholder="Password">
                 <button class="auth-btn" onclick="handleAuth('login')">Enter Teyvat</button>
-                <p onclick="toggleAuth()" class="toggle-link">New here? Register</p>
+                <p onclick="toggleAuth()" class="toggle-link" id="to-register">New here? Register</p>
             </div>
 
             <div id="register-form" style="display:none;">
                 <input type="text" id="reg-username" placeholder="New Username">
                 <input type="password" id="reg-password" placeholder="New Password">
                 <button class="auth-btn" onclick="handleAuth('register')">Create Account</button>
-                <p onclick="toggleAuth()" class="toggle-link">Back to Login</p>
+                <p onclick="toggleAuth()" class="toggle-link" id="to-login">Back to Login</p>
             </div>
         </div>
     </div>
