@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teyvat Idle Clicker</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
     <nav>
@@ -27,28 +29,56 @@
 
         <section id="home-panel" class="game-panel active">
             <div id="click-area">
-                    <img src="img/primogem.png" alt="Primogem" class="primogem-img">
+                <div class="primogem-shape">
+                    <img src="img/primogem.png" alt="Primogem" class="primogem-img" draggable="false">
+                </div>
             </div>
         </section>
 
-        </main>
+        <section id="upgrades-panel" class="game-panel">
+            <h2 class="panel-title">Click Upgrades</h2>
+            <div id="click-upgrades" class="list-container"></div>
+        </section>
+
+        <section id="generators-panel" class="game-panel">
+            <h2 class="panel-title">Resource Generators</h2>
+            <div id="gen-upgrades" class="list-container"></div>
+        </section>
+    </main>
 
     <aside id="stats-sidebar">
+        <div class="stats-header">STATISTICS</div>
+
         <div class="stats-container">
-            <div class="stats-header">STATISTICS</div>
             <div class="stats-group">
                 <div class="stats-label">BALANCES</div>
-                <div class="stat-row"><span>Primos:</span> <span id="stat-total">0</span></div>
-                <div class="stat-row"><span>Multiplier:</span> <span id="stat-mult">1.0x</span></div>
+                <div class="stat-row">
+                    <span class="label">Primogems:</span>
+                    <span id="stat-total" class="value highlight">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="label">Multiplier:</span>
+                    <span id="stat-mult" class="value">1.00x</span>
+                </div>
             </div>
+
+            <div class="stats-divider"></div>
+
             <div class="stats-group">
                 <div class="stats-label">PRODUCTION</div>
-                <div class="stat-row"><span>Per Click:</span> <span id="stat-click">1</span></div>
-                <div class="stat-row"><span>Per Second:</span> <span id="stat-pps">0</span></div>
+                <div class="stat-row">
+                    <span class="label">Per Click:</span>
+                    <span id="stat-click" class="value">1</span>
+                </div>
+                <div class="stat-row">
+                    <span class="label">Per Second:</span>
+                    <span id="stat-pps" class="value">0.0</span>
+                </div>
             </div>
         </div>
     </aside>
 
     <script src="script.js"></script>
 </body>
+
 </html>
