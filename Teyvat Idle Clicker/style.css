@@ -21,7 +21,8 @@ body {
     -webkit-user-select: none;
 }
 
-nav, aside {
+nav,
+aside {
     width: 200px;
     background: var(--panel-bg);
     padding: 20px 15px;
@@ -67,17 +68,51 @@ main {
 
 #top-stash {
     position: absolute;
-    top: 40px;
+    top: 30px;
     left: 50%;
     transform: translateX(-50%);
-    width: 280px;
-    background: var(--panel-bg);
-    border: 1px solid var(--primo-blue);
+    width: 320px;
+    background: rgba(22, 26, 33, 0.85);
+    border: 1px solid rgba(110, 231, 183, 0.3);
     border-radius: 12px;
-    padding: 15px;
-    backdrop-filter: blur(5px);
+    padding: 12px 20px;
+    backdrop-filter: blur(12px);
     text-align: center;
     z-index: 5;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5),
+        inset 0 0 15px rgba(110, 231, 183, 0.05);
+}
+
+.stash-label {
+    color: var(--accent-gold);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+    opacity: 0.8;
+    font-weight: 800;
+}
+
+.stash-value-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.stash-count {
+    color: var(--neon-blue);
+    font-size: 2rem;
+    font-weight: 900;
+    text-shadow: 0 0 15px rgba(110, 231, 183, 0.5);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.stash-unit {
+    color: var(--text-gray);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 5px;
 }
 
 .game-panel {
@@ -90,13 +125,14 @@ main {
 }
 
 .game-panel.active {
-    display: flex; 
+    display: flex;
     flex-direction: column;
-    align-items: center; 
+    align-items: center;
     justify-content: center;
 }
 
-#upgrades-panel.active, #generators-panel.active {
+#upgrades-panel.active,
+#generators-panel.active {
     justify-content: flex-start;
     padding-top: 120px;
 }
@@ -256,7 +292,7 @@ main {
     font-size: 1.8rem;
     pointer-events: none;
     z-index: 9999;
-    text-shadow: 
+    text-shadow:
         -2px -2px 0 #000, 2px -2px 0 #000,
         -2px 2px 0 #000, 2px 2px 0 #000,
         0 0 10px var(--primo-blue);
@@ -264,8 +300,15 @@ main {
 }
 
 @keyframes floatUp {
-    0% { opacity: 1; transform: translate(-50%, 0) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -100px) scale(1.2); }
+    0% {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
+
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -100px) scale(1.2);
+    }
 }
 
 /* --- FINAL LIVELY PROFILE SECTION --- */
@@ -365,7 +408,7 @@ main {
     width: 100%;
     margin-top: 15px;
     padding: 10px;
-    background: rgba(255, 118, 117, 0.1); 
+    background: rgba(255, 118, 117, 0.1);
     border: 1px solid #ff7675;
     color: #ff7675;
     border-radius: 6px;
@@ -399,7 +442,7 @@ main {
     letter-spacing: 1.5px;
     z-index: 9999;
     transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
     text-transform: uppercase;
 }
 
@@ -464,7 +507,7 @@ main {
 
 .auth-card input {
     width: 100%;
-    max-width: 100%; 
+    max-width: 100%;
     margin-bottom: 1.2rem;
     padding: 14px 18px;
     background: rgba(0, 0, 0, 0.4);
