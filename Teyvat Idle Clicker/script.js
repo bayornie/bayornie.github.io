@@ -15,6 +15,7 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // --- 1. GAME DATA ---
+let isLoggedIn = false;
 let game = {
     primos: 0,
     totalPrimosEver: 0,
@@ -37,6 +38,12 @@ let game = {
 
 // --- 2. CORE LOGIC ---
 document.getElementById('click-area').addEventListener('mousedown', (e) => {
+    if (!isLoggedIn) {
+        showNotification("Please Login to start collecting!");
+        openAuth(); 
+        return; 
+    }
+
     let amount = game.clickPower * game.multiplier;
     game.primos += amount;
     game.totalPrimosEver += amount;
@@ -47,6 +54,8 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
 
 // Passive Income Loop
 setInterval(() => {
+    if (!isLoggedIn) return;
+
     let totalPPS = 0;
     game.generators.forEach(g => {
         totalPPS += (g.income * g.count);
@@ -145,6 +154,11 @@ function renderList(containerId, data, clickFn) {
 
 // --- 4. PURCHASING ---
 function buyClickUpgrade(index) {
+    if (!isLoggedIn) {
+        showNotification("Login to purchase upgrades!");
+        return;
+    }
+
     let up = game.clickUpgrades[index];
     if (game.primos >= up.cost) {
         game.primos -= up.cost;
@@ -157,6 +171,11 @@ function buyClickUpgrade(index) {
 }
 
 function buyGenerator(index) {
+    if (!isLoggedIn) {
+        showNotification("Login to purchase generators!");
+        return;
+    }
+
     let gen = game.generators[index];
     if (game.primos >= gen.cost) {
         game.primos -= gen.cost;
@@ -180,7 +199,6 @@ function spawnText(x, y, txt) {
 }
 
 // --- 5. AUTH & CLOUD SAVE LOGIC ---
-
 function openAuth() {
     document.getElementById('auth-overlay').style.display = 'flex';
 }
@@ -238,11 +256,13 @@ auth.onAuthStateChanged((user) => {
     const userControls = document.getElementById('user-controls');
     
     if (user) {
+        isLoggedIn = true;
         document.getElementById('auth-overlay').style.display = 'none';
         if(loginTrigger) loginTrigger.style.display = 'none';
         if(userControls) userControls.style.display = 'block';
         loadCloudGame(user.uid);
     } else {
+        isLoggedIn = false;
         document.getElementById('auth-overlay').style.display = 'none'; 
         if(loginTrigger) {
             loginTrigger.style.display = 'block';
