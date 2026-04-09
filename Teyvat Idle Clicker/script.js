@@ -40,6 +40,12 @@ let game = {
         { id: 'fast_gen', name: "Ley Line Efficiency", cost: 2, level: 0, desc: '+10% Generator Speed' },
         { id: 'strong_start', name: "Hero's Wit", cost: 5, level: 0, desc: 'Start with +10 Click Power' }
     ],
+
+    shopItems: [
+        { id: 'time_warp', name: "Time Warp", cost: 5000, desc: "Instantly gain 1 hour of passive income." },
+        { id: 'seelie', name: "Follower Seelie", cost: 50000, desc: "A helpful spirit that clicks for you once every 2 seconds." },
+        { id: 'buff_pot', name: "Adepti's Temptation", cost: 75000, desc: "Permanently increases click multiplier by +0.5x." }
+    ],
 };
 
 // --- 2. CORE LOGIC ---
@@ -95,7 +101,8 @@ function showPanel(panelId) {
 
     if (panelId === 'upgrades') renderList('click-upgrades', game.clickUpgrades, buyClickUpgrade);
     if (panelId === 'generators') renderList('gen-upgrades', game.generators, buyGenerator);
-    if (panelId === 'prestige') {renderPrestigeUpgrades();}
+    if (panelId === 'prestige') {renderPrestigeUpgrades();};
+    if (panelId === 'shop') {renderShopItems();};
 }
 
 function updateUI() {
@@ -153,30 +160,6 @@ function updateCardStates(containerId, data) {
     });
 }
 
-function renderList(containerId, data, clickFn) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    container.innerHTML = '';
-
-    data.forEach((item, index) => {
-        let displayLvl = item.level !== undefined ? item.level : item.count;
-        const card = document.createElement('div');
-        card.className = `upgrade-card ${game.primos < item.cost ? 'disabled' : ''}`;
-        card.innerHTML = `
-            <div>
-                <strong>${item.name}</strong><br>
-                <small>${item.power ? '+' + item.power + ' Click' : '+' + item.income + '/s'}</small>
-            </div>
-            <div>
-                <span>Cost: <span class="cost-val">${Math.floor(item.cost).toLocaleString()}</span></span><br>
-                <small>Lvl: <span class="lvl-val">${displayLvl}</span></small>
-            </div>
-        `;
-        card.onclick = () => clickFn(index);
-        container.appendChild(card);
-    });
-}
-
 // --- 4. PURCHASING ---
 function buyClickUpgrade(index) {
     if (!isLoggedIn) {
@@ -230,6 +213,38 @@ function buyBlessing(index) {
     }
 }
 
+function buyShopItem(index) {
+    if (!isLoggedIn) {
+        showNotification("Login to access the Shop!");
+        return;
+    }
+
+    let item = game.shopItems[index];
+    if (game.primos >= item.cost) {
+        game.primos -= item.cost;
+        
+        // --- SPECIAL EFFECTS ---
+        if (item.id === 'time_warp') {
+            let totalPPS = 0;
+            game.generators.forEach(g => totalPPS += (g.income * g.count));
+            let bonus = totalPPS * 3600; // 3600 seconds = 1 hour
+            game.primos += bonus;
+            showNotification(`Time Warped! Gained ${Math.floor(bonus).toLocaleString()} Primos!`);
+        } 
+        
+        if (item.id === 'buff_pot') {
+            game.multiplier += 0.5;
+            showNotification("Consumed Adepti's Temptation! Multiplier increased.");
+        }
+
+        updateUI();
+        renderShopItems();
+        saveCloudGame();
+    } else {
+        showNotification("Not enough Primogems!");
+    }
+}
+
 function spawnText(x, y, txt) {
     const el = document.createElement('div');
     el.className = 'float-text';
@@ -242,7 +257,7 @@ function spawnText(x, y, txt) {
     setTimeout(() => { el.remove(); }, 800);
 }
 
-// --- 5. PRESTIGE SYSTEM ---
+// --- PRESTIGE SYSTEM ---
 
 function ascend() {
     if (!isLoggedIn) {
@@ -294,6 +309,32 @@ function getBaseCost(id) {
     return baseCosts[id] || 100;
 }
 
+// --- RENDERING FUNCTIONS ---
+
+function renderList(containerId, data, clickFn) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+
+    data.forEach((item, index) => {
+        let displayLvl = item.level !== undefined ? item.level : item.count;
+        const card = document.createElement('div');
+        card.className = `upgrade-card ${game.primos < item.cost ? 'disabled' : ''}`;
+        card.innerHTML = `
+            <div>
+                <strong>${item.name}</strong><br>
+                <small>${item.power ? '+' + item.power + ' Click' : '+' + item.income + '/s'}</small>
+            </div>
+            <div>
+                <span>Cost: <span class="cost-val">${Math.floor(item.cost).toLocaleString()}</span></span><br>
+                <small>Lvl: <span class="lvl-val">${displayLvl}</span></small>
+            </div>
+        `;
+        card.onclick = () => clickFn(index);
+        container.appendChild(card);
+    });
+}
+
 function renderPrestigeUpgrades() {
     const container = document.getElementById('prestige-upgrades');
     if (!container) return;
@@ -313,6 +354,30 @@ function renderPrestigeUpgrades() {
             </div>
         `;
         card.onclick = () => buyBlessing(index);
+        container.appendChild(card);
+    });
+}
+
+function renderShopItems() {
+    const container = document.getElementById('shop-items');
+    if (!container) return;
+    container.innerHTML = '';
+
+    game.shopItems.forEach((item, index) => {
+        const card = document.createElement('div');
+        const canAfford = game.primos >= item.cost;
+        card.className = `upgrade-card ${canAfford ? '' : 'disabled'}`;
+        
+        card.innerHTML = `
+            <div>
+                <strong>${item.name}</strong><br>
+                <small>${item.desc}</small>
+            </div>
+            <div>
+                <span>Cost: <span class="highlight">${item.cost.toLocaleString()}</span></span>
+            </div>
+        `;
+        card.onclick = () => buyShopItem(index);
         container.appendChild(card);
     });
 }
