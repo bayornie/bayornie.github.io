@@ -19,8 +19,6 @@ let game = {
 };
 
 // --- 2. CORE LOGIC ---
-
-// Click Interaction (Single listener to prevent double-clicking issues)
 document.getElementById('click-area').addEventListener('mousedown', (e) => {
     let amount = game.clickPower * game.multiplier;
     game.primos += amount;
@@ -135,9 +133,12 @@ function spawnText(x, y, txt) {
     el.className = 'float-text';
     el.innerText = txt;
     
-    // Fixed: Uses fixed positioning logic to ensure it stays on the mouse
-    el.style.left = x + 'px';
-    el.style.top = y + 'px';
+    // Add a slight random offset so they don't stack perfectly
+    const randomX = (Math.random() - 0.5) * 40;
+    const randomY = (Math.random() - 0.5) * 20; 
+
+    el.style.left = (x + randomX) + 'px';
+    el.style.top = (y + randomY) + 'px';
     
     document.body.appendChild(el);
     setTimeout(() => { el.remove(); }, 800);
