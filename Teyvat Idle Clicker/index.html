@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teyvat Clicker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav>
+        <div class="nav-item active" onclick="showPanel('home')">Home</div>
+        <div class="nav-item" onclick="showPanel('upgrades')">Upgrades</div>
+        <div class="nav-item" onclick="showPanel('generators')">Generators</div>
+        <div class="nav-item" onclick="showPanel('prestige')">Prestige</div>
+        <div class="nav-item" onclick="showPanel('shop')">Shop</div>
+    </nav>
+
+    <main>
+        <div id="top-stash">
+            <div class="stash-header">YOUR STASH</div>
+            <div class="stash-body">
+                <span id="primo-count">0</span>
+                <div class="currency-label">Primogems</div>
+            </div>
+        </div>
+
+        <section id="home-panel" class="game-panel active">
+            <div id="click-area">
+                    <img src="img/primogem.png" alt="Primogem" class="primogem-img">
+            </div>
+        </section>
+
+        </main>
+
+    <aside id="stats-sidebar">
+        <div class="stats-container">
+            <div class="stats-header">STATISTICS</div>
+            <div class="stats-group">
+                <div class="stats-label">BALANCES</div>
+                <div class="stat-row"><span>Primos:</span> <span id="stat-total">0</span></div>
+                <div class="stat-row"><span>Multiplier:</span> <span id="stat-mult">1.0x</span></div>
+            </div>
+            <div class="stats-group">
+                <div class="stats-label">PRODUCTION</div>
+                <div class="stat-row"><span>Per Click:</span> <span id="stat-click">1</span></div>
+                <div class="stat-row"><span>Per Second:</span> <span id="stat-pps">0</span></div>
+            </div>
+        </div>
+    </aside>
+
+    <script src="script.js"></script>
+</body>
+</html>
