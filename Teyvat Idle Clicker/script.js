@@ -14,7 +14,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// --- 1. GAME DATA ---
+// --- GAME DATA ---
 let isLoggedIn = false;
 let game = {
     primos: 0,
@@ -22,6 +22,8 @@ let game = {
     prestigePoints: 0,
     multiplier: 1.0,
     clickPower: 1,
+    lastLogin: Date.now(),
+    pps: 0,
 
     clickUpgrades: [
         { id: 'hands', name: 'Stronger Hands', cost: 10, power: 1, level: 0 },
@@ -32,7 +34,7 @@ let game = {
     generators: [
         { id: 'flower', name: 'Sweet Flower', cost: 50, income: 0.25, count: 0 },
         { id: 'lamp', name: 'Lamp Grass', cost: 250, income: 1, count: 0 },
-        { id: 'sunsettia', name: 'Sunsettia', cost: 1000, income: 5.0, count: 0 }
+        { id: 'sunsettia', name: 'Sunsettia', cost: 750, income: 5.0, count: 0 }
     ],
 
     blessings: [
@@ -48,7 +50,7 @@ let game = {
     ],
 };
 
-// --- 2. CORE LOGIC ---
+// --- CORE LOGIC ---
 document.getElementById('click-area').addEventListener('mousedown', (e) => {
     if (!isLoggedIn) {
         showNotification("Please Login to start collecting!");
@@ -57,10 +59,23 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
     }
 
     let amount = game.clickPower * game.multiplier;
+
+    const critBlessing = game.blessings.find(b => b.id === 'crit');
+    const critLevel = critBlessing ? critBlessing.level : 0;
+    const critChance = critLevel * 0.05;
+
+    const isCrit = Math.random() < critChance;
+    let displayPops = `+${Math.floor(amount)}`;
+
+    if (isCrit) {
+        amount *= 5; // 5x multiplier for a Critical Hit
+        displayPops = `CRIT! +${Math.floor(amount)}`;
+    }
+
     game.primos += amount;
     game.totalPrimosEver += amount;
 
-    spawnText(e.clientX, e.clientY, `+${Math.floor(amount)}`);
+    spawnText(e.clientX, e.clientY, displayPops);
     updateUI();
 });
 
@@ -79,7 +94,7 @@ setInterval(() => {
     updateUI();
 }, 100);
 
-// --- 3. UI FUNCTIONS ---
+// --- UI FUNCTIONS ---
 function showNotification(message) {
     const toast = document.getElementById('game-toast');
     if (!toast) return;
@@ -101,8 +116,8 @@ function showPanel(panelId) {
 
     if (panelId === 'upgrades') renderList('click-upgrades', game.clickUpgrades, buyClickUpgrade);
     if (panelId === 'generators') renderList('gen-upgrades', game.generators, buyGenerator);
-    if (panelId === 'prestige') {renderPrestigeUpgrades();};
-    if (panelId === 'shop') {renderShopItems();};
+    if (panelId === 'prestige') { renderPrestigeUpgrades(); };
+    if (panelId === 'shop') { renderShopItems(); };
 }
 
 function updateUI() {
@@ -137,6 +152,68 @@ function updateUI() {
     }
 }
 
+function togglePasswordVisibility(inputId) {
+    const passwordInput = document.getElementById(inputId);
+    const toggleIcon = passwordInput.nextElementSibling;
+
+    if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggleIcon.innerText = "👁️";
+    } else {
+        passwordInput.type = "password";
+        toggleIcon.innerText = "🔒";
+    }
+}
+
+function calculateOfflineEarnings() {
+    let totalPPS = 0;
+    game.generators.forEach(g => {
+        totalPPS += (g.income * g.count);
+    });
+    game.pps = totalPPS * game.multiplier;
+
+    const now = Date.now();
+    const lastLogin = game.lastLogin || now;
+
+    let secondsAway = Math.floor((now - lastLogin) / 1000);
+    if (secondsAway <= 30) return; 
+
+    const maxSeconds = 36000; // 10 Hours
+    if (secondsAway > maxSeconds) secondsAway = maxSeconds;
+
+    const earned = secondsAway * game.pps;
+
+    if (earned > 0) {
+        game.primos += earned;
+        game.totalPrimosEver += earned;
+        game.lastLogin = now;
+
+        const hours = Math.floor(secondsAway / 3600);
+        const mins = Math.floor((secondsAway % 3600) / 60);
+
+        showOfflineModal(earned, hours, mins);
+        saveCloudGame();
+    }
+}
+
+function showOfflineModal(amount, h, m) {
+    const modal = document.getElementById('offline-modal');
+    if (!modal) return;
+
+    const timeText = document.getElementById('offline-time-text');
+    const amountText = document.getElementById('offline-amount-text');
+
+    if (timeText) timeText.innerText = `You were away for ${h > 0 ? h + "h " : ""}${m}m`;
+    if (amountText) amountText.innerText = Math.floor(amount).toLocaleString();
+
+    // Force it to show
+    modal.style.setProperty('display', 'flex', 'important');
+}
+
+function closeOfflineModal() {
+    document.getElementById('offline-modal').style.display = 'none';
+}
+
 function updateCardStates(containerId, data) {
     const container = document.getElementById(containerId);
     if (!container) return;
@@ -160,7 +237,7 @@ function updateCardStates(containerId, data) {
     });
 }
 
-// --- 4. PURCHASING ---
+// --- PURCHASING ---
 function buyClickUpgrade(index) {
     if (!isLoggedIn) {
         showNotification("Login to purchase upgrades!");
@@ -199,11 +276,11 @@ function buyBlessing(index) {
     if (game.prestigePoints >= b.cost) {
         game.prestigePoints -= b.cost;
         b.level++;
-        b.cost = Math.ceil(b.cost * 2.5);
-        
+        b.cost = Math.ceil(b.cost * 2);
+
         // Apply immediate effects if needed
-        if(b.id === 'strong_start') game.clickPower += 10;
-        
+        if (b.id === 'strong_start') game.clickPower += 10;
+
         showNotification(`${b.name} Level Up!`);
         updateUI();
         renderPrestigeUpgrades();
@@ -222,7 +299,7 @@ function buyShopItem(index) {
     let item = game.shopItems[index];
     if (game.primos >= item.cost) {
         game.primos -= item.cost;
-        
+
         // --- SPECIAL EFFECTS ---
         if (item.id === 'time_warp') {
             let totalPPS = 0;
@@ -230,8 +307,25 @@ function buyShopItem(index) {
             let bonus = totalPPS * 3600; // 3600 seconds = 1 hour
             game.primos += bonus;
             showNotification(`Time Warped! Gained ${Math.floor(bonus).toLocaleString()} Primos!`);
-        } 
-        
+        }
+
+        if (item.id === 'seelie') {
+            if ((game.seelies || 0) >= 3) {
+                showNotification("You can only carry 3 Seelies at a time!");
+                return;
+            }
+
+            game.seelies = (game.seelies || 0) + 1;
+            item.cost = Math.ceil(item.cost * 1.5);
+
+            showNotification(`Seelie #${game.seelies} joined your journey!`);
+
+            if (game.seelies === 3) {
+                item.name = "Follower Seelie (MAX)";
+                item.desc = "You have reached the maximum number of Seelies.";
+            }
+        }
+
         if (item.id === 'buff_pot') {
             game.multiplier += 0.5;
             showNotification("Consumed Adepti's Temptation! Multiplier increased.");
@@ -244,6 +338,18 @@ function buyShopItem(index) {
         showNotification("Not enough Primogems!");
     }
 }
+
+// --- SEELIE AUTO-CLICKER SYSTEM ---
+setInterval(() => {
+    if (!isLoggedIn || !game.seelies || game.seelies <= 0) return;
+
+    // A Seelie clicks for you!
+    let amount = (game.clickPower * game.multiplier);
+    game.primos += (amount * game.seelies);
+    game.totalPrimosEver += (amount * game.seelies);
+
+    updateUI();
+}, 3000);
 
 function spawnText(x, y, txt) {
     const el = document.createElement('div');
@@ -365,24 +471,42 @@ function renderShopItems() {
 
     game.shopItems.forEach((item, index) => {
         const card = document.createElement('div');
+
+        // Check if this is a Seelie and if the player already has 3
+        const isMaxSeelie = item.id === 'seelie' && (game.seelies || 0) >= 3;
         const canAfford = game.primos >= item.cost;
-        card.className = `upgrade-card ${canAfford ? '' : 'disabled'}`;
-        
+
+        // Card is disabled if they can't afford it OR if it's a maxed Seelie
+        card.className = `upgrade-card ${(!canAfford || isMaxSeelie) ? 'disabled' : ''}`;
+
+        // If maxed, show "MAXED", otherwise show the usual cost
+        const costDisplay = isMaxSeelie ?
+            `<span class="highlight">MAXED</span>` :
+            `Cost: <span class="highlight">${item.cost.toLocaleString()}</span>`;
+
         card.innerHTML = `
             <div>
                 <strong>${item.name}</strong><br>
                 <small>${item.desc}</small>
             </div>
             <div>
-                <span>Cost: <span class="highlight">${item.cost.toLocaleString()}</span></span>
+                <span>${costDisplay}</span>
             </div>
         `;
-        card.onclick = () => buyShopItem(index);
+
+        card.onclick = () => {
+            if (isMaxSeelie) {
+                showNotification("You already have the maximum number of Seelies!");
+            } else {
+                buyShopItem(index);
+            }
+        };
+
         container.appendChild(card);
     });
 }
 
-// --- 6. AUTH & CLOUD SAVE LOGIC ---
+// --- AUTH & CLOUD SAVE LOGIC ---
 function openAuth() {
     document.getElementById('auth-overlay').style.display = 'flex';
 }
@@ -458,6 +582,7 @@ auth.onAuthStateChanged((user) => {
 });
 
 async function saveCloudGame() {
+    game.lastLogin = Date.now();
     const user = auth.currentUser;
     if (user) {
         await db.collection("users").doc(user.uid).set(game);
@@ -469,6 +594,9 @@ async function loadCloudGame(uid) {
     const doc = await db.collection("users").doc(uid).get();
     if (doc.exists) {
         game = doc.data();
+        
+        calculateOfflineEarnings(); 
+        
         updateUI();
         console.log("Cloud Loaded!");
     }
