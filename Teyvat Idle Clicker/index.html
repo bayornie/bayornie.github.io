@@ -64,6 +64,32 @@
             <h2 class="panel-title">Resource Generators</h2>
             <div id="gen-upgrades" class="list-container"></div>
         </section>
+
+        <section id="prestige-panel" class="game-panel">
+            <h2 class="panel-title">Ascension of the Traveler</h2>
+            <div class="prestige-header">
+                <p>Sacrifice your current Primogems to gain permanent power.</p>
+                <div class="prestige-currency">
+                    <strong>Prestige Points: </strong>
+                    <span id="stat-prestige" class="highlight">0</span>
+                </div>
+            </div>
+
+            <button id="ascension-btn" class="auth-btn" onclick="ascend()">
+                Ascend (Requires 1,000,000 Primos)
+            </button>
+
+            <h3 class="panel-subtitle">Permanent Blessings</h3>
+            <div id="prestige-upgrades" class="list-container">
+            </div>
+        </section>
+
+        <section id="shop-panel" class="game-panel">
+            <h2 class="panel-title">Wanderer's Goods</h2>
+            <p style="text-align: center; color: #888;">Limited time offers and special items.</p>
+            <div id="shop-items" class="list-container">
+            </div>
+        </section>
     </main>
 
     <aside id="stats-sidebar">
