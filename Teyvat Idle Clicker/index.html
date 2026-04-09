@@ -10,7 +10,7 @@
 
 <body>
 
-    <div id="auth-overlay" style="display: none;">
+    <div id="auth-overlay" class="auth-overlay" style="display: none;">
         <div class="auth-card">
             <h2 id="auth-title">Welcome, Traveler</h2>
 
@@ -18,14 +18,14 @@
                 <input type="text" id="username" placeholder="Username">
                 <input type="password" id="password" placeholder="Password">
                 <button class="auth-btn" onclick="handleAuth('login')">Enter Teyvat</button>
-                <p onclick="toggleAuth()">New here? Register</p>
+                <p onclick="toggleAuth()" class="toggle-link">New here? Register</p>
             </div>
 
             <div id="register-form" style="display:none;">
                 <input type="text" id="reg-username" placeholder="New Username">
                 <input type="password" id="reg-password" placeholder="New Password">
                 <button class="auth-btn" onclick="handleAuth('register')">Create Account</button>
-                <p onclick="toggleAuth()">Back to Login</p>
+                <p onclick="toggleAuth()" class="toggle-link">Back to Login</p>
             </div>
         </div>
     </div>
@@ -98,11 +98,48 @@
         </div>
 
         <div class="sidebar-footer">
-            <button id="login-nav-btn" class="account-btn" onclick="openAuth()">
-                Login / Register
-            </button>
+            <div id="user-controls" style="display: none;">
+                <button id="profile-btn" class="account-btn" onclick="openProfile()">Profile</button>
+                <button id="logout-btn" class="logout-link" onclick="handleLogout()">Logout</button>
+            </div>
+            <button id="login-nav-btn" class="account-btn" onclick="openAuth()">Login / Register</button>
         </div>
     </aside>
+
+    <div id="profile-overlay" class="auth-overlay" style="display: none;">
+        <div class="auth-card profile-card lively-ui">
+            <div class="profile-header">
+                <div class="header-line"></div>
+                <h2>Traveler Profile</h2>
+                <div class="header-line"></div>
+            </div>
+
+            <div class="profile-info stats-grid">
+                <div class="stat-item">
+                    <span class="stat-icon">✨</span>
+                    <div class="stat-details">
+                        <strong>Total Primogems</strong>
+                        <span id="prof-primos" class="stat-value">0</span>
+                    </div>
+                </div>
+
+                <div class="stat-item">
+                    <span class="stat-icon">⚔️</span>
+                    <div class="stat-details">
+                        <strong>Click Power</strong>
+                        <span id="prof-power" class="stat-value">1</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="auth-btn neon-glow"
+                onclick="document.getElementById('profile-overlay').style.display='none'">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <div id="game-toast" class="toast-notification"></div>
 
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
