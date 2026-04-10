@@ -664,31 +664,29 @@ async function loadCloudGame(uid) {
             if (!cloudData.clickUpgrades[index]) {
                 cloudData.clickUpgrades.push(localItem);
             } else {
-                // Update stats, keep player level
                 cloudData.clickUpgrades[index].name = localItem.name;
                 cloudData.clickUpgrades[index].power = localItem.power;
             }
         });
 
-        // 2. SMART SYNC: Generators (Updates Exquisite Chest income to 50 automatically)
+        // 2. SMART SYNC: Generators
         game.generators.forEach((localGen, index) => {
             if (!cloudData.generators[index]) {
                 cloudData.generators.push(localGen);
             } else {
-                // Update stats, keep player count
                 cloudData.generators[index].name = localGen.name;
                 cloudData.generators[index].income = localGen.income;
             }
         });
 
-        // 3. SMART SYNC: Blessings (Prestige Upgrades)
+        // 3. SMART SYNC: Blessings
         game.blessings.forEach((localBlessing, index) => {
             if (!cloudData.blessings[index]) {
                 cloudData.blessings.push(localBlessing);
             } else {
-                // Update descriptions or names if changed
                 cloudData.blessings[index].name = localBlessing.name;
                 cloudData.blessings[index].desc = localBlessing.desc;
+                // Note: We don't sync cost here because it increases with level
             }
         });
 
@@ -697,25 +695,22 @@ async function loadCloudGame(uid) {
             if (!cloudData.shopItems[index]) {
                 cloudData.shopItems.push(localShop);
             } else {
-                // Update shop text/names
                 cloudData.shopItems[index].name = localShop.name;
                 cloudData.shopItems[index].desc = localShop.desc;
+                // We sync cost for shop items because they are usually flat/static
+                cloudData.shopItems[index].cost = localShop.cost;
             }
         });
 
-        // Fix potential undefined values
+        // Safety for new variables
         if (cloudData.seelies === undefined) cloudData.seelies = 0;
-        if (cloudData.multiplier === undefined) cloudData.multiplier = 1.0;
+        if (cloudData.prestigePoints === undefined) cloudData.prestigePoints = 0;
 
-        // Apply the patched data
         game = cloudData;
-
         calculateOfflineEarnings();
         updateUI();
-
-        // Save immediately so the Firebase database reflects the new GitHub stats
-        saveCloudGame();
-        console.log("Cloud Loaded: All stats synchronized with GitHub!");
+        saveCloudGame(); 
+        console.log("Sync Complete: Your save is now running the latest GitHub balance!");
     }
 }
 
