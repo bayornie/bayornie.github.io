@@ -19,34 +19,42 @@ let isLoggedIn = false;
 let game = {
     primos: 0,
     totalPrimosEver: 0,
+    lastWarpTime: 0,
     prestigePoints: 0,
     multiplier: 1.0,
     clickPower: 1,
     lastLogin: Date.now(),
     pps: 0,
+    seelies: 0,
 
     clickUpgrades: [
         { id: 'hands', name: 'Stronger Hands', cost: 10, power: 1, level: 0 },
         { id: 'trowel', name: 'Stone Trowel', cost: 150, power: 5, level: 0 },
-        { id: 'trowel', name: 'Steel Trowel', cost: 500, power: 10, level: 0 }
+        { id: 'steel_trowel', name: 'Steel Trowel', cost: 500, power: 10, level: 0 },
+        { id: 'dull_blade', name: 'Dull Blade', cost: 2500, power: 20, level: 0 },
+        { id: 'silver_sword', name: 'Silver Sword', cost: 5000, power: 50, level: 0 }
     ],
 
     generators: [
-        { id: 'flower', name: 'Sweet Flower', cost: 50, income: 0.25, count: 0 },
-        { id: 'lamp', name: 'Lamp Grass', cost: 250, income: 1, count: 0 },
-        { id: 'sunsettia', name: 'Sunsettia', cost: 750, income: 5.0, count: 0 }
+        { id: 'flower', name: 'Sweet Flower', cost: 50, income: 0.5, count: 0 },
+        { id: 'lamp', name: 'Lamp Grass', cost: 300, income: 2, count: 0 },
+        { id: 'sunsettia', name: 'Sunsettia', cost: 1000, income: 5, count: 0 },
+        { id: 'common_chest', name: 'Common Chest', cost: 5000, income: 25, count: 0 },
+        { id: 'exquisite_chest', name: 'Exquisite Chest', cost: 25000, income: 50, count: 0 }
     ],
 
     blessings: [
         { id: 'crit', name: "Adventurer's Luck", cost: 1, level: 0, desc: '+5% Crit Click Chance' },
         { id: 'fast_gen', name: "Ley Line Efficiency", cost: 2, level: 0, desc: '+10% Generator Speed' },
-        { id: 'strong_start', name: "Hero's Wit", cost: 5, level: 0, desc: 'Start with +10 Click Power' }
+        { id: 'strong_start', name: "Hero's Wit", cost: 5, level: 0, desc: 'Start with +25 Click Power' },
+        { id: 'resonance', name: "Elemental Resonance", cost: 10, level: 0, desc: '+10% Total Multiplier' }
     ],
 
     shopItems: [
-        { id: 'time_warp', name: "Time Warp", cost: 5000, desc: "Instantly gain 1 hour of passive income." },
-        { id: 'seelie', name: "Follower Seelie", cost: 50000, desc: "A helpful spirit that clicks for you once every 2 seconds." },
-        { id: 'buff_pot', name: "Adepti's Temptation", cost: 75000, desc: "Permanently increases click multiplier by +0.5x." }
+        { id: 'time_warp', name: "Time Warp", cost: 20000, desc: "Instantly gain 30 minutes of passive income." },
+        { id: 'seelie', name: "Follower Seelie", cost: 50000, desc: "A helpful spirit that clicks for you once every 3 seconds." },
+        { id: 'buff_pot', name: "Adepti's Temptation", cost: 75000, desc: "Permanently increases click multiplier by +0.5x." },
+        { id: 'primordial_shard', name: "Primordial Shard", cost: 300000, desc: "Permanently increases all PPS by 10%." }
     ],
 };
 
@@ -176,7 +184,7 @@ function calculateOfflineEarnings() {
     const lastLogin = game.lastLogin || now;
 
     let secondsAway = Math.floor((now - lastLogin) / 1000);
-    if (secondsAway <= 30) return; 
+    if (secondsAway <= 30) return;
 
     const maxSeconds = 36000; // 10 Hours
     if (secondsAway > maxSeconds) secondsAway = maxSeconds;
@@ -302,10 +310,24 @@ function buyShopItem(index) {
 
         // --- SPECIAL EFFECTS ---
         if (item.id === 'time_warp') {
+            const now = Date.now();
+            const cooldown = 3600 * 1000;
+            const timePassed = now - (game.lastWarpTime || 0);
+
+            if (timePassed < cooldown) {
+                const minutesLeft = Math.ceil((cooldown - timePassed) / 60000);
+                showNotification(`Time Warp is on cooldown! Wait ${minutesLeft}m.`);
+                return; // Stop the purchase
+            }
+
+            // --- If not on cooldown, proceed with the warp ---
             let totalPPS = 0;
             game.generators.forEach(g => totalPPS += (g.income * g.count));
-            let bonus = totalPPS * 3600; // 3600 seconds = 1 hour
+            let bonus = (totalPPS * game.multiplier) * 1800;
+
             game.primos += bonus;
+            game.lastWarpTime = now;
+            item.cost = Math.floor(item.cost * 2);
             showNotification(`Time Warped! Gained ${Math.floor(bonus).toLocaleString()} Primos!`);
         }
 
@@ -316,7 +338,7 @@ function buyShopItem(index) {
             }
 
             game.seelies = (game.seelies || 0) + 1;
-            item.cost = Math.ceil(item.cost * 1.5);
+            item.cost = Math.ceil(item.cost * 2.5);
 
             showNotification(`Seelie #${game.seelies} joined your journey!`);
 
@@ -328,7 +350,16 @@ function buyShopItem(index) {
 
         if (item.id === 'buff_pot') {
             game.multiplier += 0.5;
+            item.cost = Math.floor(item.cost * 2);
             showNotification("Consumed Adepti's Temptation! Multiplier increased.");
+        }
+
+        if (item.id === 'primordial_shard') {
+            game.generators.forEach(gen => {
+                gen.income *= 1.1;
+            });
+            item.cost = Math.floor(item.cost * 3);
+            showNotification("Primordial Shard fused! All generators are 10% more effective.");
         }
 
         updateUI();
@@ -409,8 +440,19 @@ function ascend() {
 // Helper to get initial costs for the reset
 function getBaseCost(id) {
     const baseCosts = {
-        'hands': 10, 'trowel': 150, 'steel-trowel': 500,
-        'flower': 50, 'lamp': 250, 'sunsettia': 1000
+        // Click Upgrades
+        'hands': 10,
+        'trowel': 150,
+        'steel_trowel': 500,
+        'dull_blade': 2500,
+        'silver_sword': 5000,
+
+        // Generators
+        'flower': 50,
+        'lamp': 300,
+        'sunsettia': 1000,
+        'common_chest': 5000,
+        'exquisite_chest': 25000
     };
     return baseCosts[id] || 100;
 }
@@ -472,17 +514,37 @@ function renderShopItems() {
     game.shopItems.forEach((item, index) => {
         const card = document.createElement('div');
 
-        // Check if this is a Seelie and if the player already has 3
+        // --- COOLDOWN LOGIC ---
+        let isOnCooldown = false;
+        let cooldownText = "";
+
+        if (item.id === 'time_warp' && game.lastWarpTime) {
+            const now = Date.now();
+            const cooldownPeriod = 3600000; // 1 hour in ms
+            const timePassed = now - game.lastWarpTime;
+
+            if (timePassed < cooldownPeriod) {
+                isOnCooldown = true;
+                const minsLeft = Math.ceil((cooldownPeriod - timePassed) / 60000);
+                cooldownText = `Ready in ${minsLeft}m`;
+            }
+        }
+
         const isMaxSeelie = item.id === 'seelie' && (game.seelies || 0) >= 3;
         const canAfford = game.primos >= item.cost;
 
-        // Card is disabled if they can't afford it OR if it's a maxed Seelie
-        card.className = `upgrade-card ${(!canAfford || isMaxSeelie) ? 'disabled' : ''}`;
+        // Disable if: Can't afford OR Max Seelies OR On Cooldown
+        card.className = `upgrade-card ${(!canAfford || isMaxSeelie || isOnCooldown) ? 'disabled' : ''}`;
 
-        // If maxed, show "MAXED", otherwise show the usual cost
-        const costDisplay = isMaxSeelie ?
-            `<span class="highlight">MAXED</span>` :
-            `Cost: <span class="highlight">${item.cost.toLocaleString()}</span>`;
+        // Determine what to display in the cost area
+        let costDisplay;
+        if (isMaxSeelie) {
+            costDisplay = `<span class="highlight">MAXED</span>`;
+        } else if (isOnCooldown) {
+            costDisplay = `<span class="highlight">${cooldownText}</span>`;
+        } else {
+            costDisplay = `Cost: <span class="highlight">${item.cost.toLocaleString()}</span>`;
+        }
 
         card.innerHTML = `
             <div>
@@ -497,6 +559,8 @@ function renderShopItems() {
         card.onclick = () => {
             if (isMaxSeelie) {
                 showNotification("You already have the maximum number of Seelies!");
+            } else if (isOnCooldown) {
+                showNotification("This item is still on cooldown!");
             } else {
                 buyShopItem(index);
             }
@@ -593,12 +657,65 @@ async function saveCloudGame() {
 async function loadCloudGame(uid) {
     const doc = await db.collection("users").doc(uid).get();
     if (doc.exists) {
-        game = doc.data();
-        
-        calculateOfflineEarnings(); 
-        
+        let cloudData = doc.data();
+
+        // 1. SMART SYNC: Click Upgrades
+        game.clickUpgrades.forEach((localItem, index) => {
+            if (!cloudData.clickUpgrades[index]) {
+                cloudData.clickUpgrades.push(localItem);
+            } else {
+                // Update stats, keep player level
+                cloudData.clickUpgrades[index].name = localItem.name;
+                cloudData.clickUpgrades[index].power = localItem.power;
+            }
+        });
+
+        // 2. SMART SYNC: Generators (Updates Exquisite Chest income to 50 automatically)
+        game.generators.forEach((localGen, index) => {
+            if (!cloudData.generators[index]) {
+                cloudData.generators.push(localGen);
+            } else {
+                // Update stats, keep player count
+                cloudData.generators[index].name = localGen.name;
+                cloudData.generators[index].income = localGen.income;
+            }
+        });
+
+        // 3. SMART SYNC: Blessings (Prestige Upgrades)
+        game.blessings.forEach((localBlessing, index) => {
+            if (!cloudData.blessings[index]) {
+                cloudData.blessings.push(localBlessing);
+            } else {
+                // Update descriptions or names if changed
+                cloudData.blessings[index].name = localBlessing.name;
+                cloudData.blessings[index].desc = localBlessing.desc;
+            }
+        });
+
+        // 4. SMART SYNC: Shop Items
+        game.shopItems.forEach((localShop, index) => {
+            if (!cloudData.shopItems[index]) {
+                cloudData.shopItems.push(localShop);
+            } else {
+                // Update shop text/names
+                cloudData.shopItems[index].name = localShop.name;
+                cloudData.shopItems[index].desc = localShop.desc;
+            }
+        });
+
+        // Fix potential undefined values
+        if (cloudData.seelies === undefined) cloudData.seelies = 0;
+        if (cloudData.multiplier === undefined) cloudData.multiplier = 1.0;
+
+        // Apply the patched data
+        game = cloudData;
+
+        calculateOfflineEarnings();
         updateUI();
-        console.log("Cloud Loaded!");
+
+        // Save immediately so the Firebase database reflects the new GitHub stats
+        saveCloudGame();
+        console.log("Cloud Loaded: All stats synchronized with GitHub!");
     }
 }
 
