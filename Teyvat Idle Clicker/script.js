@@ -139,6 +139,11 @@ function updateUI() {
     game.generators.forEach(g => totalPPS += (g.income * g.count));
     document.getElementById('stat-pps').innerText = (totalPPS * game.multiplier).toFixed(1);
 
+    // Display Total Ever Collected
+    if (document.getElementById('stat-total-ever')) {
+        document.getElementById('stat-total-ever').innerText = Math.floor(game.totalPrimosEver).toLocaleString();
+    }
+
     updateCardStates('click-upgrades', game.clickUpgrades);
     updateCardStates('gen-upgrades', game.generators);
 
