@@ -17,6 +17,7 @@ const db = firebase.firestore();
 // --- GAME DATA ---
 let isLoggedIn = false;
 let game = {
+    playerName: "Traveler",
     primos: 0,
     totalPrimosEver: 0,
     lastWarpTime: 0,
@@ -578,6 +579,11 @@ function openAuth() {
 function openProfile() {
     const user = auth.currentUser;
     if (user) {
+        const profName = document.getElementById('prof-name');
+        if (profName) {
+            profName.innerText = game.playerName || "Traveler";
+        }
+
         if (document.getElementById('prof-primos')) {
             document.getElementById('prof-primos').innerText = Math.floor(game.primos).toLocaleString();
         }
@@ -586,10 +592,17 @@ function openProfile() {
             document.getElementById('prof-power').innerText = (game.clickPower * game.multiplier).toFixed(0);
         }
 
-        // This shows the pop-up
+        if (document.getElementById('prof-per-sec')) {
+            let totalIncome = 0;
+            game.generators.forEach(gen => {
+                totalIncome += gen.count * gen.income;
+            });
+            document.getElementById('prof-per-sec').innerText = totalIncome.toFixed(1);
+        }
+
         document.getElementById('profile-overlay').style.display = 'flex';
     } else {
-        showToast("Please login to view profile!");
+        showNotification("Please login to view profile!");
     }
 }
 
@@ -600,7 +613,8 @@ function handleLogout() {
 }
 
 async function handleAuth(type) {
-    const email = document.getElementById(type === 'login' ? 'username' : 'reg-username').value + "@game.com";
+    const usernameInput = document.getElementById(type === 'login' ? 'username' : 'reg-username').value;
+    const email = usernameInput + "@game.com";
     const pass = document.getElementById(type === 'login' ? 'password' : 'reg-password').value;
 
     if (pass.length < 6) {
@@ -610,9 +624,11 @@ async function handleAuth(type) {
 
     try {
         if (type === 'register') {
+            game.playerName = usernameInput; 
+
             const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
             await db.collection("users").doc(userCredential.user.uid).set(game);
-            showNotification("Ad Astra Abyssosque Traveler! Account Created.");
+            showNotification(`Ad Astra Abyssosque, ${game.playerName}!`);
         } else {
             await auth.signInWithEmailAndPassword(email, pass);
             showNotification("Welcome back, Traveler!");
@@ -686,7 +702,6 @@ async function loadCloudGame(uid) {
             } else {
                 cloudData.blessings[index].name = localBlessing.name;
                 cloudData.blessings[index].desc = localBlessing.desc;
-                // Note: We don't sync cost here because it increases with level
             }
         });
 
@@ -697,7 +712,6 @@ async function loadCloudGame(uid) {
             } else {
                 cloudData.shopItems[index].name = localShop.name;
                 cloudData.shopItems[index].desc = localShop.desc;
-                // We sync cost for shop items because they are usually flat/static
                 cloudData.shopItems[index].cost = localShop.cost;
             }
         });
@@ -705,12 +719,24 @@ async function loadCloudGame(uid) {
         // Safety for new variables
         if (cloudData.seelies === undefined) cloudData.seelies = 0;
         if (cloudData.prestigePoints === undefined) cloudData.prestigePoints = 0;
+        
+        // If name is missing or the generic "Traveler", pull the real username from their email
+        if (!cloudData.playerName || cloudData.playerName === "Traveler") {
+            const userEmail = auth.currentUser.email;
+            if (userEmail) {
+                // Takes 'Byoku' from 'Byoku@game.com'
+                const recoveredName = userEmail.split('@')[0];
+                cloudData.playerName = recoveredName.charAt(0).toUpperCase() + recoveredName.slice(1);
+            } else {
+                cloudData.playerName = "Traveler";
+            }
+        }
 
         game = cloudData;
         calculateOfflineEarnings();
         updateUI();
         saveCloudGame(); 
-        console.log("Sync Complete: Your save is now running the latest GitHub balance!");
+        console.log("Sync Complete: Player Name and Balance updated!");
     }
 }
 
