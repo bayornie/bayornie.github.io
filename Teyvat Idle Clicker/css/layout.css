@@ -1,0 +1,72 @@
+nav,
+aside {
+    width: 200px;
+    background: var(--panel-bg);
+    padding: 20px 15px;
+    border-right: 1px solid var(--primo-dark);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    backdrop-filter: blur(10px);
+    z-index: 10;
+}
+
+aside {
+    border-right: none;
+    border-left: 1px solid var(--primo-dark);
+}
+
+main {
+    flex-grow: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: radial-gradient(circle, #1a232e 0%, #0c0f12 100%);
+    height: 100vh;
+    overflow: hidden;
+}
+
+.game-panel {
+    display: none;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.game-panel.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+#upgrades-panel.active,
+#generators-panel.active,
+#prestige-panel.active,
+#shop-panel.active {
+    justify-content: flex-start !important;
+    padding-top: 140px !important;
+    height: 100%;
+}
+
+#home-panel.active {
+    justify-content: center !important;
+    padding-top: 0 !important;
+}
+
+#stats-sidebar {
+    background: linear-gradient(180deg, rgba(22, 26, 33, 0.95) 0%, rgba(12, 15, 18, 1) 100%);
+    border-left: 1px solid rgba(59, 98, 145, 0.3);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding: 30px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: center;
+}
