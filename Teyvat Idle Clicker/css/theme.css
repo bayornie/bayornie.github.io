@@ -1,0 +1,30 @@
+:root {
+    --bg-dark: #0c0f12;
+    --panel-bg: rgba(22, 26, 33, 0.9);
+    --primo-blue: #ade5ff;
+    --primo-dark: #3b6291;
+    --accent-gold: #ece5d8;
+    --text-gray: #bdc2c6;
+    --card-bg: rgba(35, 41, 51, 0.75);
+    --neon-blue: #6ee7b7;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--accent-gold);
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body,
+html {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+}
