@@ -1,5 +1,8 @@
 // --- HELPER FUNCTIONS ---
 function formatNumbers(num) {
+    if (num >= 1000000000000000000) return (num / 1000000000000000000).toFixed(2) + 'Qi';
+    if (num >= 1000000000000000) return (num / 1000000000000000).toFixed(2) + 'Qa';
+    if (num >= 1000000000000) return (num / 1000000000000).toFixed(2) + 'T';
     if (num >= 1000000000) return (num / 1000000000).toFixed(2) + 'B';
     if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
@@ -68,12 +71,26 @@ function showPanel(panelId) {
     if (targetPanel) targetPanel.classList.add('active');
 
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    if (window.event && window.event.currentTarget) window.event.currentTarget.classList.add('active');
+    if (window.event && window.event.currentTarget) {
+        window.event.currentTarget.classList.add('active');
+    } else {
+        // Fallback: If clicked via code, find the nav item by text
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            if (item.innerText.toLowerCase() === panelId.toLowerCase()) {
+                item.classList.add('active');
+            }
+        });
+    }
 
+    // --- Tab Rendering Logic ---
     if (panelId === 'upgrades') renderList('click-upgrades', game.clickUpgrades, buyClickUpgrade);
     if (panelId === 'generators') renderList('gen-upgrades', game.generators, buyGenerator);
-    if (panelId === 'prestige') { renderPrestigeUpgrades(); };
-    if (panelId === 'shop') { renderShopItems(); };
+    if (panelId === 'prestige') { renderPrestigeUpgrades(); }
+    if (panelId === 'shop') { renderShopItems(); }
+    
+    // --- NEW: Render Pets when the tab is opened ---
+    if (panelId === 'pets') { renderPets(); }
 }
 
 function updateUI() {
