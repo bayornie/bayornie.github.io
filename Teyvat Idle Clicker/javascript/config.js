@@ -26,6 +26,7 @@ auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
 
 // --- GAME DATA ---
 let isLoggedIn = false;
+let buyAmount = 1;
 let game = {
     playerName: "Traveler",
     primos: 0,
