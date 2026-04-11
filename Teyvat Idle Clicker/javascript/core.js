@@ -88,30 +88,28 @@ function updateUI() {
         basePPS += (g.income * g.count);
     });
 
-    // --- 2. APPLY SEPARATED MULTIPLIERS (The "Leak" Fix) ---
+    // --- 2. APPLY SEPARATED MULTIPLIERS ---
     game.clickPower = baseCP * (game.clickMultiplier || 1);
     let finalPPS = basePPS * (game.prestigeMultiplier || 1);
 
-    // --- 3. EXISTING UI UPDATES (Preserved) ---
+    // --- 3. MAIN RESOURCE DISPLAYS ---
     document.getElementById('primogems').innerText = formatNumbers(game.primos);
     document.getElementById('stat-total').innerText = formatNumbers(game.primos);
     
-    // We display the prestige multiplier as the main stat multiplier
+    // Multiplier and Power stats
     document.getElementById('stat-mult').innerText = (game.prestigeMultiplier || 1).toFixed(2) + 'x';
-    
-    // Click power now uses the recalculated, separated value
     document.getElementById('stat-click').innerText = formatNumbers(game.clickPower);
-
-    // Formatted PPS now uses the separated finalPPS
     document.getElementById('stat-pps').innerText = formatNumbers(finalPPS);
 
     if (document.getElementById('stat-total-ever')) {
         document.getElementById('stat-total-ever').innerText = formatNumbers(game.totalPrimosEver);
     }
 
-    updateCardStates('click-upgrades', game.clickUpgrades);
-    updateCardStates('gen-upgrades', game.generators);
+    // --- 4. DYNAMIC LIST RENDERING (The Multi-Buy Fix) ---
+    renderList('click-upgrades', game.clickUpgrades, buyClickUpgrade);
+    renderList('gen-upgrades', game.generators, buyGenerator);
 
+    // --- 5. SPECIAL STATS & BUTTONS ---
     const prestigeDisplay = document.getElementById('stat-prestige');
     if (prestigeDisplay) {
         prestigeDisplay.innerText = formatNumbers(game.prestigePoints || 0);
@@ -128,7 +126,6 @@ function updateUI() {
         }
     }
 }
-
 function togglePasswordVisibility(inputId) {
     const passwordInput = document.getElementById(inputId);
     const toggleIcon = passwordInput.nextElementSibling;
