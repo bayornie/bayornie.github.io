@@ -42,6 +42,7 @@ main {
     justify-content: center;
 }
 
+#pets-panel.active,
 #upgrades-panel.active,
 #generators-panel.active,
 #prestige-panel.active,
