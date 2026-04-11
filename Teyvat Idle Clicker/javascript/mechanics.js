@@ -6,7 +6,8 @@ function buyClickUpgrade(index) {
     }
 
     let up = game.clickUpgrades[index];
-    const rate = 1.5;
+    // --- CHANGE: Pull the individual rate from the object ---
+    const rate = up.rate || 1.5;
 
     let countToBuy = buyAmount === 'max' ? getMaxAffordable(game.primos, up.cost, rate) : buyAmount;
     
@@ -20,8 +21,8 @@ function buyClickUpgrade(index) {
     if (game.primos >= totalCost) {
         game.primos -= totalCost;
         up.level += countToBuy;
-        game.clickPower += (up.power * countToBuy); // Multiply power gain by count
-        up.cost *= Math.pow(rate, countToBuy); // Scale cost correctly for next time
+        game.clickPower += (up.power * countToBuy);
+        up.cost *= Math.pow(rate, countToBuy); 
         updateUI();
         saveCloudGame();
     } else if (buyAmount !== 'max') {
@@ -36,7 +37,8 @@ function buyGenerator(index) {
     }
 
     let gen = game.generators[index];
-    const rate = 1.75;
+    // --- CHANGE: Pull the individual rate from the object ---
+    const rate = gen.rate || 1.75;
 
     let countToBuy = buyAmount === 'max' ? getMaxAffordable(game.primos, gen.cost, rate) : buyAmount;
     
@@ -247,32 +249,29 @@ function renderList(containerId, data, clickFn) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // We only build the structure once. If cards already exist, we just update their values.
     const existingCards = container.querySelectorAll('.upgrade-card');
 
     data.forEach((item, index) => {
-        const rate = item.power ? 1.5 : 1.75;
+        // --- THE UPDATE: DYNAMIC RATE ---
+        // It looks for item.rate first. If it's missing, it uses your old defaults.
+        const rate = item.rate || (item.power ? 1.5 : 1.75);
+
         let displayAmt = buyAmount === 'max' ? getMaxAffordable(game.primos, item.cost, rate) : buyAmount;
         let effectiveAmt = (displayAmt <= 0) ? 1 : displayAmt;
         let totalCost = getMultiCost(item.cost, rate, effectiveAmt);
         const canAfford = game.primos >= totalCost;
         let displayLvl = item.level !== undefined ? item.level : item.count;
 
-        // CHECK: Do we need to create the card or just update it?
         let card = existingCards[index];
 
         if (!card) {
-            // Initial creation if the card doesn't exist yet
             card = document.createElement('div');
             card.className = 'upgrade-card';
             container.appendChild(card);
         }
 
-        // 1. Update the 'disabled' status without rebuilding HTML
         card.classList.toggle('disabled', !canAfford);
 
-        // 2. ONLY update the HTML if the values actually changed
-        // This is what stops the flickering
         const newHTML = `
             <div>
                 <strong>${item.name}</strong><br>
@@ -289,11 +288,10 @@ function renderList(containerId, data, clickFn) {
             card.innerHTML = newHTML;
         }
 
-        // 3. Update the click event
         card.onclick = () => {
             if (canAfford) {
                 clickFn(index);
-                updateUI(); // Immediate refresh after purchase
+                updateUI(); 
             } else {
                 showNotification("Not enough Primogems!");
             }
