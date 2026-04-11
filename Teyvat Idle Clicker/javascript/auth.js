@@ -131,6 +131,7 @@ async function loadCloudGame(uid) {
             } else {
                 cloudData.clickUpgrades[index].name = localItem.name;
                 cloudData.clickUpgrades[index].power = localItem.power;
+                cloudData.clickUpgrades[index].rate = localItem.rate;
             }
         });
 
@@ -141,6 +142,7 @@ async function loadCloudGame(uid) {
             } else {
                 cloudData.generators[index].name = localGen.name;
                 cloudData.generators[index].income = localGen.income;
+                cloudData.generators[index].rate = localGen.rate;
             }
         });
 
