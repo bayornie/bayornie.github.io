@@ -40,19 +40,19 @@ let game = {
     seelies: 0,
 
     clickUpgrades: [
-        { id: 'hands', name: 'Stronger Hands', cost: 10, power: 1, level: 0 },
-        { id: 'trowel', name: 'Stone Trowel', cost: 150, power: 5, level: 0 },
-        { id: 'steel_trowel', name: 'Steel Trowel', cost: 500, power: 10, level: 0 },
-        { id: 'dull_blade', name: 'Dull Blade', cost: 2500, power: 20, level: 0 },
-        { id: 'silver_sword', name: 'Silver Sword', cost: 5000, power: 50, level: 0 }
+        { id: 'hands', name: 'Stronger Hands', cost: 10, power: 1, level: 0, rate: 1.2 },
+        { id: 'trowel', name: 'Stone Trowel', cost: 150, power: 5, level: 0, rate: 1.3 },
+        { id: 'steel_trowel', name: 'Steel Trowel', cost: 500, power: 10, level: 0, rate: 1.4 },
+        { id: 'dull_blade', name: 'Dull Blade', cost: 2500, power: 20, level: 0, rate: 1.45 },
+        { id: 'silver_sword', name: 'Silver Sword', cost: 5000, power: 50, level: 0, rate: 1.5 }
     ],
 
     generators: [
-        { id: 'flower', name: 'Sweet Flower', cost: 50, income: 0.5, count: 0 },
-        { id: 'lamp', name: 'Lamp Grass', cost: 300, income: 2.0, count: 0 },
-        { id: 'sunsettia', name: 'Sunsettia', cost: 1000, income: 5.0, count: 0 },
-        { id: 'common_chest', name: 'Common Chest', cost: 5000, income: 20.0, count: 0 },
-        { id: 'exquisite_chest', name: 'Exquisite Chest', cost: 25000, income: 50.0, count: 0 }
+        { id: 'flower', name: 'Sweet Flower', cost: 50, income: 0.5, count: 0, rate: 1.2 },
+        { id: 'lamp', name: 'Lamp Grass', cost: 300, income: 2.0, count: 0, rate: 1.25 },
+        { id: 'sunsettia', name: 'Sunsettia', cost: 1000, income: 5.0, count: 0, rate: 1.4 },
+        { id: 'common_chest', name: 'Common Chest', cost: 5000, income: 20.0, count: 0, rate: 1.5 },
+        { id: 'exquisite_chest', name: 'Exquisite Chest', cost: 25000, income: 50.0, count: 0, rate: 1.7 }
     ],
 
     blessings: [
