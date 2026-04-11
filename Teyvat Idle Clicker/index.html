@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/special.css">
+    <link rel="stylesheet" href="css/auth.css">
 </head>
 
 <body>
@@ -49,6 +50,7 @@
         <div class="nav-item" onclick="showPanel('generators')">Generators</div>
         <div class="nav-item" onclick="showPanel('prestige')">Prestige</div>
         <div class="nav-item" onclick="showPanel('shop')">Shop</div>
+        <div class="nav-item" onclick="showPanel('pets')">Pets</div>
     </nav>
 
     <main>
@@ -61,6 +63,9 @@
         </div>
 
         <section id="home-panel" class="game-panel active">
+            <div id="active-pets-display" class="active-pets-banner">
+            </div>
+
             <div id="click-area">
                 <div class="primogem-shape">
                     <img src="img/primogem.png" alt="Primogem" class="primogem-img" draggable="false">
@@ -119,6 +124,19 @@
             <div id="shop-items" class="list-container">
             </div>
         </section>
+
+        <section id="pets-panel" class="game-panel">
+            <h2 class="panel-title">Companions & Pets</h2>
+            <div class="party-status">
+                <p>Equip up to 4 pets to assist you on your journey.</p>
+                <div class="party-slots-info">
+                    Active Pets: <span id="party-count" class="highlight">0</span> / 4
+                </div>
+            </div>
+
+            <div id="pets-grid" class="list-container pets-grid">
+            </div>
+        </section>
     </main>
 
     <aside id="stats-sidebar">
@@ -154,6 +172,18 @@
                     <span class="label">Per Second:</span>
                     <span id="stat-pps" class="value">0.0</span>
                 </div>
+            </div>
+        </div>
+
+            <div class="stats-divider"></div>
+
+        <div class="stats-group">
+            <div class="stats-label">ACTIVE PARTY</div>
+            <div class="stat-row">
+                <span class="label">Slots Used:</span>
+                <span id="sidebar-party-count" class="value">0/4</span>
+            </div>
+            <div id="active-pets-mini" class="mini-pet-list">
             </div>
         </div>
 
