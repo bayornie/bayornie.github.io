@@ -155,12 +155,17 @@ function buyShopItem(index) {
 setInterval(() => {
     if (!isLoggedIn || !game.seelies || game.seelies <= 0) return;
 
-    let currentClickPower = game.clickPower * (game.clickMultiplier || 1);  
+    // --- CHANGE: Use the new helper function instead of manual math ---
+    let currentClickPower = getFinalClickPower();  
     let totalSeelieGain = currentClickPower * game.seelies;
 
     // 4. Update game state
     game.primos += totalSeelieGain;
     game.totalPrimosEver += totalSeelieGain;
+    
+    // Handle Raiden & Fischl strikes here too if you want them in the same loop
+    handleAutoPetStrikes(); 
+
     updateUI();
 
     // Optional: Spawn a visual indicator for the Seelie click
@@ -406,14 +411,156 @@ function setBuyAmount(amt) {
     }
 }
 
-// Math for Exponential Cost: Total = BaseCost * ((Rate^N - 1) / (Rate - 1))
 function getMultiCost(baseCost, rate, count) {
     return baseCost * (Math.pow(rate, count) - 1) / (rate - 1);
 }
 
-// Math to find Max affordable: N = log_rate( (Primos * (Rate - 1) / BaseCost) + 1 )
 function getMaxAffordable(primos, currentCost, rate) {
     if (primos < currentCost) return 0;
     let n = Math.floor(Math.log((primos * (rate - 1) / currentCost) + 1) / Math.log(rate));
     return n;
+}
+
+// --- PET CORE MECHANICS ---
+
+function handleAutoPetStrikes() {
+    // Raiden Shogun: 10% Click Power every 1s
+    if (game.activePets.includes('raiden')) {
+        const damage = getFinalClickPower() * 0.10;
+        game.primos += damage;
+        game.totalPrimosEver += damage;
+    }
+
+    // Fischl: 1 Full Click every 2.5s (2500ms)
+    if (game.activePets.includes('fischl')) {
+        fischlTimer += 1000;
+        if (fischlTimer >= 2500) {
+            const damage = getFinalClickPower();
+            game.primos += damage;
+            game.totalPrimosEver += damage;
+            fischlTimer = 0;
+        }
+    }
+}
+
+function getDiscountedCost(baseCost) {
+    let discount = 1;
+    if (game.activePets.includes('yaoyao')) discount -= 0.05;
+    if (game.activePets.includes('nahida')) discount -= 0.15;
+    return baseCost * discount;
+}
+
+function togglePetEquip(petId) {
+    const activeIndex = game.activePets.indexOf(petId);
+
+    if (activeIndex > -1) {
+        // Unequip
+        game.activePets.splice(activeIndex, 1);
+        showNotification("Pet unequipped.");
+    } else {
+        // Equip
+        if (game.activePets.length >= 4) {
+            showNotification("Party is full! (Max 4)");
+            return;
+        }
+        if (game.ownedPets.includes(petId)) {
+            game.activePets.push(petId);
+            showNotification(`${petId} added to party!`);
+        } else {
+            showNotification("You don't own this pet yet.");
+        }
+    }
+    updateUI();
+    saveCloudGame(); 
+}
+
+function getFinalClickPower() {
+    let base = game.clickPower || 1;
+    let multiplier = game.clickMultiplier || 1;
+    let petBonus = 1;
+
+    // 1. Add Pet Multipliers (Anemo Buffs)
+    if (game.activePets && game.activePets.includes('sucrose')) petBonus += 0.15;
+    if (game.activePets && game.activePets.includes('xiao')) petBonus += 0.40;
+
+    // 2. Combine them (Base * Potions * Pets)
+    let finalPower = base * multiplier * petBonus;
+
+    if (game.activePets && game.activePets.includes('skirk')) {
+        if (Math.random() < 0.10) { 
+            return finalPower * 3.0; 
+        }
+    }
+
+    return finalPower;
+}
+
+function renderPets() {
+    const container = document.getElementById('pets-grid');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // Loop through the pet data from your config
+    config.pets.forEach(pet => {
+        const isOwned = game.ownedPets.includes(pet.id);
+        const isActive = game.activePets.includes(pet.id);
+        
+        const card = document.createElement('div');
+        card.className = `pet-card rarity-${pet.rarity} ${!isOwned ? 'locked' : ''} ${isActive ? 'active' : ''}`;
+        
+        const visionColors = { 
+            Anemo: '#64ffbf', Pyro: '#ff6464', Hydro: '#64c9ff', 
+            Electro: '#d164ff', Dendro: '#a2ff64', Cryo: '#64f7ff', Geo: '#ffe164' 
+        };
+        const glowColor = visionColors[pet.vision] || '#ffffff';
+        if (isActive) card.style.boxShadow = `0 0 15px ${glowColor}`;
+
+        card.innerHTML = `
+            <div class="pet-icon-wrapper">
+                <img src="${pet.icon}" class="pet-chibi" alt="${pet.name}" draggable="false">
+                <div class="vision-tag" style="background: ${glowColor}">${pet.vision}</div>
+            </div>
+            <div class="pet-info">
+                <div class="pet-name">${pet.name}</div>
+                <div class="pet-buff-desc">${pet.buffDesc || 'No buff info available'}</div>
+                <button class="equip-btn">
+                    ${isActive ? 'UNEQUIP' : (isOwned ? 'EQUIP' : 'LOCKED')}
+                </button>
+            </div>
+        `;
+
+        card.onclick = () => {
+            if (isOwned) {
+                togglePetEquip(pet.id);
+                renderPets();
+                updateSidebarParty();
+            } else {
+                showNotification("This companion hasn't joined you yet!");
+            }
+        };
+
+        container.appendChild(card);
+    });
+
+    document.getElementById('party-count').innerText = game.activePets.length;
+}
+
+function updateSidebarParty() {
+    const sidebarCount = document.getElementById('sidebar-party-count');
+    if (sidebarCount) sidebarCount.innerText = `${game.activePets.length}/4`;
+
+    const miniList = document.getElementById('active-pets-mini');
+    if (!miniList) return;
+    miniList.innerHTML = '';
+
+    game.activePets.forEach(petId => {
+        const petData = config.pets.find(p => p.id === petId);
+        if (petData) {
+            const img = document.createElement('img');
+            img.src = petData.icon;
+            img.className = 'mini-pet-icon';
+            img.title = petData.name;
+            miniList.appendChild(img);
+        }
+    });
 }
