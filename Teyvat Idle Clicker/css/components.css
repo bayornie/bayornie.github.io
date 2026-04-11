@@ -234,3 +234,50 @@
     background: linear-gradient(90deg, transparent, var(--primo-dark), transparent);
     margin: 10px 0;
 }
+
+/* --- MULTIPLIER BUTTONS --- */
+.buy-multipliers {
+    display: flex;
+    gap: 8px;
+    margin: 10px 0 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-mult {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(100, 255, 191, 0.2); /* Subtle teal */
+    color: #e0e0e0;
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: all 0.2s ease;
+}
+
+.btn-mult:hover {
+    background: rgba(100, 255, 191, 0.1);
+    border-color: #64ffbf;
+}
+
+.btn-mult.active {
+    background: #64ffbf; /* Your signature teal */
+    color: #0b1116; /* Dark text for contrast */
+    border-color: #64ffbf;
+    box-shadow: 0 0 10px rgba(100, 255, 191, 0.4);
+    font-weight: bold;
+}
+
+/* --- UPGRADE CARD ADJUSTMENTS --- */
+.upgrade-card.disabled {
+    opacity: 0.6;
+    filter: grayscale(0.8);
+    cursor: not-allowed;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.upgrade-card small[style*="color: #64ffbf"] {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
