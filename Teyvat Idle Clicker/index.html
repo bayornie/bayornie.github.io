@@ -70,11 +70,27 @@
 
         <section id="upgrades-panel" class="game-panel">
             <h2 class="panel-title">Click Upgrades</h2>
+            <div class="buy-multipliers">
+                <button onclick="setBuyAmount(1)" class="btn-mult active">1x</button>
+                <button onclick="setBuyAmount(5)" class="btn-mult">5x</button>
+                <button onclick="setBuyAmount(10)" class="btn-mult">10x</button>
+                <button onclick="setBuyAmount(25)" class="btn-mult">25x</button>
+                <button onclick="setBuyAmount(50)" class="btn-mult">50x</button>
+                <button onclick="setBuyAmount('max')" class="btn-mult">MAX</button>
+            </div>
             <div id="click-upgrades" class="list-container"></div>
         </section>
 
         <section id="generators-panel" class="game-panel">
             <h2 class="panel-title">Resource Generators</h2>
+            <div class="buy-multipliers">
+                <button onclick="setBuyAmount(1)" class="btn-mult active">1x</button>
+                <button onclick="setBuyAmount(5)" class="btn-mult">5x</button>
+                <button onclick="setBuyAmount(10)" class="btn-mult">10x</button>
+                <button onclick="setBuyAmount(25)" class="btn-mult">25x</button>
+                <button onclick="setBuyAmount(50)" class="btn-mult">50x</button>
+                <button onclick="setBuyAmount('max')" class="btn-mult">MAX</button>
+            </div>
             <div id="gen-upgrades" class="list-container"></div>
         </section>
 
