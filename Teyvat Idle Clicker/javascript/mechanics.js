@@ -6,13 +6,26 @@ function buyClickUpgrade(index) {
     }
 
     let up = game.clickUpgrades[index];
-    if (game.primos >= up.cost) {
-        game.primos -= up.cost;
-        up.level++;
-        game.clickPower += up.power;
-        up.cost *= 1.5;
+    const rate = 1.5;
+
+    let countToBuy = buyAmount === 'max' ? getMaxAffordable(game.primos, up.cost, rate) : buyAmount;
+    
+    if (countToBuy < 1) {
+        if (buyAmount !== 'max') showNotification("Not enough Primogems!");
+        return;
+    }
+
+    let totalCost = getMultiCost(up.cost, rate, countToBuy);
+
+    if (game.primos >= totalCost) {
+        game.primos -= totalCost;
+        up.level += countToBuy;
+        game.clickPower += (up.power * countToBuy); // Multiply power gain by count
+        up.cost *= Math.pow(rate, countToBuy); // Scale cost correctly for next time
         updateUI();
         saveCloudGame();
+    } else if (buyAmount !== 'max') {
+        showNotification("Not enough Primogems!");
     }
 }
 
@@ -23,12 +36,25 @@ function buyGenerator(index) {
     }
 
     let gen = game.generators[index];
-    if (game.primos >= gen.cost) {
-        game.primos -= gen.cost;
-        gen.count++;
-        gen.cost *= 1.75;
+    const rate = 1.75;
+
+    let countToBuy = buyAmount === 'max' ? getMaxAffordable(game.primos, gen.cost, rate) : buyAmount;
+    
+    if (countToBuy < 1) {
+        if (buyAmount !== 'max') showNotification("Not enough Primogems!");
+        return;
+    }
+
+    let totalCost = getMultiCost(gen.cost, rate, countToBuy);
+
+    if (game.primos >= totalCost) {
+        game.primos -= totalCost;
+        gen.count += countToBuy;
+        gen.cost *= Math.pow(rate, countToBuy);
         updateUI();
         saveCloudGame();
+    } else if (buyAmount !== 'max') {
+        showNotification("Not enough Primogems!");
     }
 }
 
@@ -220,26 +246,58 @@ function getBaseCost(id) {
 function renderList(containerId, data, clickFn) {
     const container = document.getElementById(containerId);
     if (!container) return;
-    container.innerHTML = '';
+
+    // We only build the structure once. If cards already exist, we just update their values.
+    const existingCards = container.querySelectorAll('.upgrade-card');
 
     data.forEach((item, index) => {
+        const rate = item.power ? 1.5 : 1.75;
+        let displayAmt = buyAmount === 'max' ? getMaxAffordable(game.primos, item.cost, rate) : buyAmount;
+        let effectiveAmt = (displayAmt <= 0) ? 1 : displayAmt;
+        let totalCost = getMultiCost(item.cost, rate, effectiveAmt);
+        const canAfford = game.primos >= totalCost;
         let displayLvl = item.level !== undefined ? item.level : item.count;
-        const card = document.createElement('div');
-        
-        card.className = `upgrade-card ${game.primos < item.cost ? 'disabled' : ''}`;
-        
-        card.innerHTML = `
+
+        // CHECK: Do we need to create the card or just update it?
+        let card = existingCards[index];
+
+        if (!card) {
+            // Initial creation if the card doesn't exist yet
+            card = document.createElement('div');
+            card.className = 'upgrade-card';
+            container.appendChild(card);
+        }
+
+        // 1. Update the 'disabled' status without rebuilding HTML
+        card.classList.toggle('disabled', !canAfford);
+
+        // 2. ONLY update the HTML if the values actually changed
+        // This is what stops the flickering
+        const newHTML = `
             <div>
                 <strong>${item.name}</strong><br>
-                <small>${item.power ? '+' + item.power + ' Click' : '+' + item.income.toFixed(1) + '/s'}</small>
+                <small>${item.power ? '+' + item.power + ' Click' : '+' + item.income.toFixed(1) + '/s'}</small><br>
+                <small style="color: #64ffbf;">Buying: ${displayAmt}x</small>
             </div>
             <div>
-                <span>Cost: <span class="cost-val">${formatNumbers(item.cost)}</span></span><br>
+                <span>Cost: <span class="cost-val">${formatNumbers(totalCost)}</span></span><br>
                 <small>Lvl: <span class="lvl-val">${displayLvl}</span></small>
             </div>
         `;
-        card.onclick = () => clickFn(index);
-        container.appendChild(card);
+
+        if (card.innerHTML !== newHTML) {
+            card.innerHTML = newHTML;
+        }
+
+        // 3. Update the click event
+        card.onclick = () => {
+            if (canAfford) {
+                clickFn(index);
+                updateUI(); // Immediate refresh after purchase
+            } else {
+                showNotification("Not enough Primogems!");
+            }
+        };
     });
 }
 
@@ -328,4 +386,36 @@ function renderShopItems() {
 
         container.appendChild(card);
     });
+}
+
+function setBuyAmount(amt) {
+    buyAmount = amt;
+    
+    // Update button visuals
+    document.querySelectorAll('.btn-mult').forEach(btn => {
+        const btnText = btn.innerText.toLowerCase().replace('x', '');
+        const targetText = amt.toString().toLowerCase();
+        
+        if (btnText === targetText) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    if (typeof updateUI === "function") {
+        updateUI();
+    }
+}
+
+// Math for Exponential Cost: Total = BaseCost * ((Rate^N - 1) / (Rate - 1))
+function getMultiCost(baseCost, rate, count) {
+    return baseCost * (Math.pow(rate, count) - 1) / (rate - 1);
+}
+
+// Math to find Max affordable: N = log_rate( (Primos * (Rate - 1) / BaseCost) + 1 )
+function getMaxAffordable(primos, currentCost, rate) {
+    if (primos < currentCost) return 0;
+    let n = Math.floor(Math.log((primos * (rate - 1) / currentCost) + 1) / Math.log(rate));
+    return n;
 }
