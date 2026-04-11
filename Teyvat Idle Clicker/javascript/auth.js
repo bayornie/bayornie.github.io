@@ -41,7 +41,7 @@ function openProfile() {
             game.generators.forEach(gen => {
                 basePPS += (gen.count * gen.income);
             });
-            
+
             let finalPPS = basePPS * (game.prestigeMultiplier || 1) * (game.globalMultiplier || 1);
             document.getElementById('prof-per-sec').innerText = formatNumbers(finalPPS);
         }
@@ -164,6 +164,23 @@ async function loadCloudGame(uid) {
                 cloudData.shopItems[index].name = localShop.name;
                 cloudData.shopItems[index].desc = localShop.desc;
                 cloudData.shopItems[index].cost = localShop.cost;
+            }
+        });
+
+        // 5. SMART SYNC: Pets
+        if (cloudData.ownedPets === undefined) cloudData.ownedPets = [];
+        if (cloudData.activePets === undefined) cloudData.activePets = [];
+        if (!cloudData.pets) cloudData.pets = JSON.parse(JSON.stringify(config.pets));
+
+        game.pets.forEach((localPet, index) => {
+            if (!cloudData.pets[index]) {
+                cloudData.pets.push(localPet);
+            } else {
+                cloudData.pets[index].name = localPet.name;
+                cloudData.pets[index].buffType = localPet.buffType;
+                cloudData.pets[index].buffValue = localPet.buffValue;
+                cloudData.pets[index].rarity = localPet.rarity;
+                if (localPet.interval) cloudData.pets[index].interval = localPet.interval;
             }
         });
 
