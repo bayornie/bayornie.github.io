@@ -6,17 +6,21 @@ function buyClickUpgrade(index) {
     }
 
     let up = game.clickUpgrades[index];
-    // --- CHANGE: Pull the individual rate from the object ---
     const rate = up.rate || 1.5;
 
-    let countToBuy = buyAmount === 'max' ? getMaxAffordable(game.primos, up.cost, rate) : buyAmount;
+    // Apply Pet Discount
+    const effectiveDiscount = game.currentDiscount || 1;
+    const currentCost = up.cost * effectiveDiscount;
+
+    let countToBuy = buyAmount === 'max' ? getMaxAffordable(game.primos, currentCost, rate) : buyAmount;
 
     if (countToBuy < 1) {
         if (buyAmount !== 'max') showNotification("Not enough Primogems!");
         return;
     }
 
-    let totalCost = getMultiCost(up.cost, rate, countToBuy);
+    // Apply discount to the total multi-buy cost
+    let totalCost = getMultiCost(up.cost, rate, countToBuy) * effectiveDiscount;
 
     if (game.primos >= totalCost) {
         game.primos -= totalCost;
@@ -37,17 +41,21 @@ function buyGenerator(index) {
     }
 
     let gen = game.generators[index];
-    // --- CHANGE: Pull the individual rate from the object ---
     const rate = gen.rate || 1.75;
 
-    let countToBuy = buyAmount === 'max' ? getMaxAffordable(game.primos, gen.cost, rate) : buyAmount;
+    // Apply Pet Discount
+    const effectiveDiscount = game.currentDiscount || 1;
+    const currentCost = gen.cost * effectiveDiscount;
+
+    let countToBuy = buyAmount === 'max' ? getMaxAffordable(game.primos, currentCost, rate) : buyAmount;
 
     if (countToBuy < 1) {
         if (buyAmount !== 'max') showNotification("Not enough Primogems!");
         return;
     }
 
-    let totalCost = getMultiCost(gen.cost, rate, countToBuy);
+    // Apply discount to the total multi-buy cost
+    let totalCost = getMultiCost(gen.cost, rate, countToBuy) * effectiveDiscount;
 
     if (game.primos >= totalCost) {
         game.primos -= totalCost;
@@ -155,16 +163,17 @@ function buyPet(petId) {
     const petData = game.pets.find(p => p.id === petId);
     if (!petData) return;
 
-    // Use the exact cost from your config (no more 5000 fallback)
-    const cost = petData.cost;
+    // --- APPLY DISCOUNT LOGIC ---
+    const effectiveDiscount = game.currentDiscount || 1;
+    const finalCost = petData.cost * effectiveDiscount;
 
     if (game.ownedPets.includes(petId)) {
         showNotification("This companion is already in your party!");
         return;
     }
 
-    if (game.primos >= cost) {
-        game.primos -= cost;
+    if (game.primos >= finalCost) {
+        game.primos -= finalCost;
         game.ownedPets.push(petId);
 
         // --- ACTIVE PARTY LOGIC ---
@@ -187,24 +196,49 @@ function buyPet(petId) {
 
 // --- SEELIE AUTO-CLICKER SYSTEM ---
 setInterval(() => {
-    if (!isLoggedIn || !game.seelies || game.seelies <= 0) return;
+    if (!isLoggedIn) return;
 
-    let currentClickPower = getFinalClickPower();  
-    let totalSeelieGain = currentClickPower * game.seelies;
+    // --- 1. SEELIE AUTO-CLICK LOGIC ---
+    if (game.seelies && game.seelies > 0) {
+        let currentClickPower = getFinalClickPower();
+        let totalSeelieGain = currentClickPower * game.seelies;
 
-    game.primos += totalSeelieGain;
-    game.totalPrimosEver += totalSeelieGain;
-    
-    handleAutoPetStrikes(); 
+        game.primos += totalSeelieGain;
+        game.totalPrimosEver += totalSeelieGain;
+
+        // Visual indicator for Seelies
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        spawnText(centerX, centerY, `+${formatNumbers(totalSeelieGain)} ✨`);
+    }
 
     updateUI();
-
-    // --- ACTIVATED: Visual indicator for the Seelie click ---
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
-    spawnText(centerX, centerY, `+${formatNumbers(totalSeelieGain)} ✨`);
-
 }, 3000);
+
+setInterval(() => {
+    if (!isLoggedIn) return;
+
+    const buffs = calculatePetBuffs();
+    const clickPower = getFinalClickPower();
+
+    // RAIDEN: Every 1s with 10% multiplier (Bane of All Evil/Musou no Hitotachi)
+    if (game.activePets.includes('raiden')) {
+        let raidenDmg = clickPower * 0.10;
+        game.primos += raidenDmg;
+        game.totalPrimosEver += raidenDmg;
+        spawnText(window.innerWidth / 2 + 50, window.innerHeight / 2, `+${formatNumbers(raidenDmg)} ⚡`, "#b186ff");
+    }
+
+    // FISCHL: Every 2 seconds (Oz Support)
+    if (game.activePets.includes('fischl') && Math.floor(Date.now() / 1000) % 2 === 0) {
+        let fischlDmg = clickPower * 0.025;
+        game.primos += fischlDmg;
+        game.totalPrimosEver += fischlDmg;
+        spawnText(window.innerWidth / 2 - 50, window.innerHeight / 2, `+${formatNumbers(fischlDmg)} 🐦`, "#b186ff");
+    }
+
+    updateUI();
+}, 1000);
 
 // --- PRESTIGE SYSTEM ---
 function ascend() {
@@ -220,19 +254,16 @@ function ascend() {
         return;
     }
 
-    // 3. Calculate Points (1 point for every 1M)
-    let pointsGained = Math.floor(game.primos / 1000000);
+    const buffs = calculatePetBuffs();
+    let pointsGained = Math.floor(game.primos / 1000000) * (buffs.prestigeBonus || 1);
+
     game.prestigePoints = (game.prestigePoints || 0) + pointsGained;
 
     // 4. Update the Multiplier (Permanent Buff)
-    // Updated: Now adds 0.05 (5%) per point gained
     game.multiplier += (pointsGained * 0.05);
-
-    // 5. Reset Progress (Sacrifice)
     game.primos = 0;
     game.clickPower = 1;
 
-    // Reset Upgrades and Generators back to Level 0 and base costs
     game.clickUpgrades.forEach(up => {
         up.level = 0;
         up.cost = getBaseCost(up.id);
@@ -243,11 +274,9 @@ function ascend() {
         gen.cost = getBaseCost(gen.id);
     });
 
-    // 6. Refresh everything
     updateUI();
     saveCloudGame();
-    // Updated notification to show 5% per point
-    showNotification(`Ascension Complete! Multiplier increased by ${pointsGained * 5}%.`);
+    showNotification(`Ascension Complete! Gained ${Math.floor(pointsGained)} points. Multiplier +${(pointsGained * 5).toFixed(1)}%.`);
 }
 
 // Helper to get initial costs for the reset
@@ -323,47 +352,91 @@ function togglePetEquip(petId) {
     saveCloudGame();
 }
 
+function handleMainClick() {
+    clickCounter++;
+    const buffs = calculatePetBuffs();
+    let power = getFinalClickPower();
+
+    // 1. Xingqiu: Every 25th click counts as 50 clicks (per Excel)
+    if (game.activePets.includes('xingqiu') && clickCounter % 25 === 0) {
+        power *= 50;
+        showNotification("Raincutter Burst!", "hydro");
+    }
+
+    // 2. Kaeya/Skirk: Critical Hits
+    if (buffs.critChance > 0) {
+        power *= buffs.critValue;
+    }
+
+    game.primos += power;
+    game.totalPrimosEver += power;
+
+    // Visuals
+    const x = window.innerWidth / 2;
+    const y = window.innerHeight / 2;
+    let color = buffs.critChance > 0 ? "#ff4e4e" : "#ffffff";
+    spawnText(x, y, `+${formatNumbers(power)}`, color);
+
+    updateUI();
+}
+
 function getFinalClickPower() {
     let base = game.clickPower || 1;
     let multiplier = game.clickMultiplier || 1;
-    let petBonus = 1;
 
-    // 1. Add Pet Multipliers (Anemo Buffs)
-    if (game.activePets && game.activePets.includes('sucrose')) petBonus += 0.15;
-    if (game.activePets && game.activePets.includes('xiao')) petBonus += 0.40;
+    // This already handles Xiao (1.5x), Sucrose (1.15x), and Arlecchino (1.5x)
+    const petBuffs = calculatePetBuffs();
 
-    // 2. Combine them (Base * Potions * Pets)
-    let finalPower = base * multiplier * petBonus;
-
-    if (game.activePets && game.activePets.includes('skirk')) {
-        if (Math.random() < 0.10) {
-            return finalPower * 3.0;
-        }
-    }
+    // We multiply the base by the active multipliers
+    let finalPower = base * multiplier * petBuffs.clickMult * petBuffs.globalMult;
 
     return finalPower;
 }
 
 // --- PARTY & BUFF LOGIC ---
-
 function calculatePetBuffs() {
-    let clickMult = 1;
-    let ppsMult = 1;
+    let buffs = {
+        clickMult: 1,
+        ppsMult: 1,
+        globalMult: 1,
+        discount: 1,
+        prestigeBonus: 1,      // For Noelle and Xilonen
+        critChance: 0,        // For Kaeya and Skirk
+        critValue: 1,         // Damage multiplier on crit
+        autoClickRate: 0,     // Interval in ms
+        autoClickPower: 0     // % of click power
+    };
 
-    // Loop through active IDs and find their data in the config
+    if (!game.activePets) return buffs;
+
     game.activePets.forEach(petId => {
         const pet = game.pets.find(p => p.id === petId);
         if (!pet) return;
 
+        // --- Standard Buff Types ---
         if (pet.buffType === 'click') {
-            clickMult += pet.buffValue;
+            buffs.clickMult *= (1 + pet.buffValue);
         } else if (pet.buffType === 'pps_mult') {
-            ppsMult *= pet.buffValue;
+            buffs.ppsMult *= pet.buffValue;
         } else if (pet.buffType === 'global_mult') {
-            ppsMult *= pet.buffValue;
-            clickMult += (pet.buffValue - 1);
+            buffs.globalMult *= pet.buffValue;
+        } else if (pet.buffType === 'discount') {
+            buffs.discount -= pet.buffValue;
+        }
+
+        // --- Special Sheet Mechanics ---
+        else if (pet.buffType === 'prestige' || pet.buffType === 'prestige_bonus') {
+            buffs.prestigeBonus += pet.buffValue;
+        } else if (pet.buffType === 'crit') {
+            buffs.critChance = 1.0;
+            buffs.critValue = pet.buffValue;
+        } else if (pet.buffType === 'auto_click') {
+            buffs.autoClickRate = pet.id === 'raiden' ? 1000 : 2000;
+            buffs.autoClickPower = pet.buffValue;
         }
     });
 
-    return { clickMult, ppsMult };
+    if (buffs.discount < 0.1) buffs.discount = 0.1;
+
+    return buffs;
 }
