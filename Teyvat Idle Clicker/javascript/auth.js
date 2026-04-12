@@ -170,13 +170,19 @@ async function loadCloudGame(uid) {
         // 5. SMART SYNC: Pets
         if (cloudData.ownedPets === undefined) cloudData.ownedPets = [];
         if (cloudData.activePets === undefined) cloudData.activePets = [];
-        if (!cloudData.pets) cloudData.pets = JSON.parse(JSON.stringify(config.pets));
+
+        // Ensure the pets array exists in cloudData
+        if (!cloudData.pets) {
+            cloudData.pets = JSON.parse(JSON.stringify(game.pets));
+        }
 
         game.pets.forEach((localPet, index) => {
             if (!cloudData.pets[index]) {
                 cloudData.pets.push(localPet);
             } else {
                 cloudData.pets[index].name = localPet.name;
+                cloudData.pets[index].cost = localPet.cost;
+                cloudData.pets[index].icon = localPet.icon;
                 cloudData.pets[index].buffType = localPet.buffType;
                 cloudData.pets[index].buffValue = localPet.buffValue;
                 cloudData.pets[index].rarity = localPet.rarity;
