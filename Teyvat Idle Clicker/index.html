@@ -19,7 +19,7 @@
             <h2 id="auth-title">Welcome, Traveler</h2>
 
             <div id="login-form">
-                <input type="text" id="username" placeholder="Username">
+                <input type="email" id="login-email" placeholder="Email Address">
 
                 <div class="password-wrapper">
                     <input type="password" id="password" placeholder="Password">
@@ -27,14 +27,24 @@
                 </div>
 
                 <button class="auth-btn" onclick="handleAuth('login')">Enter Teyvat</button>
+
+                <p style="text-align: center; margin-top: 10px;">
+                    <a href="#" onclick="resetPassword()"
+                        style="color: #ecd078; text-decoration: none; font-size: 0.85rem;">
+                        Forgot Password?
+                    </a>
+                </p>
+
                 <p onclick="toggleAuth()" class="toggle-link" id="to-register">New here? Register</p>
             </div>
 
             <div id="register-form" style="display:none;">
-                <input type="text" id="reg-username" placeholder="New Username">
+                <input type="email" id="reg-email" placeholder="Email Address">
+
+                <input type="text" id="reg-username" placeholder="Display Name / Username">
 
                 <div class="password-wrapper">
-                    <input type="password" id="reg-password" placeholder="New Password">
+                    <input type="password" id="reg-password" placeholder="New Password (min. 6 chars)">
                     <span class="password-toggle" onclick="togglePasswordVisibility('reg-password')">👁️</span>
                 </div>
 
