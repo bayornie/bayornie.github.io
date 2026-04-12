@@ -113,7 +113,7 @@ function updateUI() {
     // Fetch Resonance Blessing for the +10% per level bonus
     const resonanceBlessing = game.blessings.find(b => b.id === 'resonance');
     const resonanceMult = 1 + (resonanceBlessing ? resonanceBlessing.level * 0.10 : 0);
-    
+
     // Combine Ascension (game.multiplier) and Blessings
     let totalGameMult = (game.multiplier || 1) * resonanceMult;
 
@@ -407,34 +407,57 @@ function renderPetShop() {
 
     availablePets.forEach((pet) => {
         const card = document.createElement('div');
-        const cost = pet.cost;
-        const canAfford = game.primos >= cost;
+
+        const effectiveDiscount = game.currentDiscount || 1;
+        const finalCost = pet.cost * effectiveDiscount;
+        const canAfford = game.primos >= finalCost;
         const is5Star = pet.rarity === 5;
 
-        // Apply rarity class for styling
-        card.className = `upgrade-card ${is5Star ? 'rarity-5' : 'rarity-4'} ${!canAfford ? 'disabled' : ''}`;
+        card.className = `pet-card rarity-${pet.rarity} ${(!canAfford || !isLoggedIn) ? 'disabled' : ''}`;
+
+        // Buff Text Logic for the tag
+        let buffText = "";
+        if (pet.buffType === 'click') buffText = `+${(pet.buffValue * 100)}% Click`;
+        else if (pet.buffType === 'pps_mult') buffText = `${pet.buffValue}x PPS`;
+        else if (pet.buffType === 'global_mult') buffText = `${pet.buffValue}x Global`;
+        else if (pet.buffType === 'discount') buffText = `-${(pet.buffValue * 100)}% Cost`;
+        else buffText = pet.buffType.replace('_', ' ');
+
+        const costStyle = (effectiveDiscount < 1) ? 'color: #ffe164; font-weight: bold;' : 'color: #64ffbf;';
 
         card.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 15px; pointer-events: none;">
-                <img src="${pet.icon}" alt="${pet.name}" style="width: 60px; height: 60px; object-fit: contain;">
-                <div>
-                    <strong style="color: ${is5Star ? '#ffb13f' : '#a256e1'}">${pet.name}</strong>
-                    <small style="display: block; color: var(--text-gray); margin-top: 2px;">
-                        ${pet.vision} Companion
-                    </small>
+            <div class="pet-card-main">
+                <div class="pet-card-left">
+                    <div class="pet-icon-wrapper">
+                        <img src="${pet.icon}" alt="${pet.name}" class="pet-chibi" draggable="false">
+                    </div>
+                    <div class="pet-info">
+                        <strong class="pet-name">${pet.name}</strong>
+                        <div class="pet-buff-tag">${buffText}</div>
+                    </div>
+                </div>
+                <div class="pet-card-right" style="text-align: right;">
+                    <span class="pet-cost" style="${costStyle}">${formatNumbers(finalCost)}</span>
+                    <br><small style="font-size: 0.6rem; color: white; opacity: 0.7; letter-spacing: 1px;">PRIMOGEMS</small>
                 </div>
             </div>
-            <div style="pointer-events: none; text-align: right;">
-                <span class="highlight" style="font-size: 1.1rem;">${formatNumbers(cost)}</span>
-                <br><small style="font-size: 0.6rem; opacity: 0.6;">PRIMOGEMS</small>
-            </div>
+            <button class="equip-btn" style="background: rgba(255, 255, 255, 0.15); margin-top: 10px;">
+                RECRUIT
+            </button>
         `;
 
         card.onclick = () => {
-            if (game.primos >= cost) {
-                game.primos -= cost;
+            if (!isLoggedIn) {
+                showNotification("Please Login to recruit companions!");
+                if (typeof openAuth === 'function') openAuth();
+                return;
+            }
+
+            if (game.primos >= finalCost) {
+                game.primos -= finalCost;
                 game.ownedPets.push(pet.id);
-                showNotification(`${pet.name} has joined your party!`);
+                showNotification(`${pet.name} joined your party!`);
+
                 renderPetShop();
                 if (typeof renderPets === 'function') renderPets();
                 updateUI();
@@ -444,12 +467,8 @@ function renderPetShop() {
             }
         };
 
-        // Send to the correct container based on rarity
-        if (is5Star) {
-            container5.appendChild(card);
-        } else {
-            container4.appendChild(card);
-        }
+        if (is5Star) container5.appendChild(card);
+        else container4.appendChild(card);
     });
 }
 
@@ -458,12 +477,12 @@ function renderPets() {
     if (!container) return;
     container.innerHTML = '';
 
-    // Loop through the pet data from your config
     game.pets.forEach(pet => {
         const isOwned = game.ownedPets.includes(pet.id);
         const isActive = game.activePets.includes(pet.id);
 
         const card = document.createElement('div');
+        // Combined your rarity classes with the active/locked states
         card.className = `pet-card rarity-${pet.rarity} ${!isOwned ? 'locked' : ''} ${isActive ? 'active' : ''}`;
 
         const visionColors = {
@@ -471,27 +490,42 @@ function renderPets() {
             Electro: '#d164ff', Dendro: '#a2ff64', Cryo: '#64f7ff', Geo: '#ffe164'
         };
         const glowColor = visionColors[pet.vision] || '#ffffff';
+
+        // Dynamic Glow for active pets
         if (isActive) card.style.boxShadow = `0 0 15px ${glowColor}`;
 
+        // Buff Text for the Tag
+        let buffText = "";
+        if (pet.buffType === 'click') buffText = `+${(pet.buffValue * 100)}% Click`;
+        else if (pet.buffType === 'pps_mult') buffText = `${pet.buffValue}x PPS`;
+        else buffText = pet.buffType.replace('_', ' ');
+
+
         card.innerHTML = `
-            <div class="pet-icon-wrapper">
-                <img src="${pet.icon}" class="pet-chibi" alt="${pet.name}" draggable="false">
-                <div class="vision-tag" style="background: ${glowColor}">${pet.vision}</div>
+            <div class="pet-card-main">
+                <div class="pet-card-left">
+                    <div class="pet-icon-wrapper">
+                        <img src="${pet.icon}" class="pet-chibi" alt="${pet.name}" draggable="false">
+                        <div class="vision-tag" style="background: ${glowColor}; color: #000;">
+                            ${pet.vision}
+                        </div>
+                    </div>
+                    <div class="pet-info">
+                        <div class="pet-name">${pet.name}</div>
+                        <div class="pet-buff-tag">${buffText}</div>
+                    </div>
+                </div>
             </div>
-            <div class="pet-info">
-                <div class="pet-name">${pet.name}</div>
-                <div class="pet-buff-desc">${pet.buffDesc || 'No buff info available'}</div>
-                <button class="equip-btn">
-                    ${isActive ? 'UNEQUIP' : (isOwned ? 'EQUIP' : 'LOCKED')}
-                </button>
-            </div>
+            <button class="equip-btn ${isActive ? 'active' : ''}">
+                ${isActive ? 'UNEQUIP' : (isOwned ? 'EQUIP' : 'LOCKED')}
+            </button>
         `;
 
         card.onclick = () => {
             if (isOwned) {
                 togglePetEquip(pet.id);
                 renderPets();
-                updateSidebarParty();
+                if (typeof updateSidebarParty === 'function') updateSidebarParty();
             } else {
                 showNotification("This companion hasn't joined you yet!");
             }
@@ -500,7 +534,9 @@ function renderPets() {
         container.appendChild(card);
     });
 
-    document.getElementById('party-count').innerText = game.activePets.length;
+    if (document.getElementById('party-count')) {
+        document.getElementById('party-count').innerText = game.activePets.length;
+    }
 }
 
 function updatePartySidebar() {
