@@ -391,6 +391,31 @@
     color: var(--primo-blue);
 }
 
+/* Container for the specific buff stats */
+.pet-stats-container {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pet-buff-label {
+    font-size: 0.65rem;
+    color: #888;
+    letter-spacing: 1px;
+    font-weight: bold;
+}
+
+.pet-buff-value {
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
 .mini-pet-icon {
     width: 30px;
     height: 30px;
