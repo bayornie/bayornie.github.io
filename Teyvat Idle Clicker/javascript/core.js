@@ -87,13 +87,17 @@ function showPanel(panelId) {
     if (panelId === 'upgrades') renderList('click-upgrades', game.clickUpgrades, buyClickUpgrade);
     if (panelId === 'generators') renderList('gen-upgrades', game.generators, buyGenerator);
     if (panelId === 'prestige') { renderPrestigeUpgrades(); }
-    if (panelId === 'shop') { renderShopItems(); }
-    
-    // --- NEW: Render Pets when the tab is opened ---
     if (panelId === 'pets') { renderPets(); }
+    if (panelId === 'shop') {
+        renderShopItems();
+        renderPetShop();
+    }
 }
 
 function updateUI() {
+    // --- 0. PET BUFF CALCULATIONS (Added for Active Party) ---
+    const petBuffs = calculatePetBuffs(); 
+
     // --- 1. RECALCULATE BASE STATS (The "Source of Truth" Fix) ---
     let baseCP = 1; 
     game.clickUpgrades.forEach(up => {
@@ -105,9 +109,10 @@ function updateUI() {
         basePPS += (g.income * g.count);
     });
 
-    // --- 2. APPLY SEPARATED MULTIPLIERS ---
-    game.clickPower = baseCP * (game.clickMultiplier || 1);
-    let finalPPS = basePPS * (game.prestigeMultiplier || 1);
+    // --- 2. APPLY SEPARATED MULTIPLIERS (Updated to include Pet Buffs) ---
+    // We multiply your existing multipliers by the new petBuffs
+    game.clickPower = baseCP * (game.clickMultiplier || 1) * petBuffs.clickMult;
+    let finalPPS = basePPS * (game.prestigeMultiplier || 1) * petBuffs.ppsMult;
 
     // --- 3. MAIN RESOURCE DISPLAYS ---
     document.getElementById('primogems').innerText = formatNumbers(game.primos);
@@ -142,7 +147,11 @@ function updateUI() {
             ascBtn.innerText = `Ascend (Requires 1M)`;
         }
     }
+
+    // --- 6. SIDEBAR SYNC (Added to update the "0/4 Slots" display) ---
+    updatePartySidebar();
 }
+
 function togglePasswordVisibility(inputId) {
     const passwordInput = document.getElementById(inputId);
     const toggleIcon = passwordInput.nextElementSibling;
