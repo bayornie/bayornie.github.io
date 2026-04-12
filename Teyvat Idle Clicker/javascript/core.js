@@ -1,5 +1,7 @@
 // --- HELPER FUNCTIONS ---
 function formatNumbers(num) {
+    if (num >= 1000000000000000000000000) return (num / 1000000000000000000000000).toFixed(2) + 'Sp';
+    if (num >= 1000000000000000000000) return (num / 1000000000000000000000).toFixed(2) + 'Sx';
     if (num >= 1000000000000000000) return (num / 1000000000000000000).toFixed(2) + 'Qi';
     if (num >= 1000000000000000) return (num / 1000000000000000).toFixed(2) + 'Qa';
     if (num >= 1000000000000) return (num / 1000000000000).toFixed(2) + 'T';
@@ -9,8 +11,44 @@ function formatNumbers(num) {
     return Math.floor(num).toLocaleString();
 }
 
+const bgmPlayer = new Audio();
+bgmPlayer.volume = game.bgmVolume;
+
+function playTrack(index) {
+    if (!game.bgmList || game.bgmList.length === 0) return;
+
+    // Boundary checks for the loop
+    if (index >= game.bgmList.length) index = 0; 
+    if (index < 0) index = game.bgmList.length - 1;
+
+    game.currentTrackIndex = index;
+    const track = game.bgmList[index];
+
+    bgmPlayer.src = track.file;
+    bgmPlayer.volume = game.bgmVolume || 0.5;
+
+    if (!game.isMusicMuted) {
+        bgmPlayer.play().catch(e => {
+            console.log("Autoplay blocked. Interaction required.");
+        });
+    }
+
+    if (typeof renderMusicList === "function") {
+        renderMusicList();
+    }
+}
+
+bgmPlayer.onended = () => {
+    playTrack(game.currentTrackIndex + 1);
+};
+
 // --- CORE LOGIC ---
 document.getElementById('click-area').addEventListener('mousedown', (e) => {
+    // --- MUSIC KICKSTART ---
+    if (bgmPlayer.paused && !game.isMusicMuted && bgmPlayer.src) {
+        bgmPlayer.play().catch(err => console.log("Playback interaction required."));
+    }
+
     if (!isLoggedIn) {
         showNotification("Please Login to start collecting!");
         openAuth();
@@ -21,6 +59,8 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
     const buffs = calculatePetBuffs();
 
     clickCounter++;
+    
+    // --- RAINCUTTER LOGIC (Xingqiu) ---
     let isRaincutter = false;
     if (game.activePets && game.activePets.includes('xingqiu') && clickCounter % 25 === 0) {
         amount *= 50;
@@ -37,7 +77,7 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
     const critChanceFromBlessing = critLevel * 0.05;
 
     const rolledBlessingCrit = Math.random() < critChanceFromBlessing;
-    const hasGuaranteedPetCrit = buffs.critChance > 0; 
+    const hasGuaranteedPetCrit = buffs.critChance > 0;
     const isCrit = rolledBlessingCrit || hasGuaranteedPetCrit;
 
     let label = "";
@@ -45,7 +85,7 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
 
     if (isRaincutter) {
         label = "RAINCUTTER!";
-        color = "#4cc2f1";
+        color = "#4cc2f1"; // Hydro Blue
     } else if (isCrit) {
         // --- STACKING MULTIPLIER LOGIC ---
         let totalCritMult = 1;
@@ -53,19 +93,19 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
         if (hasSkirk && hasKaeya) {
             totalCritMult = 6.0; // 3x (Skirk) * 2x (Kaeya)
             label = "ABYSSAL FREEZE!";
-            color = "#b7a8ff"; 
+            color = "#b7a8ff"; // Light Purple/Ice
         } else if (hasSkirk) {
             totalCritMult = 3.0;
             label = "ABYSSAL!";
-            color = "#a155ff";
+            color = "#a155ff"; // Deep Void Purple
         } else if (hasKaeya) {
             totalCritMult = 2.0;
             label = "FREEZE!";
-            color = "#8deaff";
+            color = "#8deaff"; // Cryo Blue
         } else if (rolledBlessingCrit) {
-            totalCritMult = 2.0; // Default blessing crit value
+            totalCritMult = 2.0; 
             label = "CRIT!";
-            color = "#ff4e4e";
+            color = "#ff4e4e"; // Standard Red Crit
         }
 
         amount *= totalCritMult;
@@ -78,6 +118,7 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
     // 5. Visuals
     let display = `${label} +${formatNumbers(amount)}`.trim();
     spawnText(e.clientX, e.clientY, display, color);
+    
     updateUI();
 });
 
@@ -101,7 +142,7 @@ setInterval(() => {
 
     // 4. Calculate Final Income 
     let finalPPS = basePPS * petBuffs.ppsMult * (petBuffs.globalMult || 1) * totalGameMult;
-    
+
     // Divide by 10 because the interval runs every 100ms (10 times per second)
     let income = finalPPS / 10;
 
@@ -186,7 +227,7 @@ function updateUI() {
     // Support both your standard IDs and the stat-panel IDs
     const primoEl = document.getElementById('primogems') || document.getElementById('primo-count');
     if (primoEl) primoEl.innerText = formatNumbers(game.primos);
-    
+
     const statTotalEl = document.getElementById('stat-total');
     if (statTotalEl) statTotalEl.innerText = formatNumbers(game.primos);
 
@@ -323,7 +364,7 @@ function renderList(containerId, data, clickFn) {
     if (!container) return;
 
     const existingCards = container.querySelectorAll('.upgrade-card');
-    
+
     // --- PET DISCOUNT LOGIC ---
     const effectiveDiscount = game.currentDiscount || 1;
 
@@ -335,10 +376,10 @@ function renderList(containerId, data, clickFn) {
 
         let displayAmt = buyAmount === 'max' ? getMaxAffordable(game.primos, discountedBaseCost, rate) : buyAmount;
         let effectiveAmt = (displayAmt <= 0) ? 1 : displayAmt;
-        
+
         // Calculate the total cost with the discount applied
         let totalCost = getMultiCost(item.cost, rate, effectiveAmt) * effectiveDiscount;
-        
+
         const canAfford = game.primos >= totalCost;
         let displayLvl = item.level !== undefined ? item.level : item.count;
 
