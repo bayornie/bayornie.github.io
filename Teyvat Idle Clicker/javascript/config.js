@@ -73,22 +73,20 @@ let game = {
     ],
 
     pets: [
-        // --- 4 STAR PETS ---
-        { id: 'sucrose', name: 'Sucrose', rarity: 4, vision: 'Anemo', buffType: 'click', buffValue: 0.15, icon: 'img/pets/sucrose_chibi.png', owned: false },
-        { id: 'bennett', name: 'Bennett', rarity: 4, vision: 'Pyro', buffType: 'pps', buffValue: 0.10, icon: 'img/pets/bennett_chibi.png', owned: false },
-        { id: 'xingqiu', name: 'Xingqiu', rarity: 4, vision: 'Hydro', buffType: 'special_click', buffValue: 100, icon: 'img/pets/xingqiu_chibi.png', owned: false },
-        { id: 'yaoyao', name: 'Yaoyao', rarity: 4, vision: 'Dendro', buffType: 'discount', buffValue: 0.05, icon: 'img/pets/yaoyao_chibi.png', owned: false },
-        { id: 'fischl', name: 'Fischl', rarity: 4, vision: 'Electro', buffType: 'autoclick', buffValue: 2500, icon: 'img/pets/fischl_chibi.png', owned: false },
-        { id: 'kaeya', name: 'Kaeya', rarity: 4, vision: 'Cryo', buffType: 'freeze', buffValue: 60, icon: 'img/pets/kaeya_chibi.png', owned: false },
-        { id: 'noelle', name: 'Noelle', rarity: 4, vision: 'Geo', buffType: 'prestige_bonus', buffValue: 0.15, icon: 'img/pets/noelle_chibi.png', owned: false },
+        { id: 'sucrose', name: 'Sucrose', rarity: 4, vision: 'Anemo', cost: 125000000, buffType: 'click', buffValue: 0.15, icon: 'img/pets/sucrose_chibi.png' },
+        { id: 'bennett', name: 'Bennett', rarity: 4, vision: 'Pyro', cost: 140000000, buffType: 'pps', buffValue: 0.10, icon: 'img/pets/bennett_chibi.png' },
+        { id: 'xingqiu', name: 'Xingqiu', rarity: 4, vision: 'Hydro', cost: 155000000, buffType: 'special_click', buffValue: 100, icon: 'img/pets/xingqiu_chibi.png' },
+        { id: 'yaoyao', name: 'Yaoyao', rarity: 4, vision: 'Dendro', cost: 170000000, buffType: 'discount', buffValue: 0.05, icon: 'img/pets/yaoyao_chibi.png' },
+        { id: 'fischl', name: 'Fischl', rarity: 4, vision: 'Electro', cost: 185000000, buffType: 'autoclick', buffValue: 2500, icon: 'img/pets/fischl_chibi.png' },
+        { id: 'kaeya', name: 'Kaeya', rarity: 4, vision: 'Cryo', cost: 200000000, buffType: 'freeze', buffValue: 60, icon: 'img/pets/kaeya_chibi.png' },
+        { id: 'noelle', name: 'Noelle', rarity: 4, vision: 'Geo', cost: 215000000, buffType: 'prestige_bonus', buffValue: 0.15, icon: 'img/pets/noelle_chibi.png' },
 
-        // --- 5 STAR PETS ---
-        { id: 'xiao', name: 'Xiao', rarity: 5, vision: 'Anemo', buffType: 'click', buffValue: 0.40, icon: 'img/pets/xiao_chibi.png', owned: false },
-        { id: 'arlecchino', name: 'Arlecchino', rarity: 5, vision: 'Pyro', buffType: 'global_mult', buffValue: 1.5, icon: 'img/pets/arlecchino_chibi.png', owned: false },
-        { id: 'columbina', name: 'Columbina', rarity: 5, vision: 'Hydro', buffType: 'pps_mult', buffValue: 2.0, icon: 'img/pets/columbina_chibi.png', owned: false },
-        { id: 'nahida', name: 'Nahida', rarity: 5, vision: 'Dendro', buffType: 'discount', buffValue: 0.15, icon: 'img/pets/nahida_chibi.png', owned: false },
-        { id: 'raiden', name: 'Raiden Shogun', rarity: 5, vision: 'Electro', buffType: 'auto_burst', buffValue: 0.10, interval: 1000, icon: 'img/pets/raiden_chibi.png', owned: false },
-        { id: 'skirk', name: 'Skirk', rarity: 5, vision: 'Cryo', buffType: 'crit_click', buffValue: 3.0, icon: 'img/pets/skirk_chibi.png', owned: false },
-        { id: 'xilonen', name: 'Xilonen', rarity: 5, vision: 'Geo', buffType: 'prestige_perm', buffValue: 0.25, icon: 'img/pets/xilonen_chibi.png', owned: false }
+        { id: 'xiao', name: 'Xiao', rarity: 5, vision: 'Anemo', cost: 250000000, buffType: 'click', buffValue: 0.40, icon: 'img/pets/xiao_chibi.png' },
+        { id: 'arlecchino', name: 'Arlecchino', rarity: 5, vision: 'Pyro', cost: 275000000, buffType: 'global_mult', buffValue: 1.5, icon: 'img/pets/arlecchino_chibi.png' },
+        { id: 'columbina', name: 'Bina', rarity: 5, vision: 'Hydro', cost: 300000000, buffType: 'pps_mult', buffValue: 2.0, icon: 'img/pets/columbina_chibi.png' },
+        { id: 'nahida', name: 'Nahida', rarity: 5, vision: 'Dendro', cost: 325000000, buffType: 'discount', buffValue: 0.15, icon: 'img/pets/nahida_chibi.png' },
+        { id: 'raiden', name: 'Raiden', rarity: 5, vision: 'Electro', cost: 350000000, buffType: 'auto_burst', buffValue: 0.10, interval: 1000, icon: 'img/pets/raiden_chibi.png' },
+        { id: 'skirk', name: 'Skirk', rarity: 5, vision: 'Cryo', cost: 375000000, buffType: 'crit_click', buffValue: 3.0, icon: 'img/pets/skirk_chibi.png' },
+        { id: 'xilonen', name: 'Xilo', rarity: 5, vision: 'Geo', cost: 400000000, buffType: 'prestige_perm', buffValue: 0.25, icon: 'img/pets/xilonen_chibi.png' }
     ]
 };
