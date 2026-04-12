@@ -67,10 +67,10 @@ let game = {
     ],
 
     shopItems: [
-        { id: 'time_warp', name: "Time Warp", cost: 20000, desc: "Instantly gain 30 minutes of passive income." },
-        { id: 'seelie', name: "Follower Seelie", cost: 150000, desc: "A helpful spirit that clicks for you once every 3 seconds." },
-        { id: 'buff_pot', name: "Adepti's Temptation", cost: 300000, desc: "Permanently increases click multiplier by +0.5x." },
-        { id: 'primordial_shard', name: "Primordial Shard", cost: 750000, desc: "Permanently increases generator multipliers by 10%." }
+        { id: 'time_warp', name: "Time Warp", cost: 20000, level: 0, desc: "Instantly gain 30 minutes of passive income." },
+        { id: 'seelie', name: "Follower Seelie", cost: 150000, level: 0, desc: "A helpful spirit that clicks for you once every 3 seconds." },
+        { id: 'buff_pot', name: "Adepti's Temptation", cost: 300000, level: 0, desc: "Permanently increases click multiplier by +0.5x." },
+        { id: 'primordial_shard', name: "Primordial Shard", cost: 750000, level: 0, desc: "Permanently increases generator multipliers by 10%." }
     ],
 
     pets: [
