@@ -97,9 +97,9 @@ function buyShopItem(index) {
 
     // Define rates for price scaling
     const rates = {
-        'time_warp': 2,
-        'seelie': 2.5,
-        'buff_pot': 2,
+        'time_warp': 1.2,
+        'seelie': 3,
+        'buff_pot': 2.5,
         'primordial_shard': 3
     };
     const rate = rates[item.id] || 2;
