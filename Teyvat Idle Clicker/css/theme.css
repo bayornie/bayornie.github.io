@@ -28,3 +28,31 @@ html {
     height: 100vh;
     overflow: hidden;
 }
+
+.music-card {
+    max-height: 80vh;
+}
+
+#track-list-container {
+    width: 100%;
+    overflow-y: auto;
+    margin: 20px 0;
+    padding-right: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#track-list-container .nav-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(110, 231, 183, 0.2);
+    padding: 15px;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+}
+
+#track-list-container .nav-item.active {
+    border-color: var(--neon-blue);
+    background: rgba(110, 231, 183, 0.733);
+}
