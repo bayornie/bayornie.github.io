@@ -375,6 +375,22 @@
     object-fit: contain;
 }
 
+#pet-shop-list .upgrade-card {
+    padding: 15px 20px;
+    min-height: 80px;
+}
+
+#pet-shop-list .upgrade-card img {
+    width: 50px !important;
+    height: 70px !important;
+    filter: drop-shadow(0 0 8px rgba(173, 229, 255, 0.3));
+}
+
+#pet-shop-list .upgrade-card strong {
+    font-size: 1.1rem;
+    color: var(--primo-blue);
+}
+
 .mini-pet-icon {
     width: 30px;
     height: 30px;
