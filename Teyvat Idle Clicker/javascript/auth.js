@@ -263,6 +263,14 @@ async function loadCloudGame(uid) {
             cloudData.playerName = "Traveler";
         }
 
+        // --- SYNC AUDIO PREFERENCES ---
+        if (cloudData.currentTrackIndex === undefined) cloudData.currentTrackIndex = 0;
+        if (cloudData.bgmVolume === undefined) cloudData.bgmVolume = 0.5;
+        if (cloudData.isMusicMuted === undefined) cloudData.isMusicMuted = false;
+
+        // We refresh the bgmList from the local code to ensure file paths are always correct
+        cloudData.bgmList = JSON.parse(JSON.stringify(game.bgmList));
+
         game = cloudData;
         calculateOfflineEarnings();
         updateUI();
@@ -282,10 +290,12 @@ window.onclick = function (event) {
     const authOverlay = document.getElementById('auth-overlay');
     const profOverlay = document.getElementById('profile-overlay');
     const settingsOverlay = document.getElementById('settings-overlay');
+    const musicOverlay = document.getElementById('music-overlay');
 
     if (event.target == authOverlay) authOverlay.style.display = "none";
     if (event.target == profOverlay) profOverlay.style.display = "none";
     if (event.target == settingsOverlay) settingsOverlay.style.display = "none";
+    if (event.target == musicOverlay) musicOverlay.style.display = "none";
 }
 
 // --- SEND VERIFICATION EMAIL ---
@@ -325,6 +335,38 @@ async function changeEmail() {
             showNotification(error.message);
         }
     }
+}
+
+function openMusicModal() {
+    document.getElementById('music-overlay').style.display = 'flex';
+    renderMusicList();
+}
+
+function closeMusicModal() {
+    document.getElementById('music-overlay').style.display = 'none';
+}
+
+function renderMusicList() {
+    const container = document.getElementById('track-list-container');
+    container.innerHTML = '';
+
+    game.bgmList.forEach((track, index) => {
+        const isPlaying = game.currentTrackIndex === index;
+        const btn = document.createElement('div');
+        btn.className = `nav-item ${isPlaying ? 'active' : ''}`;
+        btn.style.marginBottom = "8px";
+        btn.innerHTML = `
+            <span>${track.title}</span>
+            ${isPlaying ? '<small> (Playing)</small>' : ''}
+        `;
+        btn.onclick = () => playTrack(index);
+        container.appendChild(btn);
+    });
+}
+
+function updateVolume(val) {
+    game.bgmVolume = val;
+    bgmPlayer.volume = val;
 }
 
 setInterval(saveCloudGame, 30000);
