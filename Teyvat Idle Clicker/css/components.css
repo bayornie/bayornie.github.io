@@ -78,10 +78,10 @@
     width: 95%;
     max-width: 900px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 15px;
     padding: 15px;
-    overflow: visible; 
+    overflow: visible;
     max-height: none;
 }
 
@@ -201,7 +201,7 @@
     font-size: 0.7rem;
     display: flex;
     align-items: center;
-    white-space: nowrap; 
+    white-space: nowrap;
     flex-shrink: 1;
 }
 
@@ -246,7 +246,8 @@
 
 .btn-mult {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(100, 255, 191, 0.2); /* Subtle teal */
+    border: 1px solid rgba(100, 255, 191, 0.2);
+    /* Subtle teal */
     color: #e0e0e0;
     padding: 6px 12px;
     cursor: pointer;
@@ -262,22 +263,180 @@
 }
 
 .btn-mult.active {
-    background: #64ffbf; /* Your signature teal */
-    color: #0b1116; /* Dark text for contrast */
+    background: #64ffbf;
+    /* Your signature teal */
+    color: #0b1116;
+    /* Dark text for contrast */
     border-color: #64ffbf;
     box-shadow: 0 0 10px rgba(100, 255, 191, 0.4);
     font-weight: bold;
 }
 
-/* --- UPGRADE CARD ADJUSTMENTS --- */
-.upgrade-card.disabled {
-    opacity: 0.6;
-    filter: grayscale(0.8);
-    cursor: not-allowed;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+.pet-card,
+.pet-card-main{
+    position: relative;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
 }
 
-.upgrade-card small[style*="color: #64ffbf"] {
-    font-weight: 600;
+/* Rarity Backgrounds for both */
+.pet-card.rarity-4,
+.pet-card-main.rarity-4 {
+    background: linear-gradient(135deg, #3d336a 0%, #63519f 100%);
+    border-color: #a256e1;
+}
+
+.pet-card.rarity-5,
+.pet-card-main.rarity-5 {
+    background: linear-gradient(135deg, #7a5521 0%, #b18535 100%);
+    border-color: #ffb13f;
+}
+
+/* Hover effects */
+.pet-card:hover:not(.locked),
+.pet-card-main:hover:not(.disabled) {
+    transform: translateY(-3px);
+    filter: brightness(1.1);
+}
+
+.pet-card-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.pet-card-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.pet-icon-wrapper {
+    width: 55px;
+    height: 55px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pet-chibi {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.pet-name {
+    font-weight: bold;
+    color: white;
+    font-size: 1rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.pet-buff-tag {
+    font-size: 0.7rem;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-top: 4px;
+    display: inline-block;
+    width: fit-content;
+}
+
+.pet-icon-wrapper {
+    position: relative;
+    width: 65px;
+    height: 65px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 10px;
+    padding: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pet-chibi {
+    width: 100%;
+    height: 80%;
+    object-fit: contain;
+    margin-top: -5px;
+}
+
+.vision-tag {
+    position: absolute;
+    bottom: 2px;
+    width: 90%;
+    text-align: center;
+    font-size: 0.5rem;
+    font-weight: 900;
+    padding: 1px 0;
+    border-radius: 3px;
+    text-transform: uppercase;
     letter-spacing: 0.5px;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
+    border: none;
+}
+
+.vision-tag {
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+}
+
+.pet-cost {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.equip-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.pet-card:hover:not(.locked) .equip-btn,
+.upgrade-card:hover:not(.disabled) .equip-btn {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+}
+
+.equip-btn.active {
+    background: #ff6464;
+    /* Sharp Pyro Red */
+    color: white;
+    border: 1px solid #ffb0b0;
+    box-shadow: 0 0 15px rgba(255, 100, 100, 0.4);
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.locked .equip-btn,
+.disabled .equip-btn {
+    background: rgba(0, 0, 0, 0.2);
+    color: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: not-allowed;
 }
