@@ -50,7 +50,7 @@
         <div class="nav-item" onclick="showPanel('generators')">Generators</div>
         <div class="nav-item" onclick="showPanel('prestige')">Prestige</div>
         <div class="nav-item" onclick="showPanel('shop')">Shop</div>
-        <div class="nav-item" onclick="showPanel('pets')">Pets</div>
+        <div class="nav-item" onclick="showPanel('pets')">Companions</div>
     </nav>
 
     <main>
@@ -118,12 +118,30 @@
             </div>
         </section>
 
-        <section id="shop-panel" class="game-panel">
-            <h2 class="panel-title">Wanderer's Goods</h2>
-            <p style="text-align: center; color: #888;">Limited time offers and special items.</p>
+        <div id="shop-panel" class="game-panel">
+            <h1 class="panel-title">Wanderer's Goods</h1>
             <div id="shop-items" class="list-container">
             </div>
-        </section>
+
+            <div id="pet-shop-header" style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
+                <h1 class="panel-title" style="margin-bottom: 5px;">Recruit Companions</h1>
+                <div class="stats-divider" style="width: 60%; margin: 10px auto;"></div>
+            </div>
+
+            <div style="width: 100%; max-width: 900px; margin-bottom: 10px;">
+                <h3 style="color: #a256e1; margin-left: 20px; font-weight: 800; letter-spacing: 1px;">
+                    ✦ 4-Stars
+                </h3>
+            </div>
+            <div id="pet-shop-list-4" class="list-container" style="margin-bottom: 40px;"></div>
+
+            <div style="width: 100%; max-width: 900px; margin-bottom: 10px;">
+                <h3 style="color: #ffb13f; margin-left: 20px; font-weight: 800; letter-spacing: 1px;">
+                    ✦ 5-Stars
+                </h3>
+            </div>
+            <div id="pet-shop-list-5" class="list-container"></div>
+        </div>
 
         <section id="pets-panel" class="game-panel">
             <h2 class="panel-title">Companions & Pets</h2>
@@ -175,7 +193,7 @@
             </div>
         </div>
 
-            <div class="stats-divider"></div>
+        <div class="stats-divider"></div>
 
         <div class="stats-group">
             <div class="stats-label">ACTIVE PARTY</div>
