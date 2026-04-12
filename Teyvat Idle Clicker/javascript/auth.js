@@ -20,29 +20,26 @@ function openProfile() {
             profName.innerText = game.playerName || "Traveler";
         }
 
-        // 1. Total Primogems Collected (Lifetime)
         if (document.getElementById('prof-total-ever')) {
             document.getElementById('prof-total-ever').innerText = formatNumbers(game.totalPrimosEver);
         }
 
-        // 2. Current Primogems (Spendable Stash)
         if (document.getElementById('prof-current-primos')) {
             document.getElementById('prof-current-primos').innerText = formatNumbers(game.primos);
         }
 
-        // 3. Click Power (Using the recalculated value from updateUI)
         if (document.getElementById('prof-power')) {
             document.getElementById('prof-power').innerText = formatNumbers(game.clickPower);
         }
 
-        // 4. Passive Income (Matching the sidebar 'Per Second' stat)
         if (document.getElementById('prof-per-sec')) {
             let basePPS = 0;
             game.generators.forEach(gen => {
                 basePPS += (gen.count * gen.income);
             });
 
-            let finalPPS = basePPS * (game.prestigeMultiplier || 1) * (game.globalMultiplier || 1);
+            // Ensure this uses game.multiplier to match your sidebar and config.js
+            let finalPPS = basePPS * (game.multiplier || 1);
             document.getElementById('prof-per-sec').innerText = formatNumbers(finalPPS);
         }
 
@@ -60,10 +57,43 @@ function handleLogout() {
     });
 }
 
+// --- NEW PASSWORD RESET LOGIC ---
+function resetPassword() {
+    const email = document.getElementById('login-email').value;
+
+    if (!email) {
+        showNotification("Enter your email in the login box first!");
+        return;
+    }
+
+    auth.sendPasswordResetEmail(email)
+        .then(() => {
+            showNotification("Reset link sent! Check your inbox.");
+        })
+        .catch((error) => {
+            showNotification(error.message);
+        });
+}
+
+// --- UPDATED AUTH HANDLER ---
 async function handleAuth(type) {
-    const usernameInput = document.getElementById(type === 'login' ? 'username' : 'reg-username').value;
-    const email = usernameInput + "@game.com";
-    const pass = document.getElementById(type === 'login' ? 'password' : 'reg-password').value;
+    let email, pass, username;
+
+    if (type === 'register') {
+        // Correctly maps the new registration fields
+        email = document.getElementById('reg-email').value;
+        username = document.getElementById('reg-username').value;
+        pass = document.getElementById('reg-password').value;
+    } else {
+        // Correctly maps the login fields (ensure login email id matches index.html)
+        email = document.getElementById('login-email').value;
+        pass = document.getElementById('password').value;
+    }
+
+    if (!email || !pass || (type === 'register' && !username)) {
+        showNotification("Please fill in all fields!");
+        return;
+    }
 
     if (pass.length < 6) {
         showNotification("Password must be at least 6 characters!");
@@ -74,14 +104,19 @@ async function handleAuth(type) {
         await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
 
         if (type === 'register') {
-            game.playerName = usernameInput;
+            game.playerName = username; // Preserving your username field assignment
             const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
+            
+            // Saves the full game object to the new user document
             await db.collection("users").doc(userCredential.user.uid).set(game);
+            
             showNotification(`Ad Astra Abyssosque, ${game.playerName}!`);
         } else {
+            // Logic for existing users logging back in
             await auth.signInWithEmailAndPassword(email, pass);
             showNotification("Welcome back, Traveler!");
         }
+        
         document.getElementById('auth-overlay').style.display = 'none';
     } catch (error) {
         showNotification(error.message);
@@ -100,7 +135,6 @@ auth.onAuthStateChanged((user) => {
         loadCloudGame(user.uid);
     } else {
         isLoggedIn = false;
-        document.getElementById('auth-overlay').style.display = 'none';
         if (loginTrigger) {
             loginTrigger.style.display = 'block';
             loginTrigger.innerText = "Login / Register";
@@ -171,7 +205,6 @@ async function loadCloudGame(uid) {
         if (cloudData.ownedPets === undefined) cloudData.ownedPets = [];
         if (cloudData.activePets === undefined) cloudData.activePets = [];
 
-        // Ensure the pets array exists in cloudData
         if (!cloudData.pets) {
             cloudData.pets = JSON.parse(JSON.stringify(game.pets));
         }
@@ -190,27 +223,19 @@ async function loadCloudGame(uid) {
             }
         });
 
-        // Safety for new variables
         if (cloudData.seelies === undefined) cloudData.seelies = 0;
         if (cloudData.prestigePoints === undefined) cloudData.prestigePoints = 0;
 
-        // If name is missing or the generic "Traveler", pull the real username from their email
-        if (!cloudData.playerName || cloudData.playerName === "Traveler") {
-            const userEmail = auth.currentUser.email;
-            if (userEmail) {
-                // Takes 'Byoku' from 'Byoku@game.com'
-                const recoveredName = userEmail.split('@')[0];
-                cloudData.playerName = recoveredName.charAt(0).toUpperCase() + recoveredName.slice(1);
-            } else {
-                cloudData.playerName = "Traveler";
-            }
+        // If name is missing, pull from cloud data (now contains dedicated username)
+        if (!cloudData.playerName) {
+            cloudData.playerName = "Traveler";
         }
 
         game = cloudData;
         calculateOfflineEarnings();
         updateUI();
         saveCloudGame();
-        console.log("Sync Complete: Player Name and Balance updated!");
+        console.log("Sync Complete!");
     }
 }
 
