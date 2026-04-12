@@ -17,24 +17,67 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
         return;
     }
 
-    let amount = game.clickPower * game.multiplier;
+    let amount = getFinalClickPower();
+    const buffs = calculatePetBuffs();
 
-    const critBlessing = game.blessings.find(b => b.id === 'crit');
-    const critLevel = critBlessing ? critBlessing.level : 0;
-    const critChance = critLevel * 0.05;
-
-    const isCrit = Math.random() < critChance;
-    let displayPops = `+${Math.floor(amount)}`;
-
-    if (isCrit) {
-        amount *= 5; // 5x multiplier for a Critical Hit
-        displayPops = `CRIT! +${Math.floor(amount)}`;
+    clickCounter++;
+    let isRaincutter = false;
+    if (game.activePets && game.activePets.includes('xingqiu') && clickCounter % 25 === 0) {
+        amount *= 50;
+        isRaincutter = true;
     }
 
+    // 1. Identify which pets are currently active
+    const hasSkirk = game.activePets && game.activePets.includes('skirk');
+    const hasKaeya = game.activePets && game.activePets.includes('kaeya');
+
+    // 2. Critical Chance Logic
+    const critBlessing = game.blessings.find(b => b.id === 'crit');
+    const critLevel = critBlessing ? critBlessing.level : 0;
+    const critChanceFromBlessing = critLevel * 0.05;
+
+    const rolledBlessingCrit = Math.random() < critChanceFromBlessing;
+    const hasGuaranteedPetCrit = buffs.critChance > 0; 
+    const isCrit = rolledBlessingCrit || hasGuaranteedPetCrit;
+
+    let label = "";
+    let color = "#ffffff";
+
+    if (isRaincutter) {
+        label = "RAINCUTTER!";
+        color = "#4cc2f1";
+    } else if (isCrit) {
+        // --- STACKING MULTIPLIER LOGIC ---
+        let totalCritMult = 1;
+
+        if (hasSkirk && hasKaeya) {
+            totalCritMult = 6.0; // 3x (Skirk) * 2x (Kaeya)
+            label = "ABYSSAL FREEZE!";
+            color = "#b7a8ff"; 
+        } else if (hasSkirk) {
+            totalCritMult = 3.0;
+            label = "ABYSSAL!";
+            color = "#a155ff";
+        } else if (hasKaeya) {
+            totalCritMult = 2.0;
+            label = "FREEZE!";
+            color = "#8deaff";
+        } else if (rolledBlessingCrit) {
+            totalCritMult = 2.0; // Default blessing crit value
+            label = "CRIT!";
+            color = "#ff4e4e";
+        }
+
+        amount *= totalCritMult;
+    }
+
+    // 4. Update Game State
     game.primos += amount;
     game.totalPrimosEver += amount;
 
-    spawnText(e.clientX, e.clientY, displayPops);
+    // 5. Visuals
+    let display = `${label} +${formatNumbers(amount)}`.trim();
+    spawnText(e.clientX, e.clientY, display, color);
     updateUI();
 });
 
@@ -42,14 +85,29 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
 setInterval(() => {
     if (!isLoggedIn) return;
 
-    let totalPPS = 0;
+    // 1. Calculate Base PPS from generators
+    let basePPS = 0;
     game.generators.forEach(g => {
-        totalPPS += (g.income * g.count);
+        basePPS += (g.income * g.count);
     });
 
-    let income = (totalPPS * game.multiplier) / 10;
+    // 2. Get active Pet Buffs
+    const petBuffs = calculatePetBuffs();
+
+    // 3. Get Game Multipliers (including Resonance Blessing if it exists)
+    const resonanceBlessing = game.blessings.find(b => b.id === 'resonance');
+    const resonanceMult = 1 + (resonanceBlessing ? resonanceBlessing.level * 0.10 : 0);
+    const totalGameMult = (game.multiplier || 1) * resonanceMult;
+
+    // 4. Calculate Final Income 
+    let finalPPS = basePPS * petBuffs.ppsMult * (petBuffs.globalMult || 1) * totalGameMult;
+    
+    // Divide by 10 because the interval runs every 100ms (10 times per second)
+    let income = finalPPS / 10;
+
     game.primos += income;
     game.totalPrimosEver += income;
+
     updateUI();
 }, 100);
 
@@ -95,10 +153,10 @@ function showPanel(panelId) {
 }
 
 function updateUI() {
-    // --- 0. PET BUFF CALCULATIONS (Added for Active Party) ---
+    // --- 0. PET BUFF CALCULATIONS ---
     const petBuffs = calculatePetBuffs();
 
-    // --- 1. RECALCULATE BASE STATS (The "Source of Truth" Fix) ---
+    // --- 1. RECALCULATE BASE STATS ---
     let baseCP = 1;
     game.clickUpgrades.forEach(up => {
         baseCP += (up.level * up.power);
@@ -109,32 +167,45 @@ function updateUI() {
         basePPS += (g.income * g.count);
     });
 
-    // --- 2. APPLY SEPARATED MULTIPLIERS (Updated to include Pet Buffs) ---
+    // --- 2. APPLY MULTIPLIERS ---
     // Fetch Resonance Blessing for the +10% per level bonus
     const resonanceBlessing = game.blessings.find(b => b.id === 'resonance');
     const resonanceMult = 1 + (resonanceBlessing ? resonanceBlessing.level * 0.10 : 0);
 
-    // Combine Ascension (game.multiplier) and Blessings
+    // Combine Ascension and Blessings
     let totalGameMult = (game.multiplier || 1) * resonanceMult;
 
-    // Apply everything to Click Power and PPS
-    game.clickPower = baseCP * (game.clickMultiplier || 1) * petBuffs.clickMult * totalGameMult;
-    let finalPPS = basePPS * totalGameMult * petBuffs.ppsMult;
+    // Apply Pet Click, PPS, and Global Multipliers
+    game.clickPower = baseCP * (game.clickMultiplier || 1) * petBuffs.clickMult * (petBuffs.globalMult || 1) * totalGameMult;
+    let finalPPS = basePPS * petBuffs.ppsMult * (petBuffs.globalMult || 1) * totalGameMult;
+
+    // Update global shop discount variable so renderPetShop() uses it
+    game.currentDiscount = petBuffs.discount;
 
     // --- 3. MAIN RESOURCE DISPLAYS ---
-    document.getElementById('primogems').innerText = formatNumbers(game.primos);
-    document.getElementById('stat-total').innerText = formatNumbers(game.primos);
+    // Support both your standard IDs and the stat-panel IDs
+    const primoEl = document.getElementById('primogems') || document.getElementById('primo-count');
+    if (primoEl) primoEl.innerText = formatNumbers(game.primos);
+    
+    const statTotalEl = document.getElementById('stat-total');
+    if (statTotalEl) statTotalEl.innerText = formatNumbers(game.primos);
 
-    // Multiplier and Power stats - Updated to show the calculated totalGameMult
-    document.getElementById('stat-mult').innerText = totalGameMult.toFixed(2) + 'x';
-    document.getElementById('stat-click').innerText = formatNumbers(game.clickPower);
-    document.getElementById('stat-pps').innerText = formatNumbers(finalPPS);
+    // Update Click and PPS Displays
+    const ppsEl = document.getElementById('stat-pps') || document.getElementById('primos-per-sec');
+    if (ppsEl) ppsEl.innerText = formatNumbers(finalPPS);
+
+    const cpEl = document.getElementById('stat-click') || document.getElementById('click-power-text');
+    if (cpEl) cpEl.innerText = formatNumbers(game.clickPower);
+
+    if (document.getElementById('stat-mult')) {
+        document.getElementById('stat-mult').innerText = totalGameMult.toFixed(2) + 'x';
+    }
 
     if (document.getElementById('stat-total-ever')) {
         document.getElementById('stat-total-ever').innerText = formatNumbers(game.totalPrimosEver);
     }
 
-    // --- 4. DYNAMIC LIST RENDERING (The Multi-Buy Fix) ---
+    // --- 4. DYNAMIC LIST RENDERING ---
     renderList('click-upgrades', game.clickUpgrades, buyClickUpgrade);
     renderList('gen-upgrades', game.generators, buyGenerator);
 
@@ -155,8 +226,10 @@ function updateUI() {
         }
     }
 
-    // --- 6. SIDEBAR SYNC (Added to update the "0/4 Slots" display) ---
-    updatePartySidebar();
+    // --- 6. SIDEBAR SYNC ---
+    if (typeof updatePartySidebar === "function") {
+        updatePartySidebar();
+    }
 }
 
 function togglePasswordVisibility(inputId) {
@@ -245,21 +318,27 @@ function updateCardStates(containerId, data) {
 }
 
 // --- RENDERING FUNCTIONS ---
-
 function renderList(containerId, data, clickFn) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
     const existingCards = container.querySelectorAll('.upgrade-card');
+    
+    // --- PET DISCOUNT LOGIC ---
+    const effectiveDiscount = game.currentDiscount || 1;
 
     data.forEach((item, index) => {
-        // --- THE UPDATE: DYNAMIC RATE ---
-        // It looks for item.rate first. If it's missing, it uses your old defaults.
         const rate = item.rate || (item.power ? 1.5 : 1.75);
 
-        let displayAmt = buyAmount === 'max' ? getMaxAffordable(game.primos, item.cost, rate) : buyAmount;
+        // Apply discount to the base item cost for Max calculation
+        const discountedBaseCost = item.cost * effectiveDiscount;
+
+        let displayAmt = buyAmount === 'max' ? getMaxAffordable(game.primos, discountedBaseCost, rate) : buyAmount;
         let effectiveAmt = (displayAmt <= 0) ? 1 : displayAmt;
-        let totalCost = getMultiCost(item.cost, rate, effectiveAmt);
+        
+        // Calculate the total cost with the discount applied
+        let totalCost = getMultiCost(item.cost, rate, effectiveAmt) * effectiveDiscount;
+        
         const canAfford = game.primos >= totalCost;
         let displayLvl = item.level !== undefined ? item.level : item.count;
 
@@ -273,6 +352,9 @@ function renderList(containerId, data, clickFn) {
 
         card.classList.toggle('disabled', !canAfford);
 
+        // Change text color to gold if a discount is active
+        const costStyle = effectiveDiscount < 1 ? 'color: #ffe164; font-weight: bold;' : '';
+
         const newHTML = `
             <div>
                 <strong>${item.name}</strong><br>
@@ -280,7 +362,7 @@ function renderList(containerId, data, clickFn) {
                 <small style="color: #64ffbf;">Buying: ${displayAmt}x</small>
             </div>
             <div>
-                <span>Cost: <span class="cost-val">${formatNumbers(totalCost)}</span></span><br>
+                <span>Cost: <span class="cost-val" style="${costStyle}">${formatNumbers(totalCost)}</span></span><br>
                 <small>Lvl: <span class="lvl-val">${displayLvl}</span></small>
             </div>
         `;
@@ -292,7 +374,7 @@ function renderList(containerId, data, clickFn) {
         card.onclick = () => {
             if (canAfford) {
                 clickFn(index);
-                updateUI();
+                // No need for redundant updateUI() here if clickFn already calls it
             } else {
                 showNotification("Not enough Primogems!");
             }
@@ -413,9 +495,10 @@ function renderPetShop() {
         const canAfford = game.primos >= finalCost;
         const is5Star = pet.rarity === 5;
 
+        // Apply classes for rarity and the disabled state if too expensive
         card.className = `pet-card rarity-${pet.rarity} ${(!canAfford || !isLoggedIn) ? 'disabled' : ''}`;
 
-        // Buff Text Logic for the tag
+        // Buff Text Logic
         let buffText = "";
         if (pet.buffType === 'click') buffText = `+${(pet.buffValue * 100)}% Click`;
         else if (pet.buffType === 'pps_mult') buffText = `${pet.buffValue}x PPS`;
@@ -423,13 +506,27 @@ function renderPetShop() {
         else if (pet.buffType === 'discount') buffText = `-${(pet.buffValue * 100)}% Cost`;
         else buffText = pet.buffType.replace('_', ' ');
 
+        // Visual feedback for discounted prices
         const costStyle = (effectiveDiscount < 1) ? 'color: #ffe164; font-weight: bold;' : 'color: #64ffbf;';
+
+        // Get glow color for the vision tag
+        let glowColor = "#ffffff";
+        if (pet.vision === 'Pyro') glowColor = "#ff4e4e";
+        else if (pet.vision === 'Anemo') glowColor = "#72e5d3";
+        else if (pet.vision === 'Cryo') glowColor = "#a0e9ff";
+        else if (pet.vision === 'Electro') glowColor = "#d28fd6";
+        else if (pet.vision === 'Geo') glowColor = "#e3b342";
+        else if (pet.vision === 'Hydro') glowColor = "#4cc2f1";
+        else if (pet.vision === 'Dendro') glowColor = "#a5c83b";
 
         card.innerHTML = `
             <div class="pet-card-main">
                 <div class="pet-card-left">
                     <div class="pet-icon-wrapper">
                         <img src="${pet.icon}" alt="${pet.name}" class="pet-chibi" draggable="false">
+                        <div class="vision-tag" style="background: ${glowColor}; color: #000;">
+                            ${pet.vision}
+                        </div>
                     </div>
                     <div class="pet-info">
                         <strong class="pet-name">${pet.name}</strong>
