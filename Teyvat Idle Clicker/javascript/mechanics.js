@@ -94,8 +94,27 @@ function buyShopItem(index) {
     }
 
     let item = game.shopItems[index];
+
+    // Define rates for price scaling
+    const rates = {
+        'time_warp': 2,
+        'seelie': 2.5,
+        'buff_pot': 2,
+        'primordial_shard': 3
+    };
+    const rate = rates[item.id] || 2;
+
     if (game.primos >= item.cost) {
+        // --- SEELIE MAX CHECK ---
+        if (item.id === 'seelie' && (item.level || 0) >= 3) {
+            showNotification("You can only carry 3 Seelies at a time!");
+            return;
+        }
+
         game.primos -= item.cost;
+
+        // Initialize level if it doesn't exist, then increment
+        item.level = (item.level || 0) + 1;
 
         // --- SPECIAL EFFECTS ---
         if (item.id === 'time_warp') {
@@ -106,32 +125,26 @@ function buyShopItem(index) {
             if (timePassed < cooldown) {
                 const minutesLeft = Math.ceil((cooldown - timePassed) / 60000);
                 showNotification(`Time Warp is on cooldown! Wait ${minutesLeft}m.`);
-                return; // Stop the purchase
+                // Refund since we stopped the purchase
+                game.primos += item.cost;
+                item.level--;
+                return;
             }
 
-            // --- If not on cooldown, proceed with the warp ---
             let totalPPS = 0;
             game.generators.forEach(g => totalPPS += (g.income * g.count));
             let bonus = (totalPPS * game.multiplier) * 1800;
 
             game.primos += bonus;
             game.lastWarpTime = now;
-            item.cost = Math.floor(item.cost * 2);
             showNotification(`Time Warped! Gained ${Math.floor(bonus).toLocaleString()} Primos!`);
         }
 
         if (item.id === 'seelie') {
-            if ((game.seelies || 0) >= 3) {
-                showNotification("You can only carry 3 Seelies at a time!");
-                return;
-            }
+            game.seelies = item.level;
+            showNotification(`Seelie #${item.level} joined your journey!`);
 
-            game.seelies = (game.seelies || 0) + 1;
-            item.cost = Math.ceil(item.cost * 2.5);
-
-            showNotification(`Seelie #${game.seelies} joined your journey!`);
-
-            if (game.seelies === 3) {
+            if (item.level >= 3) {
                 item.name = "Follower Seelie (MAX)";
                 item.desc = "You have reached the maximum number of Seelies.";
             }
@@ -139,7 +152,6 @@ function buyShopItem(index) {
 
         if (item.id === 'buff_pot') {
             game.clickMultiplier = (game.clickMultiplier || 1) + 0.5;
-            item.cost = Math.floor(item.cost * 2);
             showNotification("Consumed Adepti's Temptation! Click power increased.");
         }
 
@@ -147,9 +159,11 @@ function buyShopItem(index) {
             game.generators.forEach(gen => {
                 gen.income *= 1.1;
             });
-            item.cost = Math.floor(item.cost * 3);
             showNotification("Primordial Shard fused! All generators are 10% more effective.");
         }
+
+        // --- SCALE COST FOR NEXT PURCHASE ---
+        item.cost = Math.floor(item.cost * rate);
 
         updateUI();
         renderShopItems();
@@ -274,6 +288,12 @@ function ascend() {
         gen.cost = getBaseCost(gen.id);
     });
 
+    game.shopItems.forEach(item => {
+        item.level = 0;
+        item.cost = getBaseCost(item.id);
+        if (item.id === 'seelie') item.name = "Follower Seelie";
+    });
+
     updateUI();
     saveCloudGame();
     showNotification(`Ascension Complete! Gained ${Math.floor(pointsGained)} points. Multiplier +${(pointsGained * 5).toFixed(1)}%.`);
@@ -294,13 +314,18 @@ function getBaseCost(id) {
         'lamp': 300,
         'sunsettia': 1000,
         'common_chest': 5000,
-        'exquisite_chest': 25000
+        'exquisite_chest': 25000,
+
+        // --- Shop Items ---
+        'time_warp': 20000,
+        'seelie': 150000,
+        'buff_pot': 300000,
+        'primordial_shard': 750000
     };
     return baseCosts[id] || 100;
 }
 
 // --- PET CORE MECHANICS ---
-
 function handleAutoPetStrikes() {
     // Raiden Shogun: 10% Click Power every 1s
     if (game.activePets.includes('raiden')) {
