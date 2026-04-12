@@ -151,6 +151,40 @@ function buyShopItem(index) {
     }
 }
 
+function buyPet(petId) {
+    const petData = game.pets.find(p => p.id === petId);
+    if (!petData) return;
+
+    // Use the exact cost from your config (no more 5000 fallback)
+    const cost = petData.cost;
+
+    if (game.ownedPets.includes(petId)) {
+        showNotification("This companion is already in your party!");
+        return;
+    }
+
+    if (game.primos >= cost) {
+        game.primos -= cost;
+        game.ownedPets.push(petId);
+        
+        // --- ACTIVE PARTY LOGIC ---
+        if (game.activePets.length < 4) {
+            game.activePets.push(petId);
+            showNotification(`${petData.name} joined your active party!`);
+        } else {
+            showNotification(`${petData.name} obtained! Party is full.`);
+        }
+        
+        // Update everything
+        renderPetShop();
+        if (typeof renderPets === 'function') renderPets();
+        updateUI();
+        saveCloudGame();
+    } else {
+        showNotification("Not enough Primogems for this Fate!");
+    }
+}
+
 // --- SEELIE AUTO-CLICKER SYSTEM ---
 setInterval(() => {
     if (!isLoggedIn || !game.seelies || game.seelies <= 0) return;
@@ -332,6 +366,14 @@ function renderShopItems() {
     if (!container) return;
     container.innerHTML = '';
 
+    // Ensure items exist in the game object
+    if (!game.shopItems || game.shopItems.length === 0) {
+        game.shopItems = [
+            { id: 'time_warp', name: 'Time Warp', cost: 500, desc: 'Instantly gain 30 minutes of passive income.' },
+            { id: 'seelie', name: 'Follower Seelie', cost: 1000, desc: 'A floating companion. Max 3.' }
+        ];
+    }
+
     game.shopItems.forEach((item, index) => {
         const card = document.createElement('div');
 
@@ -354,17 +396,17 @@ function renderShopItems() {
         const isMaxSeelie = item.id === 'seelie' && (game.seelies || 0) >= 3;
         const canAfford = game.primos >= item.cost;
 
-        // Disable if: Can't afford OR Max Seelies OR On Cooldown
+        // Matches your .upgrade-card.disabled CSS
         card.className = `upgrade-card ${(!canAfford || isMaxSeelie || isOnCooldown) ? 'disabled' : ''}`;
 
-        // Determine what to display in the cost area
         let costDisplay;
         if (isMaxSeelie) {
             costDisplay = `<span class="highlight">MAXED</span>`;
         } else if (isOnCooldown) {
             costDisplay = `<span class="highlight">${cooldownText}</span>`;
         } else {
-            costDisplay = `Cost: <span class="highlight">${item.cost.toLocaleString()}</span>`;
+            // Using formatNumbers for consistent 1.0K, 1.0M styling
+            costDisplay = `Cost: <span class="highlight">${formatNumbers(item.cost)}</span>`;
         }
 
         card.innerHTML = `
@@ -388,6 +430,64 @@ function renderShopItems() {
         };
 
         container.appendChild(card);
+    });
+}
+
+function renderPetShop() {
+    const container4 = document.getElementById('pet-shop-list-4');
+    const container5 = document.getElementById('pet-shop-list-5');
+    if (!container4 || !container5) return;
+
+    container4.innerHTML = '';
+    container5.innerHTML = '';
+
+    const availablePets = game.pets.filter(pet => !game.ownedPets.includes(pet.id));
+
+    availablePets.forEach((pet) => {
+        const card = document.createElement('div');
+        const cost = pet.cost;
+        const canAfford = game.primos >= cost;
+        const is5Star = pet.rarity === 5;
+
+        // Apply rarity class for styling
+        card.className = `upgrade-card ${is5Star ? 'rarity-5' : 'rarity-4'} ${!canAfford ? 'disabled' : ''}`;
+
+        card.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 15px; pointer-events: none;">
+                <img src="${pet.icon}" alt="${pet.name}" style="width: 60px; height: 60px; object-fit: contain;">
+                <div>
+                    <strong style="color: ${is5Star ? '#ffb13f' : '#a256e1'}">${pet.name}</strong>
+                    <small style="display: block; color: var(--text-gray); margin-top: 2px;">
+                        ${pet.vision} Companion
+                    </small>
+                </div>
+            </div>
+            <div style="pointer-events: none; text-align: right;">
+                <span class="highlight" style="font-size: 1.1rem;">${formatNumbers(cost)}</span>
+                <br><small style="font-size: 0.6rem; opacity: 0.6;">PRIMOGEMS</small>
+            </div>
+        `;
+
+        card.onclick = () => {
+            if (game.primos >= cost) {
+                game.primos -= cost;
+                game.ownedPets.push(pet.id);
+                showNotification(`${pet.name} has joined your party!`);
+                renderPetShop(); 
+                if (typeof renderPets === 'function') renderPets();
+                updateUI();
+                saveCloudGame();
+            } else {
+                showNotification("Not enough Primogems!");
+            }
+        };
+
+        // Send to the correct container based on rarity
+        if (is5Star) {
+            container5.appendChild(card);
+        } else {
+            container4.appendChild(card);
+        }
     });
 }
 
@@ -563,4 +663,50 @@ function updateSidebarParty() {
             miniList.appendChild(img);
         }
     });
+}
+
+// --- PARTY & BUFF LOGIC ---
+
+function calculatePetBuffs() {
+    let clickMult = 1;
+    let ppsMult = 1;
+
+    // Loop through active IDs and find their data in the config
+    game.activePets.forEach(petId => {
+        const pet = game.pets.find(p => p.id === petId);
+        if (!pet) return;
+
+        if (pet.buffType === 'click') {
+            clickMult += pet.buffValue; 
+        } else if (pet.buffType === 'pps_mult') {
+            ppsMult *= pet.buffValue;
+        } else if (pet.buffType === 'global_mult') {
+            ppsMult *= pet.buffValue;
+            clickMult += (pet.buffValue - 1);
+        }
+    });
+
+    return { clickMult, ppsMult };
+}
+
+function updatePartySidebar() {
+    const slotText = document.querySelector('.active-party small');
+    if (slotText) {
+        slotText.innerText = `Slots Used: ${game.activePets.length}/4`;
+    }
+
+    const partyContainer = document.getElementById('party-icons-sidebar');
+    if (partyContainer) {
+        partyContainer.innerHTML = '';
+        game.activePets.forEach(petId => {
+            const pet = game.pets.find(p => p.id === petId);
+            if (pet) {
+                partyContainer.innerHTML += `
+                    <img src="${pet.icon}" 
+                         class="sidebar-pet-icon" 
+                         style="width: 40px; height: 40px; margin: 5px; border-radius: 50%; border: 1px solid var(--accent-blue);" 
+                         title="${pet.name}">`;
+            }
+        });
+    }
 }
