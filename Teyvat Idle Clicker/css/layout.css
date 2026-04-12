@@ -1,3 +1,18 @@
+/* 1. Hide scrollbar for Chrome, Safari, and newer Edge */
+*::-webkit-scrollbar {
+    display: none;
+}
+
+/* 2. Hide scrollbar for Firefox */
+* {
+    scrollbar-width: none;
+}
+
+/* 3. Hide scrollbar for IE and old Edge */
+* {
+    -ms-overflow-style: none;
+}
+
 nav,
 aside {
     width: 200px;
@@ -50,6 +65,28 @@ main {
     justify-content: flex-start !important;
     padding-top: 140px !important;
     height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+}
+
+#shop-panel h3 {
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#shop-panel h3::after {
+    content: "";
+    flex-grow: 1;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent);
+    margin-right: 20px;
 }
 
 #home-panel.active {
