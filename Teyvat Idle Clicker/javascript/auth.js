@@ -51,7 +51,7 @@ function openProfile() {
             settingsOverlay.style.display = 'none';
         }
         // -----------------------
-        
+
     } else {
         showNotification("Please login to view profile!");
     }
@@ -124,17 +124,17 @@ async function handleAuth(type) {
         if (type === 'register') {
             game.playerName = username; // Preserving your username field assignment
             const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
-            
+
             await userCredential.user.sendEmailVerification();
             await db.collection("users").doc(userCredential.user.uid).set(game);
-            
+
             showNotification(`Ad Astra Abyssosque, ${game.playerName}!`);
         } else {
             // Logic for existing users logging back in
             await auth.signInWithEmailAndPassword(email, pass);
             showNotification("Welcome back, Traveler!");
         }
-        
+
         document.getElementById('auth-overlay').style.display = 'none';
     } catch (error) {
         showNotification(error.message);
@@ -213,9 +213,23 @@ async function loadCloudGame(uid) {
             if (!cloudData.shopItems[index]) {
                 cloudData.shopItems.push(localShop);
             } else {
-                cloudData.shopItems[index].name = localShop.name;
-                cloudData.shopItems[index].desc = localShop.desc;
-                cloudData.shopItems[index].cost = localShop.cost;
+                let item = cloudData.shopItems[index];
+                item.name = localShop.name;
+                item.desc = localShop.desc;
+
+                const baseCosts = { 'time_warp': 20000, 'seelie': 150000, 'buff_pot': 300000, 'primordial_shard': 750000 };
+                const rates = { 'time_warp': 2, 'seelie': 2.5, 'buff_pot': 2, 'primordial_shard': 3 };
+
+                let base = baseCosts[item.id] || 100000;
+                let rate = rates[item.id] || 2;
+
+                // Set the cost based on the level saved in the cloud
+                item.cost = Math.floor(base * Math.pow(rate, item.level || 0));
+
+                // Sync Seelie MAX text if necessary
+                if (item.id === 'seelie' && (item.level || 0) >= 3) {
+                    item.name = "Follower Seelie (MAX)";
+                }
             }
         });
 
@@ -301,8 +315,8 @@ async function changeEmail() {
     try {
         await user.updateEmail(newEmail);
         showNotification("Email updated! A confirmation was sent to your old address.");
-        
-        game.playerEmail = newEmail; 
+
+        game.playerEmail = newEmail;
         saveCloudGame();
     } catch (error) {
         if (error.code === 'auth/requires-recent-login') {
