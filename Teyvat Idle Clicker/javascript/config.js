@@ -89,5 +89,22 @@ let game = {
         { id: 'raiden', name: 'Raiden', rarity: 5, vision: 'Electro', cost: 350000000, buffType: 'auto_burst', buffValue: 0.10, interval: 1000, icon: 'img/pets/raiden_chibi.png' },
         { id: 'skirk', name: 'Skirk', rarity: 5, vision: 'Abyss', cost: 350000000, buffType: 'crit', buffValue: 3.0, icon: 'img/pets/skirk_chibi.png' },
         { id: 'xilonen', name: 'Xilo', rarity: 5, vision: 'Geo', cost: 400000000, buffType: 'prestige_perm', buffValue: 0.25, icon: 'img/pets/xilonen_chibi.png' }
-    ]
+    ],
+
+    bgmList: [
+        { id: 1, title: "Chasm Lullaby", file: "sounds/bgm/Chasm Lullaby.mp3" },
+        { id: 2, title: "Columbina's Lullaby", file: "sounds/bgm/Columbina's Lullaby  Genshin Impact Ver. 6.0 Luna I OST.mp3" },
+        { id: 3, title: "Dragonspine Ice Crystal (Piano)", file: "sounds/bgm/Dragonspine Ice Crystal (Piano).mp3" },
+        { id: 4, title: "Dusk in Mondstadt", file: "sounds/bgm/Dusk in Mondstadt.mp3" },
+        { id: 5, title: "Falls of Maples", file: "sounds/bgm/Falls of Maples.mp3" },
+        { id: 6, title: "Genshin Impact Main Theme", file: "sounds/bgm/Genshin Impact Main Theme - Yu-Peng Chen.mp3" },
+        { id: 7, title: "Innocent Age", file: "sounds/bgm/Innocent Age.mp3" },
+        { id: 8, title: "Journey into Sweet Dreams", file: "sounds/bgm/Journey into Sweet Dreams.mp3" },
+        { id: 9, title: "Lovers' Oath", file: "sounds/bgm/Lovers' Oath.mp3" },
+        { id: 10, title: "Sumeru City Lullaby (Piano)", file: "sounds/bgm/Sumeru City Lullaby (Piano Version).mp3" },
+        { id: 11, title: "Sumeru City Relaxing Night (Harp)", file: "sounds/bgm/Sumeru City Relaxing Night (Harp Version).mp3" },
+    ],
+    currentTrackIndex: 0,
+    bgmVolume: 0.5,
+    isMusicMuted: false
 };
