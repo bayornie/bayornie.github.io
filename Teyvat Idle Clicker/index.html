@@ -273,10 +273,74 @@
                 </div>
             </div>
 
+            <div id="profile-settings-content"
+                style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #444;">
+                <h3 style="color: #ecd078; font-size: 1rem; margin-bottom: 10px;">Account Settings</h3>
+                <button class="auth-btn" style="background: #4a90e2; margin-bottom: 10px;"
+                    onclick="sendVerification()">Verify Email</button>
+                <input type="email" id="new-email-input" placeholder="New Email Address"
+                    style="width: 100%; margin-bottom: 5px;">
+                <button class="auth-btn" style="background: #e67e22;" onclick="changeEmail()">Update Email</button>
+            </div>
+
+            <button class="auth-btn neon-glow" onclick="toggleProfileView()">Settings</button>
+
             <button class="auth-btn neon-glow"
                 onclick="document.getElementById('profile-overlay').style.display='none'">
                 Close
             </button>
+        </div>
+    </div>
+
+    <div id="settings-overlay" class="auth-overlay" style="display: none;">
+        <div class="auth-card profile-card lively-ui" style="width: 450px;">
+            <div class="profile-header">
+                <div class="header-line"></div>
+                <h2>Account Settings</h2>
+                <div class="header-line"></div>
+            </div>
+
+            <div class="settings-content" style="width: 100%; margin-top: 20px;">
+                <div class="settings-group">
+                    <h3 style="color: #6ee7b7; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 15px;">Email
+                        Security</h3>
+
+                    <button class="auth-btn" style="background: #4a90e2; margin-bottom: 15px;"
+                        onclick="sendVerification()">
+                        Resend Verification Email
+                    </button>
+
+                    <div style="margin-bottom: 10px; text-align: left;">
+                        <label style="font-size: 0.8rem; color: #bdc2c6;">Update Email Address</label>
+                        <input type="email" id="settings-new-email" placeholder="Enter new email"
+                            style="margin-top: 5px;">
+                    </div>
+                    <button class="auth-btn" style="background: #e67e22;" onclick="changeEmail()">
+                        Update Email
+                    </button>
+                </div>
+
+                <div class="stats-divider" style="margin: 25px 0;"></div>
+
+                <div class="settings-group">
+                    <h3 style="color: #6ee7b7; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 15px;">Game
+                        Preferences</h3>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <span>Particle Effects</span>
+                        <button class="btn-mult" onclick="toggleParticles()">ON</button>
+                    </div>
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <span>Volume</span>
+                        <input type="range" min="0" max="100" value="50" style="width: 60%; margin: 0;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-actions" style="width: 100%; margin-top: 20px;">
+                <button class="auth-btn neon-glow" onclick="closeSettings()">Back to Profile</button>
+            </div>
         </div>
     </div>
 
