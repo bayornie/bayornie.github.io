@@ -10,7 +10,7 @@ function buyClickUpgrade(index) {
     const rate = up.rate || 1.5;
 
     let countToBuy = buyAmount === 'max' ? getMaxAffordable(game.primos, up.cost, rate) : buyAmount;
-    
+
     if (countToBuy < 1) {
         if (buyAmount !== 'max') showNotification("Not enough Primogems!");
         return;
@@ -22,7 +22,7 @@ function buyClickUpgrade(index) {
         game.primos -= totalCost;
         up.level += countToBuy;
         game.clickPower += (up.power * countToBuy);
-        up.cost *= Math.pow(rate, countToBuy); 
+        up.cost *= Math.pow(rate, countToBuy);
         updateUI();
         saveCloudGame();
     } else if (buyAmount !== 'max') {
@@ -41,7 +41,7 @@ function buyGenerator(index) {
     const rate = gen.rate || 1.75;
 
     let countToBuy = buyAmount === 'max' ? getMaxAffordable(game.primos, gen.cost, rate) : buyAmount;
-    
+
     if (countToBuy < 1) {
         if (buyAmount !== 'max') showNotification("Not enough Primogems!");
         return;
@@ -166,7 +166,7 @@ function buyPet(petId) {
     if (game.primos >= cost) {
         game.primos -= cost;
         game.ownedPets.push(petId);
-        
+
         // --- ACTIVE PARTY LOGIC ---
         if (game.activePets.length < 4) {
             game.activePets.push(petId);
@@ -174,7 +174,7 @@ function buyPet(petId) {
         } else {
             showNotification(`${petData.name} obtained! Party is full.`);
         }
-        
+
         // Update everything
         renderPetShop();
         if (typeof renderPets === 'function') renderPets();
@@ -189,38 +189,24 @@ function buyPet(petId) {
 setInterval(() => {
     if (!isLoggedIn || !game.seelies || game.seelies <= 0) return;
 
-    // --- CHANGE: Use the new helper function instead of manual math ---
     let currentClickPower = getFinalClickPower();  
     let totalSeelieGain = currentClickPower * game.seelies;
 
-    // 4. Update game state
     game.primos += totalSeelieGain;
     game.totalPrimosEver += totalSeelieGain;
     
-    // Handle Raiden & Fischl strikes here too if you want them in the same loop
     handleAutoPetStrikes(); 
 
     updateUI();
 
-    // Optional: Spawn a visual indicator for the Seelie click
-    // spawnText(window.innerWidth / 2, window.innerHeight / 2, `+${formatNumbers(totalSeelieGain)}`);
+    // --- ACTIVATED: Visual indicator for the Seelie click ---
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    spawnText(centerX, centerY, `+${formatNumbers(totalSeelieGain)} ✨`);
 
 }, 3000);
 
-function spawnText(x, y, txt) {
-    const el = document.createElement('div');
-    el.className = 'float-text';
-    el.innerText = txt;
-    const randomX = (Math.random() - 0.5) * 40;
-    const randomY = (Math.random() - 0.5) * 20;
-    el.style.left = (x + randomX) + 'px';
-    el.style.top = (y + randomY) + 'px';
-    document.body.appendChild(el);
-    setTimeout(() => { el.remove(); }, 800);
-}
-
 // --- PRESTIGE SYSTEM ---
-
 function ascend() {
     if (!isLoggedIn) {
         showNotification("Login to reach Ascension!");
@@ -239,7 +225,8 @@ function ascend() {
     game.prestigePoints = (game.prestigePoints || 0) + pointsGained;
 
     // 4. Update the Multiplier (Permanent Buff)
-    game.multiplier += (pointsGained * 0.1);
+    // Updated: Now adds 0.05 (5%) per point gained
+    game.multiplier += (pointsGained * 0.05);
 
     // 5. Reset Progress (Sacrifice)
     game.primos = 0;
@@ -259,7 +246,8 @@ function ascend() {
     // 6. Refresh everything
     updateUI();
     saveCloudGame();
-    showNotification(`Ascension Complete! Multiplier increased by ${pointsGained * 10}%.`);
+    // Updated notification to show 5% per point
+    showNotification(`Ascension Complete! Multiplier increased by ${pointsGained * 5}%.`);
 }
 
 // Helper to get initial costs for the reset
@@ -280,245 +268,6 @@ function getBaseCost(id) {
         'exquisite_chest': 25000
     };
     return baseCosts[id] || 100;
-}
-
-// --- RENDERING FUNCTIONS ---
-
-function renderList(containerId, data, clickFn) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    const existingCards = container.querySelectorAll('.upgrade-card');
-
-    data.forEach((item, index) => {
-        // --- THE UPDATE: DYNAMIC RATE ---
-        // It looks for item.rate first. If it's missing, it uses your old defaults.
-        const rate = item.rate || (item.power ? 1.5 : 1.75);
-
-        let displayAmt = buyAmount === 'max' ? getMaxAffordable(game.primos, item.cost, rate) : buyAmount;
-        let effectiveAmt = (displayAmt <= 0) ? 1 : displayAmt;
-        let totalCost = getMultiCost(item.cost, rate, effectiveAmt);
-        const canAfford = game.primos >= totalCost;
-        let displayLvl = item.level !== undefined ? item.level : item.count;
-
-        let card = existingCards[index];
-
-        if (!card) {
-            card = document.createElement('div');
-            card.className = 'upgrade-card';
-            container.appendChild(card);
-        }
-
-        card.classList.toggle('disabled', !canAfford);
-
-        const newHTML = `
-            <div>
-                <strong>${item.name}</strong><br>
-                <small>${item.power ? '+' + item.power + ' Click' : '+' + item.income.toFixed(1) + '/s'}</small><br>
-                <small style="color: #64ffbf;">Buying: ${displayAmt}x</small>
-            </div>
-            <div>
-                <span>Cost: <span class="cost-val">${formatNumbers(totalCost)}</span></span><br>
-                <small>Lvl: <span class="lvl-val">${displayLvl}</span></small>
-            </div>
-        `;
-
-        if (card.innerHTML !== newHTML) {
-            card.innerHTML = newHTML;
-        }
-
-        card.onclick = () => {
-            if (canAfford) {
-                clickFn(index);
-                updateUI(); 
-            } else {
-                showNotification("Not enough Primogems!");
-            }
-        };
-    });
-}
-
-function renderPrestigeUpgrades() {
-    const container = document.getElementById('prestige-upgrades');
-    if (!container) return;
-    container.innerHTML = '';
-
-    game.blessings.forEach((blessing, index) => {
-        const card = document.createElement('div');
-        card.className = `upgrade-card ${game.prestigePoints < blessing.cost ? 'disabled' : ''}`;
-        card.innerHTML = `
-            <div>
-                <strong>${blessing.name}</strong><br>
-                <small>${blessing.desc}</small>
-            </div>
-            <div>
-                <span>Cost: <span class="highlight">${blessing.cost} PP</span></span><br>
-                <small>Lvl: ${blessing.level}</small>
-            </div>
-        `;
-        card.onclick = () => buyBlessing(index);
-        container.appendChild(card);
-    });
-}
-
-function renderShopItems() {
-    const container = document.getElementById('shop-items');
-    if (!container) return;
-    container.innerHTML = '';
-
-    // Ensure items exist in the game object
-    if (!game.shopItems || game.shopItems.length === 0) {
-        game.shopItems = [
-            { id: 'time_warp', name: 'Time Warp', cost: 500, desc: 'Instantly gain 30 minutes of passive income.' },
-            { id: 'seelie', name: 'Follower Seelie', cost: 1000, desc: 'A floating companion. Max 3.' }
-        ];
-    }
-
-    game.shopItems.forEach((item, index) => {
-        const card = document.createElement('div');
-
-        // --- COOLDOWN LOGIC ---
-        let isOnCooldown = false;
-        let cooldownText = "";
-
-        if (item.id === 'time_warp' && game.lastWarpTime) {
-            const now = Date.now();
-            const cooldownPeriod = 3600000; // 1 hour in ms
-            const timePassed = now - game.lastWarpTime;
-
-            if (timePassed < cooldownPeriod) {
-                isOnCooldown = true;
-                const minsLeft = Math.ceil((cooldownPeriod - timePassed) / 60000);
-                cooldownText = `Ready in ${minsLeft}m`;
-            }
-        }
-
-        const isMaxSeelie = item.id === 'seelie' && (game.seelies || 0) >= 3;
-        const canAfford = game.primos >= item.cost;
-
-        // Matches your .upgrade-card.disabled CSS
-        card.className = `upgrade-card ${(!canAfford || isMaxSeelie || isOnCooldown) ? 'disabled' : ''}`;
-
-        let costDisplay;
-        if (isMaxSeelie) {
-            costDisplay = `<span class="highlight">MAXED</span>`;
-        } else if (isOnCooldown) {
-            costDisplay = `<span class="highlight">${cooldownText}</span>`;
-        } else {
-            // Using formatNumbers for consistent 1.0K, 1.0M styling
-            costDisplay = `Cost: <span class="highlight">${formatNumbers(item.cost)}</span>`;
-        }
-
-        card.innerHTML = `
-            <div>
-                <strong>${item.name}</strong><br>
-                <small>${item.desc}</small>
-            </div>
-            <div>
-                <span>${costDisplay}</span>
-            </div>
-        `;
-
-        card.onclick = () => {
-            if (isMaxSeelie) {
-                showNotification("You already have the maximum number of Seelies!");
-            } else if (isOnCooldown) {
-                showNotification("This item is still on cooldown!");
-            } else {
-                buyShopItem(index);
-            }
-        };
-
-        container.appendChild(card);
-    });
-}
-
-function renderPetShop() {
-    const container4 = document.getElementById('pet-shop-list-4');
-    const container5 = document.getElementById('pet-shop-list-5');
-    if (!container4 || !container5) return;
-
-    container4.innerHTML = '';
-    container5.innerHTML = '';
-
-    const availablePets = game.pets.filter(pet => !game.ownedPets.includes(pet.id));
-
-    availablePets.forEach((pet) => {
-        const card = document.createElement('div');
-        const cost = pet.cost;
-        const canAfford = game.primos >= cost;
-        const is5Star = pet.rarity === 5;
-
-        // Apply rarity class for styling
-        card.className = `upgrade-card ${is5Star ? 'rarity-5' : 'rarity-4'} ${!canAfford ? 'disabled' : ''}`;
-
-        card.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 15px; pointer-events: none;">
-                <img src="${pet.icon}" alt="${pet.name}" style="width: 60px; height: 60px; object-fit: contain;">
-                <div>
-                    <strong style="color: ${is5Star ? '#ffb13f' : '#a256e1'}">${pet.name}</strong>
-                    <small style="display: block; color: var(--text-gray); margin-top: 2px;">
-                        ${pet.vision} Companion
-                    </small>
-                </div>
-            </div>
-            <div style="pointer-events: none; text-align: right;">
-                <span class="highlight" style="font-size: 1.1rem;">${formatNumbers(cost)}</span>
-                <br><small style="font-size: 0.6rem; opacity: 0.6;">PRIMOGEMS</small>
-            </div>
-        `;
-
-        card.onclick = () => {
-            if (game.primos >= cost) {
-                game.primos -= cost;
-                game.ownedPets.push(pet.id);
-                showNotification(`${pet.name} has joined your party!`);
-                renderPetShop(); 
-                if (typeof renderPets === 'function') renderPets();
-                updateUI();
-                saveCloudGame();
-            } else {
-                showNotification("Not enough Primogems!");
-            }
-        };
-
-        // Send to the correct container based on rarity
-        if (is5Star) {
-            container5.appendChild(card);
-        } else {
-            container4.appendChild(card);
-        }
-    });
-}
-
-function setBuyAmount(amt) {
-    buyAmount = amt;
-    
-    // Update button visuals
-    document.querySelectorAll('.btn-mult').forEach(btn => {
-        const btnText = btn.innerText.toLowerCase().replace('x', '');
-        const targetText = amt.toString().toLowerCase();
-        
-        if (btnText === targetText) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
-    });
-
-    if (typeof updateUI === "function") {
-        updateUI();
-    }
-}
-
-function getMultiCost(baseCost, rate, count) {
-    return baseCost * (Math.pow(rate, count) - 1) / (rate - 1);
-}
-
-function getMaxAffordable(primos, currentCost, rate) {
-    if (primos < currentCost) return 0;
-    let n = Math.floor(Math.log((primos * (rate - 1) / currentCost) + 1) / Math.log(rate));
-    return n;
 }
 
 // --- PET CORE MECHANICS ---
@@ -571,7 +320,7 @@ function togglePetEquip(petId) {
         }
     }
     updateUI();
-    saveCloudGame(); 
+    saveCloudGame();
 }
 
 function getFinalClickPower() {
@@ -587,82 +336,12 @@ function getFinalClickPower() {
     let finalPower = base * multiplier * petBonus;
 
     if (game.activePets && game.activePets.includes('skirk')) {
-        if (Math.random() < 0.10) { 
-            return finalPower * 3.0; 
+        if (Math.random() < 0.10) {
+            return finalPower * 3.0;
         }
     }
 
     return finalPower;
-}
-
-function renderPets() {
-    const container = document.getElementById('pets-grid');
-    if (!container) return;
-    container.innerHTML = '';
-
-    // Loop through the pet data from your config
-    config.pets.forEach(pet => {
-        const isOwned = game.ownedPets.includes(pet.id);
-        const isActive = game.activePets.includes(pet.id);
-        
-        const card = document.createElement('div');
-        card.className = `pet-card rarity-${pet.rarity} ${!isOwned ? 'locked' : ''} ${isActive ? 'active' : ''}`;
-        
-        const visionColors = { 
-            Anemo: '#64ffbf', Pyro: '#ff6464', Hydro: '#64c9ff', 
-            Electro: '#d164ff', Dendro: '#a2ff64', Cryo: '#64f7ff', Geo: '#ffe164' 
-        };
-        const glowColor = visionColors[pet.vision] || '#ffffff';
-        if (isActive) card.style.boxShadow = `0 0 15px ${glowColor}`;
-
-        card.innerHTML = `
-            <div class="pet-icon-wrapper">
-                <img src="${pet.icon}" class="pet-chibi" alt="${pet.name}" draggable="false">
-                <div class="vision-tag" style="background: ${glowColor}">${pet.vision}</div>
-            </div>
-            <div class="pet-info">
-                <div class="pet-name">${pet.name}</div>
-                <div class="pet-buff-desc">${pet.buffDesc || 'No buff info available'}</div>
-                <button class="equip-btn">
-                    ${isActive ? 'UNEQUIP' : (isOwned ? 'EQUIP' : 'LOCKED')}
-                </button>
-            </div>
-        `;
-
-        card.onclick = () => {
-            if (isOwned) {
-                togglePetEquip(pet.id);
-                renderPets();
-                updateSidebarParty();
-            } else {
-                showNotification("This companion hasn't joined you yet!");
-            }
-        };
-
-        container.appendChild(card);
-    });
-
-    document.getElementById('party-count').innerText = game.activePets.length;
-}
-
-function updateSidebarParty() {
-    const sidebarCount = document.getElementById('sidebar-party-count');
-    if (sidebarCount) sidebarCount.innerText = `${game.activePets.length}/4`;
-
-    const miniList = document.getElementById('active-pets-mini');
-    if (!miniList) return;
-    miniList.innerHTML = '';
-
-    game.activePets.forEach(petId => {
-        const petData = config.pets.find(p => p.id === petId);
-        if (petData) {
-            const img = document.createElement('img');
-            img.src = petData.icon;
-            img.className = 'mini-pet-icon';
-            img.title = petData.name;
-            miniList.appendChild(img);
-        }
-    });
 }
 
 // --- PARTY & BUFF LOGIC ---
@@ -677,7 +356,7 @@ function calculatePetBuffs() {
         if (!pet) return;
 
         if (pet.buffType === 'click') {
-            clickMult += pet.buffValue; 
+            clickMult += pet.buffValue;
         } else if (pet.buffType === 'pps_mult') {
             ppsMult *= pet.buffValue;
         } else if (pet.buffType === 'global_mult') {
@@ -687,26 +366,4 @@ function calculatePetBuffs() {
     });
 
     return { clickMult, ppsMult };
-}
-
-function updatePartySidebar() {
-    const slotText = document.querySelector('.active-party small');
-    if (slotText) {
-        slotText.innerText = `Slots Used: ${game.activePets.length}/4`;
-    }
-
-    const partyContainer = document.getElementById('party-icons-sidebar');
-    if (partyContainer) {
-        partyContainer.innerHTML = '';
-        game.activePets.forEach(petId => {
-            const pet = game.pets.find(p => p.id === petId);
-            if (pet) {
-                partyContainer.innerHTML += `
-                    <img src="${pet.icon}" 
-                         class="sidebar-pet-icon" 
-                         style="width: 40px; height: 40px; margin: 5px; border-radius: 50%; border: 1px solid var(--accent-blue);" 
-                         title="${pet.name}">`;
-            }
-        });
-    }
 }
