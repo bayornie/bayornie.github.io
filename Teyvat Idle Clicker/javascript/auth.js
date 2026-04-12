@@ -43,10 +43,28 @@ function openProfile() {
             document.getElementById('prof-per-sec').innerText = formatNumbers(finalPPS);
         }
 
+        // --- UPDATED SECTION ---
+        // Show profile and ensure settings is hidden
         document.getElementById('profile-overlay').style.display = 'flex';
+        const settingsOverlay = document.getElementById('settings-overlay');
+        if (settingsOverlay) {
+            settingsOverlay.style.display = 'none';
+        }
+        // -----------------------
+        
     } else {
         showNotification("Please login to view profile!");
     }
+}
+
+function toggleProfileView() {
+    document.getElementById('profile-overlay').style.display = 'none';
+    document.getElementById('settings-overlay').style.display = 'flex';
+}
+
+function closeSettings() {
+    document.getElementById('settings-overlay').style.display = 'none';
+    document.getElementById('profile-overlay').style.display = 'flex';
 }
 
 function handleLogout() {
@@ -107,7 +125,7 @@ async function handleAuth(type) {
             game.playerName = username; // Preserving your username field assignment
             const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
             
-            // Saves the full game object to the new user document
+            await userCredential.user.sendEmailVerification();
             await db.collection("users").doc(userCredential.user.uid).set(game);
             
             showNotification(`Ad Astra Abyssosque, ${game.playerName}!`);
@@ -249,8 +267,50 @@ function toggleAuth() {
 window.onclick = function (event) {
     const authOverlay = document.getElementById('auth-overlay');
     const profOverlay = document.getElementById('profile-overlay');
+    const settingsOverlay = document.getElementById('settings-overlay');
+
     if (event.target == authOverlay) authOverlay.style.display = "none";
     if (event.target == profOverlay) profOverlay.style.display = "none";
+    if (event.target == settingsOverlay) settingsOverlay.style.display = "none";
+}
+
+// --- SEND VERIFICATION EMAIL ---
+function sendVerification() {
+    const user = auth.currentUser;
+    if (user) {
+        user.sendEmailVerification()
+            .then(() => {
+                showNotification("Verification link sent! Check your inbox.");
+            })
+            .catch((error) => {
+                showNotification("Error: " + error.message);
+            });
+    }
+}
+
+// --- UPDATE EMAIL ADDRESS ---
+async function changeEmail() {
+    const user = auth.currentUser;
+    const newEmail = document.getElementById('new-email-input').value;
+
+    if (!newEmail) {
+        showNotification("Please enter a new email address.");
+        return;
+    }
+
+    try {
+        await user.updateEmail(newEmail);
+        showNotification("Email updated! A confirmation was sent to your old address.");
+        
+        game.playerEmail = newEmail; 
+        saveCloudGame();
+    } catch (error) {
+        if (error.code === 'auth/requires-recent-login') {
+            showNotification("Security sensitive! Please logout and log back in to change email.");
+        } else {
+            showNotification(error.message);
+        }
+    }
 }
 
 setInterval(saveCloudGame, 30000);
