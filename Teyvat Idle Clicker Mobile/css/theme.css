@@ -1,0 +1,89 @@
+:root {
+    --bg-dark: #0c0f12;
+    --panel-bg: rgba(22, 26, 33, 0.9);
+    --primo-blue: #ade5ff;
+    --primo-dark: #3b6291;
+    --accent-gold: #ece5d8;
+    --text-gray: #bdc2c6;
+    --card-bg: rgba(35, 41, 51, 0.75);
+    --neon-blue: #6ee7b7;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--accent-gold);
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body,
+html {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.music-card {
+    max-height: 80vh;
+}
+
+#track-list-container {
+    width: 100%;
+    overflow-y: auto;
+    margin: 20px 0;
+    padding-right: 5px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#track-list-container .nav-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(110, 231, 183, 0.2);
+    padding: 15px;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+}
+
+#track-list-container .nav-item.active {
+    border-color: var(--neon-blue);
+    background: rgba(110, 231, 183, 0.733);
+}
+
+/* --- MOBILE MODAL ADJUSTMENTS --- */
+@media (max-width: 768px) {
+    .music-card {
+        width: 95% !important;
+        max-height: 70vh;
+    }
+
+    #track-list-container .nav-item {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+
+    :root {
+        font-size: 14px;
+    }
+}
+
+.nav-item:active,
+.btn-mult:active,
+.upgrade-card:active {
+    transform: scale(0.98);
+    filter: brightness(1.2);
+}
+
+@media (max-width: 400px) {
+    .stash-count {
+        font-size: 1.2rem !important;
+    }
+}
