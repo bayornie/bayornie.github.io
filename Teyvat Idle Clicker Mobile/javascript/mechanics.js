@@ -22,10 +22,6 @@ function buyClickUpgrade(index) {
     if (game.primos >= totalCost) {
         game.primos -= totalCost;
         up.level += countToBuy;
-        
-        // We removed the manual "+=" line because updateUI() calculates 
-        // the power perfectly based on your levels and multiplier.
-        
         up.cost *= Math.pow(rate, countToBuy);
         updateUI();
         saveCloudGame();
@@ -57,10 +53,10 @@ function buyGenerator(index) {
     if (game.primos >= totalCost) {
         game.primos -= totalCost;
         gen.count += countToBuy;
-        
+
         // Cost scaling logic
         gen.cost *= Math.pow(rate, countToBuy);
-        
+
         updateUI();
         saveCloudGame();
     } else if (buyAmount !== 'max') {
@@ -273,7 +269,7 @@ function ascend() {
     game.prestigePoints = (game.prestigePoints || 0) + pointsGained;
 
     // Reset Multiplier and stats for a clean run
-    game.multiplier = 1; 
+    game.multiplier = 1;
     game.primos = 0;
     game.clickPower = 1;
 
@@ -396,8 +392,8 @@ function handleMainClick() {
     game.totalPrimosEver += power;
 
     // Visuals
-    const x = window.innerWidth / 2;
-    const y = window.innerHeight / 2;
+    const x = e.clientX || (e.touches && e.touches[0].clientX) || (window.innerWidth / 2);
+    const y = e.clientY || (e.touches && e.touches[0].clientY) || (window.innerHeight / 2);
     let color = buffs.critChance > 0 ? "#ff4e4e" : "#ffffff";
     spawnText(x, y, `+${formatNumbers(power)}`, color);
 
