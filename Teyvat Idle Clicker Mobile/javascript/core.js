@@ -122,6 +122,21 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
     updateUI();
 });
 
+// Prevent multi-touch zoom
+document.addEventListener('touchstart', function(event) {
+    if (event.touches.length > 1) {
+        event.preventDefault(); 
+    }
+}, { passive: false });
+
+document.addEventListener('touchend', function(event) {
+    const now = (new Date()).getTime();
+    if (now - lastTouchEnd <= 300) {
+        event.preventDefault(); 
+    }
+    lastTouchEnd = now;
+}, false);
+
 // Passive Income Loop
 setInterval(() => {
     if (!isLoggedIn) return;
