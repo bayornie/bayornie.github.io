@@ -1,0 +1,167 @@
+/* 1. Hide scrollbar for Chrome, Safari, and newer Edge */
+*::-webkit-scrollbar {
+    display: none;
+}
+
+/* 2. Hide scrollbar for Firefox */
+* {
+    scrollbar-width: none;
+}
+
+/* 3. Hide scrollbar for IE and old Edge */
+* {
+    -ms-overflow-style: none;
+}
+
+/* Base structural changes for mobile-first stacking */
+body {
+    display: flex;
+    flex-direction: column; /* Stack vertically on mobile */
+    height: 100vh;
+    overflow: hidden;
+}
+
+nav,
+aside {
+    width: 100%; /* Full width on mobile */
+    background: var(--panel-bg);
+    padding: 15px;
+    display: flex;
+    flex-direction: row; /* Horizontal icons on mobile */
+    justify-content: space-around;
+    gap: 8px;
+    backdrop-filter: blur(10px);
+    z-index: 10;
+    box-sizing: border-box;
+}
+
+/* Mobile Nav specific */
+nav {
+    order: 2; /* Move navigation to bottom on mobile */
+    border-top: 1px solid var(--primo-dark);
+    border-right: none;
+    height: 70px;
+}
+
+aside {
+    display: none; /* Hide the right-side party sidebar on small phones to save space */
+}
+
+main {
+    flex-grow: 1;
+    order: 1; /* Main game area stays on top of the nav on mobile */
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: radial-gradient(circle, #1a232e 0%, #0c0f12 100%);
+    height: calc(100vh - 70px); 
+    overflow: hidden;
+}
+
+/* DESKTOP OVERRIDES (Screens wider than 768px) */
+@media (min-width: 769px) {
+    body {
+        flex-direction: row;
+    }
+
+    nav, aside {
+        width: 200px;
+        height: 100%;
+        flex-direction: column;
+        justify-content: flex-start;
+        order: unset;
+    }
+
+    nav {
+        border-right: 1px solid var(--primo-dark);
+        border-top: none;
+    }
+
+    aside {
+        display: flex;
+        border-left: 1px solid var(--primo-dark);
+    }
+
+    main {
+        height: 100vh;
+    }
+}
+
+.game-panel {
+    display: none;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.game-panel.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Content Panel Adjustments for Mobile */
+#pets-panel.active,
+#upgrades-panel.active,
+#generators-panel.active,
+#prestige-panel.active,
+#shop-panel.active {
+    justify-content: flex-start !important;
+    padding-top: 100px !important; /* Reduced for mobile */
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 90%, transparent 100%);
+}
+
+@media (min-width: 769px) {
+    #pets-panel.active,
+    #upgrades-panel.active,
+    #generators-panel.active,
+    #prestige-panel.active,
+    #shop-panel.active {
+        padding-top: 140px !important; /* Original desktop padding */
+    }
+}
+
+#shop-panel h3 {
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#shop-panel h3::after {
+    content: "";
+    flex-grow: 1;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent);
+    margin-right: 20px;
+}
+
+#home-panel.active {
+    justify-content: center !important;
+    padding-top: 0 !important;
+}
+
+#stats-sidebar {
+    background: linear-gradient(180deg, rgba(22, 26, 33, 0.95) 0%, rgba(12, 15, 18, 1) 100%);
+    border-left: 1px solid rgba(59, 98, 145, 0.3);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding: 20px; /* Reduced for mobile */
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: center;
+}
