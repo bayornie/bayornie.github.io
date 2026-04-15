@@ -7,8 +7,6 @@ function buyClickUpgrade(index) {
 
     let up = game.clickUpgrades[index];
     const rate = up.rate || 1.5;
-
-    // Apply Pet Discount
     const effectiveDiscount = game.currentDiscount || 1;
     const currentCost = up.cost * effectiveDiscount;
 
@@ -19,13 +17,15 @@ function buyClickUpgrade(index) {
         return;
     }
 
-    // Apply discount to the total multi-buy cost
     let totalCost = getMultiCost(up.cost, rate, countToBuy) * effectiveDiscount;
 
     if (game.primos >= totalCost) {
         game.primos -= totalCost;
         up.level += countToBuy;
-        game.clickPower += (up.power * countToBuy);
+        
+        // We removed the manual "+=" line because updateUI() calculates 
+        // the power perfectly based on your levels and multiplier.
+        
         up.cost *= Math.pow(rate, countToBuy);
         updateUI();
         saveCloudGame();
@@ -42,8 +42,6 @@ function buyGenerator(index) {
 
     let gen = game.generators[index];
     const rate = gen.rate || 1.75;
-
-    // Apply Pet Discount
     const effectiveDiscount = game.currentDiscount || 1;
     const currentCost = gen.cost * effectiveDiscount;
 
@@ -54,13 +52,15 @@ function buyGenerator(index) {
         return;
     }
 
-    // Apply discount to the total multi-buy cost
     let totalCost = getMultiCost(gen.cost, rate, countToBuy) * effectiveDiscount;
 
     if (game.primos >= totalCost) {
         game.primos -= totalCost;
         gen.count += countToBuy;
+        
+        // Cost scaling logic
         gen.cost *= Math.pow(rate, countToBuy);
+        
         updateUI();
         saveCloudGame();
     } else if (buyAmount !== 'max') {
@@ -262,7 +262,6 @@ function ascend() {
         return;
     }
 
-    // 2. Check if player meets the 1M requirement
     if (game.primos < 1000000) {
         showNotification("Not enough Primogems to Ascend yet!");
         return;
@@ -273,8 +272,8 @@ function ascend() {
 
     game.prestigePoints = (game.prestigePoints || 0) + pointsGained;
 
-    // 4. Update the Multiplier (Permanent Buff)
-    game.multiplier += (pointsGained * 0.05);
+    // Reset Multiplier and stats for a clean run
+    game.multiplier = 1; 
     game.primos = 0;
     game.clickPower = 1;
 
@@ -296,7 +295,7 @@ function ascend() {
 
     updateUI();
     saveCloudGame();
-    showNotification(`Ascension Complete! Gained ${Math.floor(pointsGained)} points. Multiplier +${(pointsGained * 5).toFixed(1)}%.`);
+    showNotification(`Ascension Complete! Gained ${Math.floor(pointsGained)} points. Multiplier reset to 1.00x.`);
 }
 
 // Helper to get initial costs for the reset
