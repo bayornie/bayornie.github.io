@@ -1,4 +1,4 @@
-/* --- TOP RESOURCE BAR (Genshin Capsule Style) --- */
+/* --- TOP RESOURCE BAR (Desktop-Aligned Pill Style) --- */
 #top-stash {
     position: absolute;
     top: 15px;
@@ -6,8 +6,8 @@
     transform: translateX(-50%);
     width: 90%;
     max-width: 380px;
-    background: rgba(26, 31, 39, 0.95);
-    border: 1px solid rgba(236, 229, 216, 0.2);
+    background: rgba(11, 18, 26, 0.9);
+    border: 1px solid rgba(135, 206, 250, 0.2);
     border-radius: 50px;
     padding: 10px 20px;
     backdrop-filter: blur(15px);
@@ -27,7 +27,7 @@
 }
 
 .stash-unit {
-    color: var(--btn-gold);
+    color: #bae6fd;
     font-size: 0.8rem;
     font-weight: bold;
     text-transform: uppercase;
@@ -60,50 +60,54 @@
     box-sizing: border-box;
 }
 
-/* --- UPGRADE & GENERATOR CARDS --- */
-.upgrade-card, .gen-card {
-    background: var(--card-bg);
-    border: 1px solid rgba(236, 229, 216, 0.1);
-    border-radius: 10px;
-    padding: 12px 15px;
-    display: grid;
-    grid-template-columns: 60px 1fr auto;
+/* --- UNIFIED CARD STYLING (Slate Blue Theme) --- */
+.upgrade-card, .pet-card, .gen-card, .shop-item-card {
+    display: flex;
     align-items: center;
-    gap: 15px;
-    transition: all 0.2s;
+    justify-content: space-between;
+    background: rgba(16, 24, 32, 0.85); 
+    border-radius: 4px;
+    margin-bottom: 8px;
+    height: 90px;
+    border: 1px solid rgba(135, 206, 250, 0.2); 
+    overflow: hidden;
+    padding: 0;
+    transition: all 0.2s ease;
 }
 
-.upgrade-card:active {
+.upgrade-card:active, .pet-card:active {
     transform: scale(0.98);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(135, 206, 250, 0.05);
 }
 
-.upgrade-card.disabled {
+.upgrade-card.disabled, .pet-card.disabled {
     opacity: 0.4;
     filter: grayscale(1);
     pointer-events: none;
 }
 
+/* --- UPGRADE CONTENT --- */
 .upgrade-card img {
-    width: 50px;
-    height: 50px;
+    width: 80px;
+    height: 100%;
     object-fit: contain;
-    background: rgba(0,0,0,0.2);
-    border-radius: 6px;
+    background: rgba(135, 206, 250, 0.05);
+    border-right: 1px solid rgba(135, 206, 250, 0.1);
+    padding: 10px;
 }
 
 .upgrade-card strong {
-    color: var(--accent-gold);
+    color: #bae6fd;
     font-size: 1rem;
     display: block;
 }
 
 .upgrade-card small {
-    color: var(--text-gray);
+    color: #8899a6;
     font-size: 0.75rem;
 }
 
-/* --- MULTIPLIER BUTTONS (1x, 10x, 100x) --- */
+/* --- MULTIPLIER BUTTONS (Desktop Style) --- */
 .buy-multipliers {
     display: flex;
     gap: 8px;
@@ -112,75 +116,116 @@
 }
 
 .btn-mult {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(236, 229, 216, 0.2);
-    color: var(--text-gray);
+    background: rgba(16, 24, 32, 0.8);
+    border: 1px solid rgba(135, 206, 250, 0.2);
+    color: #8899a6;
     padding: 8px 16px;
     border-radius: 4px;
     font-size: 0.8rem;
     font-weight: bold;
+    cursor: pointer;
 }
 
 .btn-mult.active {
-    background: var(--btn-gold);
-    color: #32343a;
-    border-color: var(--btn-gold);
+    background: #bae6fd;
+    color: #0f171f;
+    border-color: #bae6fd;
+    box-shadow: 0 0 10px rgba(186, 230, 253, 0.3);
 }
 
-/* --- PET CARDS (Character Style) --- */
-.pet-card {
-    position: relative;
-    padding: 15px;
-    border-radius: 12px;
-    display: grid;
-    grid-template-columns: 70px 1fr;
-    gap: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
+/* --- PET CARD SPECIFICS --- */
 .pet-icon-wrapper {
-    width: 70px;
-    height: 70px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 8px;
+    width: 80px;
+    height: 100%;
+    background: rgba(135, 206, 250, 0.08);
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
+    border-right: 1px solid rgba(135, 206, 250, 0.15);
+    gap: 2px;
+}
+
+.pet-chibi {
+    width: 55px;
+    height: auto;
+    display: block;
+    pointer-events: none;
+}
+
+.vision-tag {
+    position: relative; 
+    font-size: 0.55rem;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 900;
+    text-transform: uppercase;
+    text-align: center;
+    width: fit-content;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.pet-main-info {
+    flex-grow: 1;
+    padding: 0 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
 }
 
 .pet-name {
+    font-size: 1rem;
     font-weight: 800;
-    color: white;
-    font-size: 1.1rem;
-    margin-bottom: 4px;
+    color: #ffffff;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .pet-buff-tag {
-    font-size: 0.7rem;
-    background: rgba(0, 0, 0, 0.3);
-    color: var(--btn-gold);
+    align-self: flex-start;
+    font-size: 0.65rem;
+    background: rgba(0, 0, 0, 0.4);
+    color: #bae6fd;
     padding: 2px 8px;
     border-radius: 4px;
-    border: 1px solid rgba(227, 188, 130, 0.3);
+    border: 1px solid rgba(186, 230, 253, 0.2);
+    font-weight: bold;
+    text-align: center;
 }
 
-.equip-btn {
-    width: 100%;
-    margin-top: 10px;
-    padding: 12px;
-    border-radius: 4px;
-    background: var(--btn-gold);
-    color: #32343a;
-    font-weight: 800;
-    text-transform: uppercase;
+/* --- ACTION BUTTONS (Recruit/Upgrade/Deploy) --- */
+.pet-btn, .upgrade-btn {
+    width: 90px;
+    height: 100%;
     border: none;
+    background: rgba(255, 255, 255, 0.03);
+    color: #8899a6;
+    font-weight: 900;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-size: 0.7rem;
     letter-spacing: 1px;
+    border-radius: 0; 
+    border-left: 1px solid rgba(135, 206, 250, 0.1);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.equip-btn.active {
-    background: #ff6464; /* Pyro Red */
-    color: white;
+.pet-btn.active, .pet-btn:hover {
+    background: rgba(186, 230, 253, 0.1);
+    color: #bae6fd;
+}
+
+.pet-btn:active {
+    background: #bae6fd;
+    color: #0f171f;
+}
+
+.locked .pet-chibi {
+    filter: grayscale(1) brightness(0.4);
 }
 
 /* --- SIDEBAR STATS (Mobile View) --- */
@@ -188,38 +233,44 @@
     display: flex;
     justify-content: space-between;
     padding: 10px 0;
-    border-bottom: 1px solid rgba(236, 229, 216, 0.1);
+    border-bottom: 1px solid rgba(135, 206, 250, 0.1);
 }
 
 .stat-row .label {
-    color: var(--text-gray);
+    color: #8899a6;
     font-size: 0.85rem;
 }
 
 .stat-row .value {
-    color: var(--accent-gold);
+    color: #ffffff;
     font-weight: bold;
 }
 
 .value.highlight {
-    color: var(--btn-gold);
+    color: #bae6fd;
 }
 
-/* --- NAVIGATION BUTTONS --- */
+/* --- NAVIGATION BUTTONS (App Style) --- */
 .nav-item {
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    color: var(--text-gray);
+    color: #8899a6;
     font-size: 0.65rem;
     text-transform: uppercase;
     transition: 0.2s;
+    background: none;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
 }
 
 .nav-item.active {
-    color: var(--btn-gold);
+    color: #0f171f;
+    background: #bae6fd;
+    border-radius: 4px;
 }
 
 .nav-icon {
