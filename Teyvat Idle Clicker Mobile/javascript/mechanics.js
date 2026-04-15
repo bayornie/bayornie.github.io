@@ -22,10 +22,10 @@ function buyClickUpgrade(index) {
     if (game.primos >= totalCost) {
         game.primos -= totalCost;
         up.level += countToBuy;
-
+        
         // Cost scaling logic
         up.cost *= Math.pow(rate, countToBuy);
-
+        
         updateUI();
         saveCloudGame();
     } else if (buyAmount !== 'max') {
@@ -56,10 +56,10 @@ function buyGenerator(index) {
     if (game.primos >= totalCost) {
         game.primos -= totalCost;
         gen.count += countToBuy;
-
+        
         // Cost scaling logic
         gen.cost *= Math.pow(rate, countToBuy);
-
+        
         updateUI();
         saveCloudGame();
     } else if (buyAmount !== 'max') {
@@ -255,7 +255,7 @@ function ascend() {
 
     game.prestigePoints = (game.prestigePoints || 0) + pointsGained;
 
-    game.multiplier = 1;
+    game.multiplier = 1; 
     game.primos = 0;
     game.clickPower = 1;
 
@@ -362,39 +362,42 @@ function handleMainClick() {
 }
 
 function getFinalClickPower() {
-    let base = game.clickPower || 1;
+    // 1. Get current base from upgrades (Starts at 1)
+    let base = 1;
+    game.clickUpgrades.forEach(up => {
+        base += (Number(up.level) || 0) * (Number(up.power) || 0);
+    });
+
+    // 2. Add Seelie Blessing directly to that base
+    const seelieBlessing = game.blessings.find(b => b.id === 'strong_start');
+    const seelieBonus = (seelieBlessing ? (Number(seelieBlessing.level) || 0) * 100 : 0);
+    
+    let totalBase = base + seelieBonus;
+
+    // 3. Apply all multipliers to the new combined base
     let multiplier = game.clickMultiplier || 1;
     const petBuffs = calculatePetBuffs();
-    return base * multiplier * petBuffs.clickMult * petBuffs.globalMult;
+    const resonanceBlessing = game.blessings.find(b => b.id === 'resonance');
+    const resonanceMult = 1 + (resonanceBlessing ? (Number(resonanceBlessing.level) || 0) * 0.10 : 0);
+
+    return totalBase * multiplier * resonanceMult * (petBuffs.clickMult || 1) * (petBuffs.globalMult || 1);
 }
 
 function calculatePetBuffs() {
-    let buffs = { clickMult: 1, ppsMult: 1, globalMult: 1, discount: 1, prestigeBonus: 1, critChance: 0, critValue: 1, autoClickRate: 0, autoClickPower: 0, flatClick: 0 };
+    let buffs = { clickMult: 1, ppsMult: 1, globalMult: 1, discount: 1, prestigeBonus: 1, critChance: 0, critValue: 1, autoClickRate: 0, autoClickPower: 0 };
     if (!game.activePets) return buffs;
 
-game.activePets.forEach(petId => {
+    game.activePets.forEach(petId => {
         const pet = game.pets.find(p => p.id === petId);
         if (!pet) return;
-
         if (pet.buffType === 'click') buffs.clickMult *= (1 + pet.buffValue);
         else if (pet.buffType === 'pps_mult') buffs.ppsMult *= pet.buffValue;
         else if (pet.buffType === 'global_mult') buffs.globalMult *= pet.buffValue;
         else if (pet.buffType === 'discount') buffs.discount -= pet.buffValue;
         else if (pet.buffType === 'prestige' || pet.buffType === 'prestige_bonus') buffs.prestigeBonus += pet.buffValue;
         else if (pet.buffType === 'crit') { buffs.critChance = 1.0; buffs.critValue = pet.buffValue; }
-
-        // MODIFIED FOR HERO'S WIT / SEELIE
-        else if (pet.buffType === 'auto_click') {
-            buffs.autoClickRate = pet.id === 'raiden' ? 1000 : 2000;
-            
-            // Add static +25 (or whatever buffValue is) directly to flatClick
-            buffs.flatClick += pet.buffValue; 
-            
-            // Seelie damage stays 0
-            buffs.autoClickPower = 0;
-        }
+        else if (pet.buffType === 'auto_click') { buffs.autoClickRate = pet.id === 'raiden' ? 1000 : 2000; buffs.autoClickPower = pet.buffValue; }
     });
-
     if (buffs.discount < 0.1) buffs.discount = 0.1;
     return buffs;
 }
@@ -403,12 +406,12 @@ game.activePets.forEach(petId => {
 function toggleParticles() {
     game.settings = game.settings || { particles: true };
     game.settings.particles = !game.settings.particles;
-
+    
     const btn = document.getElementById('pref-particles');
     if (btn) {
         btn.innerText = game.settings.particles ? "ON" : "OFF";
     }
-
+    
     showNotification(`Particles ${game.settings.particles ? 'Enabled' : 'Disabled'}`);
     saveCloudGame();
 }
