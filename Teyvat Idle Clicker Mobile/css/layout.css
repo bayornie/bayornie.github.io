@@ -15,23 +15,26 @@ body {
     width: 100vw;
     margin: 0;
     overflow: hidden;
+    background: #000;
 }
 
+/* Bottom Navigation Bar - Genshin Style */
 nav {
     order: 2;
     width: 100%;
-    height: 70px;
+    height: 75px;
     background: var(--panel-bg);
     padding: 10px;
     display: flex;
     flex-direction: row;
     justify-content: space-around;
     align-items: center;
-    border-top: 1px solid var(--primo-dark);
-    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(236, 229, 216, 0.15);
+    backdrop-filter: blur(15px);
     z-index: 10;
 }
 
+/* Hide sidebars on mobile to match reference image */
 aside {
     display: none;
 }
@@ -42,8 +45,8 @@ main {
     position: relative;
     display: flex;
     flex-direction: column;
-    background: radial-gradient(circle, #1a232e 0%, #0c0f12 100%);
-    height: calc(100vh - 70px);
+    background: radial-gradient(circle at center, #1b2330 0%, #0c0f12 100%);
+    height: calc(100vh - 75px);
     overflow: hidden;
 }
 
@@ -53,46 +56,27 @@ main {
     height: 100%;
     overflow-y: auto;
     padding: 20px;
+    -webkit-overflow-scrolling: touch;
 }
 
 .game-panel.active {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
 }
 
+/* Scrollable Panel Behavior */
 #pets-panel.active,
 #upgrades-panel.active,
 #generators-panel.active,
 #prestige-panel.active,
 #shop-panel.active {
     justify-content: flex-start !important;
-    padding-top: 100px !important;
+    padding-top: 110px !important;
     height: 100%;
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    mask-image: linear-gradient(to bottom, black 92%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, black 92%, transparent 100%);
-}
-
-#shop-panel h3 {
-    text-transform: uppercase;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-}
-
-#shop-panel h3::after {
-    content: "";
-    flex-grow: 1;
-    height: 2px;
-    background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent);
-    margin-right: 20px;
+    mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
 }
 
 #home-panel.active {
@@ -100,9 +84,29 @@ main {
     padding-top: 0 !important;
 }
 
+/* Shop Headers */
+#shop-panel h3 {
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    color: var(--btn-gold);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    letter-spacing: 1.5px;
+    margin: 20px 0 10px 0;
+}
+
+#shop-panel h3::after {
+    content: "";
+    flex-grow: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(227, 188, 130, 0.3), transparent);
+}
+
+/* Stats Styling */
 #stats-sidebar {
-    background: linear-gradient(180deg, rgba(22, 26, 33, 0.95) 0%, rgba(12, 15, 18, 1) 100%);
-    border-left: 1px solid rgba(59, 98, 145, 0.3);
+    background: var(--panel-bg);
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -111,6 +115,6 @@ main {
 .sidebar-footer {
     margin-top: auto;
     padding: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(236, 229, 216, 0.1);
     text-align: center;
 }
