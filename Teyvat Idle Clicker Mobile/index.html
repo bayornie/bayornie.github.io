@@ -14,54 +14,45 @@
 
 <body>
 
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="showPanel('home')">Home</button>
+        <button class="nav-item" onclick="showPanel('upgrades')">Upgrades</button>
+        <button class="nav-item" onclick="showPanel('generators')">Generators</button>
+        <button class="nav-item" onclick="showPanel('prestige')">Ascension</button>
+        <button class="nav-item" onclick="showPanel('shop')">Shop</button>
+        <button class="nav-item" onclick="showPanel('pets')">Party</button>
+        <button class="nav-item" onclick="showPanel('stats')">Statistics</button>
+        <button class="nav-item" onclick="showPanel('profile-panel')">PROFILE</button>
+    </nav>
+
     <div id="auth-overlay" class="auth-overlay" style="display: none;">
         <div class="auth-card">
             <h2 id="auth-title">Welcome, Traveler</h2>
-
             <div id="login-form">
                 <input type="email" id="login-email" placeholder="Email Address">
-
                 <div class="password-wrapper">
                     <input type="password" id="password" placeholder="Password">
                     <span class="password-toggle" onclick="togglePasswordVisibility('password')">👁️</span>
                 </div>
-
                 <button class="auth-btn" onclick="handleAuth('login')">Enter Teyvat</button>
-
                 <p style="text-align: center; margin-top: 10px;">
                     <a href="#" onclick="resetPassword()"
-                        style="color: #ecd078; text-decoration: none; font-size: 0.85rem;">
-                        Forgot Password?
-                    </a>
+                        style="color: #ecd078; text-decoration: none; font-size: 0.85rem;">Forgot Password?</a>
                 </p>
-
                 <p onclick="toggleAuth()" class="toggle-link" id="to-register">New here? Register</p>
             </div>
-
             <div id="register-form" style="display:none;">
                 <input type="email" id="reg-email" placeholder="Email Address">
-
                 <input type="text" id="reg-username" placeholder="Display Name / Username">
-
                 <div class="password-wrapper">
                     <input type="password" id="reg-password" placeholder="New Password (min. 6 chars)">
                     <span class="password-toggle" onclick="togglePasswordVisibility('reg-password')">👁️</span>
                 </div>
-
                 <button class="auth-btn" onclick="handleAuth('register')">Create Account</button>
                 <p onclick="toggleAuth()" class="toggle-link" id="to-login">Back to Login</p>
             </div>
         </div>
     </div>
-
-    <nav>
-        <div class="nav-item active" onclick="showPanel('home')">Home</div>
-        <div class="nav-item" onclick="showPanel('upgrades')">Upgrades</div>
-        <div class="nav-item" onclick="showPanel('generators')">Generators</div>
-        <div class="nav-item" onclick="showPanel('prestige')">Prestige</div>
-        <div class="nav-item" onclick="showPanel('shop')">Shop</div>
-        <div class="nav-item" onclick="showPanel('pets')">Companions</div>
-    </nav>
 
     <main>
         <div id="top-stash">
@@ -73,12 +64,50 @@
         </div>
 
         <section id="home-panel" class="game-panel active">
-            <div id="active-pets-display" class="active-pets-banner">
-            </div>
-
+            <div id="active-pets-display" class="active-pets-banner"></div>
             <div id="click-area">
                 <div class="primogem-shape">
                     <img src="img/primogem.png" alt="Primogem" class="primogem-img" draggable="false">
+                </div>
+            </div>
+        </section>
+
+        <section id="stats-panel" class="game-panel">
+            <h2 class="panel-title">Adventurer's Records</h2>
+            <div class="stats-content">
+                <div class="stats-group">
+                    <div class="stats-label">BALANCES</div>
+                    <div class="stat-row-large">
+                        <span class="label">Total Collected:</span>
+                        <span id="stat-total-ever" class="value highlight">0</span>
+                    </div>
+                    <div class="stat-row-large">
+                        <span class="label">Primogems:</span>
+                        <span id="stat-primos-mobile" class="value highlight">0</span>
+                    </div>
+                    <div class="stat-row-large">
+                        <span class="label">Multiplier:</span>
+                        <span id="stat-mult" class="value">1.00x</span>
+                    </div>
+                </div>
+                <div class="stats-group">
+                    <div class="stats-label">PRODUCTION</div>
+                    <div class="stat-row-large">
+                        <span class="label">Per Click:</span>
+                        <span id="stat-click" class="value">1</span>
+                    </div>
+                    <div class="stat-row-large">
+                        <span class="label">Generators:</span>
+                        <span id="stat-pps" class="value">0.0</span>
+                    </div>
+                </div>
+                <div class="stats-group">
+                    <div class="stats-label">ACTIVE PARTY</div>
+                    <div class="stat-row-large">
+                        <span class="label">Slots Used:</span>
+                        <span id="sidebar-party-count" class="value">0/4</span>
+                    </div>
+                    <div id="active-pets-mini" class="mini-pet-list"></div>
                 </div>
             </div>
         </section>
@@ -110,285 +139,117 @@
         </section>
 
         <section id="prestige-panel" class="game-panel">
-            <h2 class="panel-title">Ascension of the Traveler</h2>
-            <div class="prestige-header">
-                <p>Sacrifice your current Primogems to gain permanent power.</p>
-                <div class="prestige-currency">
-                    <strong>Prestige Points: </strong>
-                    <span id="stat-prestige" class="highlight">0</span>
-                </div>
+            <h2 class="panel-title">Ascension</h2>
+            <div class="prestige-currency">
+                <strong>Prestige Points: </strong>
+                <span id="stat-prestige" class="highlight">0</span>
             </div>
-
-            <button id="ascension-btn" class="auth-btn" onclick="ascend()">
-                Ascend (Requires 1,000,000 Primos)
-            </button>
-
-            <h3 class="panel-subtitle">Permanent Blessings</h3>
-            <div id="prestige-upgrades" class="list-container">
-            </div>
+            <button id="ascension-btn" class="auth-btn" onclick="ascend()">Ascend (1M Primos)</button>
+            <div id="prestige-upgrades" class="list-container"></div>
         </section>
 
-        <div id="shop-panel" class="game-panel">
+        <section id="shop-panel" class="game-panel">
             <h1 class="panel-title">Wanderer's Goods</h1>
-            <div id="shop-items" class="list-container">
-            </div>
-
-            <div id="pet-shop-header" style="text-align: center; margin-top: 40px; margin-bottom: 20px;">
-                <h1 class="panel-title" style="margin-bottom: 5px;">Recruit Companions</h1>
-                <div class="stats-divider" style="width: 60%; margin: 10px auto;"></div>
-            </div>
-
-            <div style="width: 100%; max-width: 900px; margin-bottom: 10px;">
-                <h3 style="color: #a256e1; margin-left: 20px; font-weight: 800; letter-spacing: 1px;">
-                    ✦ 4-Stars
-                </h3>
-            </div>
-            <div id="pet-shop-list-4" class="list-container" style="margin-bottom: 40px;"></div>
-
-            <div style="width: 100%; max-width: 900px; margin-bottom: 10px;">
-                <h3 style="color: #ffb13f; margin-left: 20px; font-weight: 800; letter-spacing: 1px;">
-                    ✦ 5-Stars
-                </h3>
-            </div>
+            <div id="shop-items" class="list-container"></div>
+            <div id="pet-shop-list-4" class="list-container"></div>
             <div id="pet-shop-list-5" class="list-container"></div>
-        </div>
+        </section>
 
         <section id="pets-panel" class="game-panel">
-            <h2 class="panel-title">Companions & Pets</h2>
-            <div class="party-status">
-                <p>Equip up to 4 pets to assist you on your journey.</p>
-                <div class="party-slots-info">
-                    Active Pets: <span id="party-count" class="highlight">0</span> / 4
+            <h2 class="panel-title">Companions</h2>
+            <div class="party-slots-info">Active: <span id="party-count" class="highlight">0</span> / 4</div>
+            <div id="pets-grid" class="list-container pets-grid"></div>
+        </section>
+
+        <section id="profile-panel" class="game-panel" style="display: none;">
+            <div class="profile-layout-container">
+
+                <div id="logged-out-view"
+                    style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; min-height: 400px; padding: 60px 20px; text-align: center;">
+                    <h2 class="panel-title-large">Adventure Awaits</h2>
+                    <p style="color: #888; margin-bottom: 25px;">Log in to track your stats and sync your progress to
+                        the cloud.</p>
+                    <button class="auth-btn" onclick="openAuth()" style="max-width: 250px;">LOGIN / REGISTER</button>
+                </div>
+
+                <div id="logged-in-view" style="display: none; width: 100%;">
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
+
+                        <div class="profile-card profile-info-card">
+                            <h2 class="panel-title-large">Traveler Profile</h2>
+                            <h1 class="traveler-name" id="prof-name-tab">Traveler</h1>
+                            <div class="data-list-group">
+                                <div class="data-row">
+                                    <span class="icon-label">✦ Total Collected</span>
+                                    <span id="tab-total-ever" class="value highlight">0</span>
+                                </div>
+                                <div class="data-row">
+                                    <span class="icon-label">💰 Current Stash</span>
+                                    <span id="tab-current-primos" class="value highlight">0</span>
+                                </div>
+                                <div class="data-row">
+                                    <span class="icon-label">⚔️ Click Power</span>
+                                    <span id="tab-click-power" class="value highlight">0</span>
+                                </div>
+                                <div class="data-row">
+                                    <span class="icon-label">⌛ Passive Income</span>
+                                    <span id="tab-pps" class="value highlight">0</span>
+                                </div>
+                            </div>
+                            <button class="auth-btn logout-btn" onclick="handleLogout()">LOGOUT</button>
+                        </div>
+
+                        <div class="profile-card settings-card">
+                            <h2 class="panel-title-large">Settings</h2>
+                            <div class="data-list-group">
+                                <div class="data-label">EMAIL SECURITY</div>
+                                <button class="action-btn verify" onclick="resendVerification()">Verify Email</button>
+                                <input type="email" id="update-email-input" placeholder="Enter new email">
+                                <button class="action-btn update" onclick="updateEmail()">Update Email</button>
+                            </div>
+                            <div class="data-list-group">
+                                <div class="data-label">GAME PREFERENCES</div>
+
+                                <div class="data-row no-border">
+                                    <span class="pref-label">Particle Effects</span>
+                                    <button id="pref-particles" class="toggle-btn"
+                                        onclick="toggleParticles()">ON</button>
+                                </div>
+
+                                <div class="data-row no-border"
+                                    style="flex-direction: column; align-items: flex-start; gap: 12px; padding: 15px 0;">
+                                    <span class="pref-label">Background Music</span>
+
+                                    <div class="volume-control-box"
+                                        style="width: 100%; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px; border: 1px solid rgba(100, 255, 191, 0.1);">
+                                        <div
+                                            style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #64ffbf; margin-bottom: 8px; font-weight: bold; letter-spacing: 1px;">
+                                            <span>VOLUME</span>
+                                            <span id="vol-perc">50%</span>
+                                        </div>
+                                        <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.5"
+                                            oninput="setVolume(this.value)"
+                                            style="width: 100%; cursor: pointer; accent-color: #64ffbf;">
+                                    </div>
+
+                                    <button class="select-btn" onclick="openMusicSelect()" style="width: 100%;">Select Track</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <div id="pets-grid" class="list-container pets-grid">
             </div>
         </section>
     </main>
 
-    <aside id="stats-sidebar">
-        <div class="stats-header">STATISTICS</div>
-
-        <div class="stats-container">
-            <div class="stats-group">
-                <div class="stats-label">BALANCES</div>
-                <div class="stat-row">
-                    <span class="label">Total Collected:</span>
-                    <span id="stat-total-ever" class="value highlight">0</span>
-                </div>
-
-                <div class="stat-row">
-                    <span class="label">Primogems:</span>
-                    <span id="stat-total" class="value highlight">0</span>
-                </div>
-                <div class="stat-row">
-                    <span class="label">Multiplier:</span>
-                    <span id="stat-mult" class="value">1.00x</span>
-                </div>
+    <div id="music-overlay" class="modal-overlay" style="display: none;">
+        <div class="music-card">
+            <div class="data-label">Track List</div>
+            <div id="track-list-container" class="list-container" style="max-height: 300px; overflow-y: auto;">
             </div>
 
-            <div class="stats-divider"></div>
-
-            <div class="stats-group">
-                <div class="stats-label">PRODUCTION</div>
-                <div class="stat-row">
-                    <span class="label">Per Click:</span>
-                    <span id="stat-click" class="value">1</span>
-                </div>
-                <div class="stat-row">
-                    <span class="label">Per Second:</span>
-                    <span id="stat-pps" class="value">0.0</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="stats-divider"></div>
-
-        <div class="stats-group">
-            <div class="stats-label">ACTIVE PARTY</div>
-            <div class="stat-row">
-                <span class="label">Slots Used:</span>
-                <span id="sidebar-party-count" class="value">0/4</span>
-            </div>
-            <div id="active-pets-mini" class="mini-pet-list">
-            </div>
-        </div>
-
-        <div class="sidebar-footer">
-            <div id="user-controls" style="display: none;">
-                <button id="profile-btn" class="account-btn" onclick="openProfile()">Profile</button>
-                <button id="logout-btn" class="logout-link" onclick="handleLogout()">Logout</button>
-            </div>
-            <button id="login-nav-btn" class="account-btn" onclick="openAuth()">Login / Register</button>
-        </div>
-    </aside>
-
-    <div id="profile-overlay" class="auth-overlay" style="display: none;">
-        <div class="auth-card profile-card lively-ui">
-            <div class="profile-header">
-                <div class="header-line"></div>
-                <h2>Traveler Profile</h2>
-                <div class="header-line"></div>
-            </div>
-
-            <div class="player-identity" style="text-align: center; margin: 10px 0 20px 0;">
-                <span id="prof-name"
-                    style="font-size: 1.5rem; font-weight: bold; color: #63e6be; text-shadow: 0 0 10px rgba(99, 230, 190, 0.3);">
-                    Traveler
-                </span>
-            </div>
-
-            <div class="profile-info stats-grid">
-                <div class="stat-item">
-                    <span class="stat-icon">✨</span>
-                    <div class="stat-details">
-                        <strong>Total Collected</strong>
-                        <span id="prof-total-ever" class="stat-value">0</span>
-                    </div>
-                </div>
-
-                <div class="stat-item">
-                    <span class="stat-icon">💰</span>
-                    <div class="stat-details">
-                        <strong>Current Stash</strong>
-                        <span id="prof-current-primos" class="stat-value">0</span>
-                    </div>
-                </div>
-
-                <div class="stat-item">
-                    <span class="stat-icon">⚔️</span>
-                    <div class="stat-details">
-                        <strong>Click Power</strong>
-                        <span id="prof-power" class="stat-value">1</span>
-                    </div>
-                </div>
-
-                <div class="stat-item">
-                    <span class="stat-icon">⏳</span>
-                    <div class="stat-details">
-                        <strong>Passive Income</strong>
-                        <span id="prof-per-sec" class="stat-value">0.0</span>
-                    </div>
-                </div>
-            </div>
-
-            <div id="profile-settings-content"
-                style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #444;">
-                <h3 style="color: #ecd078; font-size: 1rem; margin-bottom: 10px;">Account Settings</h3>
-                <button class="auth-btn" style="background: #4a90e2; margin-bottom: 10px;"
-                    onclick="sendVerification()">Verify Email</button>
-                <input type="email" id="new-email-input" placeholder="New Email Address"
-                    style="width: 100%; margin-bottom: 5px;">
-                <button class="auth-btn" style="background: #e67e22;" onclick="changeEmail()">Update Email</button>
-            </div>
-
-            <button class="auth-btn neon-glow" onclick="toggleProfileView()">Settings</button>
-
-            <button class="auth-btn neon-glow"
-                onclick="document.getElementById('profile-overlay').style.display='none'">
-                Close
-            </button>
-        </div>
-    </div>
-
-    <div id="settings-overlay" class="auth-overlay" style="display: none;">
-        <div class="auth-card profile-card lively-ui" style="width: 450px;">
-            <div class="profile-header">
-                <div class="header-line"></div>
-                <h2>Account Settings</h2>
-                <div class="header-line"></div>
-            </div>
-
-            <div class="settings-content" style="width: 100%; margin-top: 20px;">
-                <div class="settings-group">
-                    <h3 style="color: #6ee7b7; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 15px;">Email
-                        Security</h3>
-
-                    <button class="auth-btn" style="background: #4a90e2; margin-bottom: 15px;"
-                        onclick="sendVerification()">
-                        Resend Verification Email
-                    </button>
-
-                    <div style="margin-bottom: 10px; text-align: left;">
-                        <label style="font-size: 0.8rem; color: #bdc2c6;">Update Email Address</label>
-                        <input type="email" id="settings-new-email" placeholder="Enter new email"
-                            style="margin-top: 5px;">
-                    </div>
-                    <button class="auth-btn" style="background: #e67e22;" onclick="changeEmail()">
-                        Update Email
-                    </button>
-                </div>
-
-                <div class="stats-divider" style="margin: 25px 0;"></div>
-
-                <div class="settings-group">
-                    <h3 style="color: #6ee7b7; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 15px;">Game
-                        Preferences</h3>
-
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <span>Particle Effects</span>
-                        <button class="btn-mult" onclick="toggleParticles()">ON</button>
-                    </div>
-
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <span>Background Music</span>
-                        <button class="btn-mult" onclick="openMusicModal()"
-                            style="width: auto; padding: 5px 15px;">Select Track</button>
-                    </div>
-
-                    <div
-                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <span>Music Volume</span>
-                        <input type="range" min="0" max="1" step="0.1" value="0.5" style="width: 60%; margin: 0;"
-                            oninput="updateVolume(this.value)">
-                    </div>
-                </div>
-            </div>
-
-            <div class="profile-actions" style="width: 100%; margin-top: 20px;">
-                <button class="auth-btn neon-glow" onclick="closeSettings()">Back to Profile</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="music-overlay" class="auth-overlay" style="display: none; z-index: 10001;">
-        <div class="auth-card profile-card" style="width: 400px; max-height: 80vh;">
-            <div class="profile-header">
-                <div class="header-line"></div>
-                <h2>Music Player</h2>
-                <div class="header-line"></div>
-            </div>
-
-            <div id="track-list-container" style="width: 100%; overflow-y: auto; margin: 20px 0; padding-right: 5px;">
-            </div>
-
-            <button class="auth-btn neon-glow" onclick="closeMusicModal()">
-                Close
-            </button>
-        </div>
-    </div>
-
-    <div id="offline-modal" class="modal-overlay" style="display:none;">
-        <div class="modal-content reward-modal">
-            <div class="modal-header">
-                <h2>Welcome Back, Traveler!</h2>
-                <p id="offline-time-text" class="time-subtitle">You were away for 0m</p>
-            </div>
-
-            <div class="reward-body">
-                <div class="reward-circle">
-                    <img src="img/primogem.png" alt="Primogem" class="main-reward-icon">
-                </div>
-                <div class="reward-count">
-                    <span class="plus-sign">+</span>
-                    <span id="offline-amount-text">0</span>
-                </div>
-            </div>
-
-            <button class="claim-btn" onclick="closeOfflineModal()">CLAIM REWARDS</button>
+            <button class="auth-btn" onclick="closeMusicModal()" style="margin-top: 20px;">Close</button>
         </div>
     </div>
 
@@ -397,7 +258,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
     <script src="javascript/config.js?v=2"></script>
     <script src="javascript/mechanics.js?v=2"></script>
     <script src="javascript/core.js?v=2"></script>
