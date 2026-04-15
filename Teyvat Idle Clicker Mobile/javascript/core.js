@@ -270,6 +270,7 @@ function updateUI() {
     const petBuffs = calculatePetBuffs();
 
     // --- 1. RECALCULATE BASE STATS ---
+    // Start with core base of 1
     let baseCP = 1;
     game.clickUpgrades.forEach(up => {
         baseCP += (Number(up.level) || 0) * (Number(up.power) || 0);
@@ -290,7 +291,16 @@ function updateUI() {
     let totalGameMult = (game.multiplier || 1) * resonanceMult;
 
     // --- 3. FINAL POWER CALCULATIONS ---
-    game.clickPower = (baseCP * totalGameMult * temptationMult * (petBuffs.clickMult || 1) * (petBuffs.globalMult || 1)) + (petBuffs.flatClick || 0);
+    // Get Seelie level and calculate its portion of the base
+    const seelieBlessing = game.blessings.find(b => b.id === 'strong_start');
+    const seelieBonus = (seelieBlessing ? (Number(seelieBlessing.level) || 0) * 100 : 0);
+
+    // This is the "Per Click" value you want.
+    // If upgrades are 300 and level is 1, this is exactly 401.
+    let effectiveBaseCP = baseCP + seelieBonus;
+
+    // Apply multipliers to the combined base
+    game.clickPower = (effectiveBaseCP * totalGameMult * temptationMult * (petBuffs.clickMult || 1) * (petBuffs.globalMult || 1)) + (petBuffs.flatClick || 0);
     
     let finalPPS = basePPS * totalGameMult * temptationMult * (petBuffs.ppsMult || 1) * (petBuffs.globalMult || 1);
 
