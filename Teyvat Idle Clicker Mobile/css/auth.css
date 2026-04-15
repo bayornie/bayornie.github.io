@@ -4,112 +4,148 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    backdrop-filter: blur(12px);
+    background: #000000;
     display: none;
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
 }
 
 .auth-card {
-    background: #2a2c31; /* Darker grey to match Genshin menus */
-    padding: 2.5rem 1.5rem;
+    background: #0f171f;
+    padding: 3rem 2rem;
     border-radius: 12px;
-    border: 1px solid rgba(236, 229, 216, 0.2);
+    border: 2px solid #64ffbf;
     width: 90%;
-    max-width: 400px;
-    color: #ece5d8;
+    max-width: 420px;
+    color: #ffffff;
     text-align: center;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 0 30px rgba(100, 255, 191, 0.15);
     display: flex;
     flex-direction: column;
     align-items: center;
-    box-sizing: border-box;
 }
 
 .auth-card h2 {
-    color: var(--btn-gold);
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
-    letter-spacing: 1px;
+    color: #ffffff;
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
 }
 
 .auth-card input {
-    width: 100%;
-    margin-bottom: 1.2rem;
-    padding: 14px 18px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(236, 229, 216, 0.1);
-    border-radius: 4px; /* Sharper corners for authentic look */
-    color: white;
-    font-size: 16px; /* Prevents auto-zoom on mobile */
-    transition: all 0.2s;
+    width: 320px;
+    margin-bottom: 1rem;
+    padding: 15px;
+    background: #050a0e;
+    border: 1px solid #1a242d;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 1rem;
+    transition: all 0.2s ease;
     box-sizing: border-box;
-    -webkit-appearance: none;
-    appearance: none;
+}
+
+.auth-card input[type="password"] {
+    padding-right: 45px;
+}
+
+.auth-card input::placeholder {
+    color: #4a5560;
 }
 
 .auth-card input:focus {
     outline: none;
-    border-color: var(--btn-gold);
-    background: rgba(0, 0, 0, 0.5);
+    border-color: #64ffbf;
+    background: #080f15;
 }
 
 .password-wrapper {
     position: relative;
+    width: 320px;
+    height: 50px;
+    margin: 0 auto 1.2rem auto;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
     width: 100%;
+    height: 100%;
+    margin-bottom: 0;
 }
 
 .password-toggle {
     position: absolute;
     right: 15px;
-    top: 40%;
+    top: 50%;
     transform: translateY(-50%);
     cursor: pointer;
-    opacity: 0.6;
-    padding: 5px;
+    color: #64ffbf;
+    font-size: 1.2rem;
+    z-index: 10;
+    line-height: 1;
 }
 
 .auth-btn {
     width: 100%;
-    padding: 16px;
-    background: #ece5d8;
-    color: #32343a;
+    max-width: 320px;
+    padding: 18px;
+    background: #64ffbf;
+    color: #0f171f;
     border: none;
-    border-radius: 4px;
-    font-weight: 800;
-    font-size: 1rem;
+    border-radius: 8px;
+    font-weight: 900;
+    font-size: 1.1rem;
     cursor: pointer;
-    transition: all 0.2s;
-    margin-top: 10px;
+    transition: all 0.2s ease;
+    margin-top: 1rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    box-sizing: border-box;
-    -webkit-appearance: none;
-    appearance: none;
+    letter-spacing: 1px;
 }
 
 .auth-btn:active {
-    transform: scale(0.96);
-    background: #fff9ed;
+    transform: scale(0.97);
+    filter: brightness(0.9);
 }
 
 .auth-card p {
-    color: rgba(236, 229, 216, 0.6);
+    color: #8899a6;
     font-size: 0.9rem;
-    margin-top: 25px;
+    margin-top: 1.5rem;
     cursor: pointer;
-    transition: all 0.3s ease;
-    letter-spacing: 0.5px;
-    display: inline-block;
-    padding: 10px;
 }
 
-.auth-card p:active {
-    color: var(--btn-gold);
-    opacity: 1;
+.auth-card p span {
+    color: #ffffff;
+    text-decoration: none;
+    margin-left: 5px;
+}
+
+.auth-btn.logout-btn {
+    background: #ff3954;
+    color: #0f171f;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 8px;
+    font-weight: 800;
+    text-transform: uppercase;
+    width: 100%;
+    margin: 10px auto 0;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.auth-btn.logout-btn:hover {
+    background: #ffffff;
+}
+
+.forgot-link {
+    color: #ecd078;
+    font-weight: bold;
+    font-size: 0.85rem;
+    text-decoration: none;
+    display: block;
+    margin-top: 1.5rem;
 }
