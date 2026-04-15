@@ -28,7 +28,6 @@ auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
 let isLoggedIn = false;
 let buyAmount = 1;
 let fischlTimer = 0;
-let lastTouchEnd = 0;
 let clickCounter = 0;
 let game = {
     playerName: "Traveler",
