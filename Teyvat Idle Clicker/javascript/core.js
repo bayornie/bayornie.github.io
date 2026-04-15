@@ -198,59 +198,65 @@ function updateUI() {
     const petBuffs = calculatePetBuffs();
 
     // --- 1. RECALCULATE BASE STATS ---
+    // Start at exactly 1. baseCP only grows if levels exist.
     let baseCP = 1;
     game.clickUpgrades.forEach(up => {
-        baseCP += (up.level * up.power);
+        baseCP += (Number(up.level) || 0) * (Number(up.power) || 0);
     });
 
     let basePPS = 0;
     game.generators.forEach(g => {
-        basePPS += (g.income * g.count);
+        basePPS += (Number(g.income) || 0) * (Number(g.count) || 0);
     });
 
     // --- 2. APPLY MULTIPLIERS ---
-    // Fetch Resonance Blessing for the +10% per level bonus
+    // Elemental Resonance logic (+10% per level)
     const resonanceBlessing = game.blessings.find(b => b.id === 'resonance');
-    const resonanceMult = 1 + (resonanceBlessing ? resonanceBlessing.level * 0.10 : 0);
+    const resonanceMult = 1 + (resonanceBlessing ? (Number(resonanceBlessing.level) || 0) * 0.10 : 0);
 
-    // Combine Ascension and Blessings
+    // Adepti's Temptation (Shop Item / buff_pot) - kept as a background power boost
+    const temptation = game.shopItems.find(item => item.id === 'buff_pot');
+    const temptationMult = 1 + (temptation ? (Number(temptation.level) || 0) * 0.5 : 0);
+
+    // This is the "Moving Multiplier" display (Ascension Base * Resonance)
+    // We base the entire game's power on this variable
     let totalGameMult = (game.multiplier || 1) * resonanceMult;
 
-    // Apply Pet Click, PPS, and Global Multipliers
-    game.clickPower = baseCP * (game.clickMultiplier || 1) * petBuffs.clickMult * (petBuffs.globalMult || 1) * totalGameMult;
-    let finalPPS = basePPS * petBuffs.ppsMult * (petBuffs.globalMult || 1) * totalGameMult;
+    // --- 3. FINAL POWER CALCULATIONS ---
+    // Formula: (Base + Upgrades) * Multiplier * Shop Mult * Pet Mults
+    game.clickPower = baseCP * totalGameMult * temptationMult * (petBuffs.clickMult || 1) * (petBuffs.globalMult || 1);
+    let finalPPS = basePPS * totalGameMult * temptationMult * (petBuffs.ppsMult || 1) * (petBuffs.globalMult || 1);
 
-    // Update global shop discount variable so renderPetShop() uses it
-    game.currentDiscount = petBuffs.discount;
+    game.currentDiscount = petBuffs.discount || 1;
 
-    // --- 3. MAIN RESOURCE DISPLAYS ---
-    // Support both your standard IDs and the stat-panel IDs
+    // --- 4. MAIN RESOURCE DISPLAYS ---
     const primoEl = document.getElementById('primogems') || document.getElementById('primo-count');
     if (primoEl) primoEl.innerText = formatNumbers(game.primos);
 
     const statTotalEl = document.getElementById('stat-total');
     if (statTotalEl) statTotalEl.innerText = formatNumbers(game.primos);
 
-    // Update Click and PPS Displays
     const ppsEl = document.getElementById('stat-pps') || document.getElementById('primos-per-sec');
     if (ppsEl) ppsEl.innerText = formatNumbers(finalPPS);
 
     const cpEl = document.getElementById('stat-click') || document.getElementById('click-power-text');
     if (cpEl) cpEl.innerText = formatNumbers(game.clickPower);
 
-    if (document.getElementById('stat-mult')) {
-        document.getElementById('stat-mult').innerText = totalGameMult.toFixed(2) + 'x';
+    // This shows the 1.00x - 1.10x etc. based on Elemental Resonance
+    const multEl = document.getElementById('stat-mult');
+    if (multEl) {
+        multEl.innerText = totalGameMult.toFixed(2) + 'x';
     }
 
     if (document.getElementById('stat-total-ever')) {
         document.getElementById('stat-total-ever').innerText = formatNumbers(game.totalPrimosEver);
     }
 
-    // --- 4. DYNAMIC LIST RENDERING ---
+    // --- 5. DYNAMIC LIST RENDERING ---
     renderList('click-upgrades', game.clickUpgrades, buyClickUpgrade);
     renderList('gen-upgrades', game.generators, buyGenerator);
 
-    // --- 5. SPECIAL STATS & BUTTONS ---
+    // --- 6. SPECIAL STATS & BUTTONS ---
     const prestigeDisplay = document.getElementById('stat-prestige');
     if (prestigeDisplay) {
         prestigeDisplay.innerText = formatNumbers(game.prestigePoints || 0);
@@ -258,16 +264,11 @@ function updateUI() {
 
     const ascBtn = document.getElementById('ascension-btn');
     if (ascBtn) {
-        if (game.primos >= 1000000) {
-            ascBtn.classList.remove('disabled');
-            ascBtn.innerText = "Ascend Now!";
-        } else {
-            ascBtn.classList.add('disabled');
-            ascBtn.innerText = `Ascend (Requires 1M)`;
-        }
+        const canAscend = game.primos >= 1000000;
+        ascBtn.classList.toggle('disabled', !canAscend);
+        ascBtn.innerText = canAscend ? "Ascend Now!" : "Ascend (Requires 1M)";
     }
 
-    // --- 6. SIDEBAR SYNC ---
     if (typeof updatePartySidebar === "function") {
         updatePartySidebar();
     }
