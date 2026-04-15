@@ -15,67 +15,75 @@ function clearAuthInputs() {
 function openProfile() {
     const user = auth.currentUser;
     if (user) {
-        const profName = document.getElementById('prof-name');
-        if (profName) {
-            profName.innerText = game.playerName || "Traveler";
+        // Updated: Targets the .traveler-name class in your new premium card
+        const travelerName = document.querySelector('.traveler-name');
+        if (travelerName) {
+            travelerName.innerText = game.playerName || "Traveler";
         }
 
-        if (document.getElementById('prof-total-ever')) {
-            document.getElementById('prof-total-ever').innerText = formatNumbers(game.totalPrimosEver);
+        // Sync all data rows in the profile tab
+        updateUI();
+
+        // Updated: showPanel handles the visibility logic for the profile-panel
+        if (typeof showPanel === "function") {
+            showPanel('profile');
+        } else {
+            document.getElementById('profile-panel').style.display = 'block';
         }
 
-        if (document.getElementById('prof-current-primos')) {
-            document.getElementById('prof-current-primos').innerText = formatNumbers(game.primos);
-        }
-
-        if (document.getElementById('prof-power')) {
-            document.getElementById('prof-power').innerText = formatNumbers(game.clickPower);
-        }
-
-        if (document.getElementById('prof-per-sec')) {
-            let basePPS = 0;
-            game.generators.forEach(gen => {
-                basePPS += (gen.count * gen.income);
-            });
-
-            // Ensure this uses game.multiplier to match your sidebar and config.js
-            let finalPPS = basePPS * (game.multiplier || 1);
-            document.getElementById('prof-per-sec').innerText = formatNumbers(finalPPS);
-        }
-
-        // --- UPDATED SECTION ---
-        // Show profile and ensure settings is hidden
-        document.getElementById('profile-overlay').style.display = 'flex';
         const settingsOverlay = document.getElementById('settings-overlay');
         if (settingsOverlay) {
             settingsOverlay.style.display = 'none';
         }
-        // -----------------------
-
     } else {
         showNotification("Please login to view profile!");
     }
 }
 
 function toggleProfileView() {
-    document.getElementById('profile-overlay').style.display = 'none';
+    // Note: in your HTML, profile-panel is a section, settings-overlay is a flex overlay
+    const profPanel = document.getElementById('profile-panel');
+    if (profPanel) profPanel.style.display = 'none';
     document.getElementById('settings-overlay').style.display = 'flex';
 }
 
 function closeSettings() {
     document.getElementById('settings-overlay').style.display = 'none';
-    document.getElementById('profile-overlay').style.display = 'flex';
+    const profPanel = document.getElementById('profile-panel');
+    if (profPanel) profPanel.style.display = 'block';
 }
 
 function handleLogout() {
-    saveCloudGame().then(() => {
-        auth.signOut().then(() => {
-            location.reload();
-        });
+    auth.signOut().then(() => {
+        isLoggedIn = false;
+
+        // 1. Hide User Data Panels
+        const profilePanel = document.getElementById('profile-panel');
+        const settingsOverlay = document.getElementById('settings-overlay');
+        if (profilePanel) profilePanel.style.display = 'none';
+        if (settingsOverlay) settingsOverlay.style.display = 'none';
+
+        // 2. Clear character party icons
+        const miniList = document.getElementById('mini-pet-list');
+        if (miniList) miniList.innerHTML = '';
+
+        // 3. Show the Login / Register overlay
+        const authOverlay = document.getElementById('auth-overlay');
+        if (authOverlay) authOverlay.style.display = 'flex';
+
+        showNotification("Logged out successfully!");
+
+        if (typeof clearAuthInputs === 'function') clearAuthInputs();
+
+        // 4. Reload the page
+        location.reload();
+    }).catch((error) => {
+        console.error("Logout Error:", error);
+        showNotification("Error logging out.");
     });
 }
 
-// --- NEW PASSWORD RESET LOGIC ---
+// --- PASSWORD RESET LOGIC ---
 function resetPassword() {
     const email = document.getElementById('login-email').value;
 
@@ -93,17 +101,15 @@ function resetPassword() {
         });
 }
 
-// --- UPDATED AUTH HANDLER ---
+// --- AUTHENTICATION HANDLER ---
 async function handleAuth(type) {
     let email, pass, username;
 
     if (type === 'register') {
-        // Correctly maps the new registration fields
         email = document.getElementById('reg-email').value;
         username = document.getElementById('reg-username').value;
         pass = document.getElementById('reg-password').value;
     } else {
-        // Correctly maps the login fields (ensure login email id matches index.html)
         email = document.getElementById('login-email').value;
         pass = document.getElementById('password').value;
     }
@@ -122,7 +128,7 @@ async function handleAuth(type) {
         await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
 
         if (type === 'register') {
-            game.playerName = username; // Preserving your username field assignment
+            game.playerName = username;
             const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
 
             await userCredential.user.sendEmailVerification();
@@ -130,7 +136,6 @@ async function handleAuth(type) {
 
             showNotification(`Ad Astra Abyssosque, ${game.playerName}!`);
         } else {
-            // Logic for existing users logging back in
             await auth.signInWithEmailAndPassword(email, pass);
             showNotification("Welcome back, Traveler!");
         }
@@ -142,30 +147,44 @@ async function handleAuth(type) {
 }
 
 auth.onAuthStateChanged((user) => {
-    const loginTrigger = document.getElementById('login-nav-btn');
-    const userControls = document.getElementById('user-controls');
+    const profilePanel = document.getElementById('profile-panel'); 
+    const loggedOutView = document.getElementById('logged-out-view');
+    const loggedInView = document.getElementById('logged-in-view');
+    const authOverlay = document.getElementById('auth-overlay');
 
     if (user) {
         isLoggedIn = true;
-        document.getElementById('auth-overlay').style.display = 'none';
-        if (loginTrigger) loginTrigger.style.display = 'none';
-        if (userControls) userControls.style.display = 'block';
+        if (authOverlay) authOverlay.style.display = 'none';
+
+        if (loggedOutView) loggedOutView.style.display = 'none';
+        if (loggedInView) loggedInView.style.display = 'block';
+
         loadCloudGame(user.uid);
+        
+        setTimeout(() => {
+            const tabName = document.getElementById('prof-name-tab');
+            if (tabName) tabName.innerText = (game && game.playerName) ? game.playerName : "Traveler";
+            if (typeof updateUI === "function") updateUI();
+        }, 500);
+
     } else {
         isLoggedIn = false;
-        if (loginTrigger) {
-            loginTrigger.style.display = 'block';
-            loginTrigger.innerText = "Login / Register";
-        }
-        if (userControls) userControls.style.display = 'none';
-        updateUI();
+
+        if (loggedOutView) loggedOutView.style.display = 'flex';
+        if (loggedInView) loggedInView.style.display = 'none';
+
+        const miniList = document.getElementById('active-pets-mini');
+        if (miniList) miniList.innerHTML = '';
+        
+        const tabName = document.getElementById('prof-name-tab');
+        if (tabName) tabName.innerText = "Traveler";
     }
 });
 
 async function saveCloudGame() {
     game.lastLogin = Date.now();
     const user = auth.currentUser;
-    if (user) {
+    if (user && isLoggedIn) {
         await db.collection("users").doc(user.uid).set(game);
         console.log("Cloud Saved!");
     }
@@ -176,7 +195,7 @@ async function loadCloudGame(uid) {
     if (doc.exists) {
         let cloudData = doc.data();
 
-        // 1. SMART SYNC: Click Upgrades
+        // Preserve all your existing merge logic for upgrades/generators/pets
         game.clickUpgrades.forEach((localItem, index) => {
             if (!cloudData.clickUpgrades[index]) {
                 cloudData.clickUpgrades.push(localItem);
@@ -187,7 +206,6 @@ async function loadCloudGame(uid) {
             }
         });
 
-        // 2. SMART SYNC: Generators
         game.generators.forEach((localGen, index) => {
             if (!cloudData.generators[index]) {
                 cloudData.generators.push(localGen);
@@ -198,7 +216,6 @@ async function loadCloudGame(uid) {
             }
         });
 
-        // 3. SMART SYNC: Blessings
         game.blessings.forEach((localBlessing, index) => {
             if (!cloudData.blessings[index]) {
                 cloudData.blessings.push(localBlessing);
@@ -208,7 +225,6 @@ async function loadCloudGame(uid) {
             }
         });
 
-        // 4. SMART SYNC: Shop Items
         game.shopItems.forEach((localShop, index) => {
             if (!cloudData.shopItems[index]) {
                 cloudData.shopItems.push(localShop);
@@ -216,30 +232,18 @@ async function loadCloudGame(uid) {
                 let item = cloudData.shopItems[index];
                 item.name = localShop.name;
                 item.desc = localShop.desc;
-
                 const baseCosts = { 'time_warp': 20000, 'seelie': 150000, 'buff_pot': 300000, 'primordial_shard': 750000 };
                 const rates = { 'time_warp': 2, 'seelie': 2.5, 'buff_pot': 2, 'primordial_shard': 3 };
-
                 let base = baseCosts[item.id] || 100000;
                 let rate = rates[item.id] || 2;
-
-                // Set the cost based on the level saved in the cloud
                 item.cost = Math.floor(base * Math.pow(rate, item.level || 0));
-
-                // Sync Seelie MAX text if necessary
-                if (item.id === 'seelie' && (item.level || 0) >= 3) {
-                    item.name = "Follower Seelie (MAX)";
-                }
+                if (item.id === 'seelie' && (item.level || 0) >= 3) item.name = "Follower Seelie (MAX)";
             }
         });
 
-        // 5. SMART SYNC: Pets
         if (cloudData.ownedPets === undefined) cloudData.ownedPets = [];
         if (cloudData.activePets === undefined) cloudData.activePets = [];
-
-        if (!cloudData.pets) {
-            cloudData.pets = JSON.parse(JSON.stringify(game.pets));
-        }
+        if (!cloudData.pets) cloudData.pets = JSON.parse(JSON.stringify(game.pets));
 
         game.pets.forEach((localPet, index) => {
             if (!cloudData.pets[index]) {
@@ -257,22 +261,15 @@ async function loadCloudGame(uid) {
 
         if (cloudData.seelies === undefined) cloudData.seelies = 0;
         if (cloudData.prestigePoints === undefined) cloudData.prestigePoints = 0;
-
-        // If name is missing, pull from cloud data (now contains dedicated username)
-        if (!cloudData.playerName) {
-            cloudData.playerName = "Traveler";
-        }
-
-        // --- SYNC AUDIO PREFERENCES ---
+        if (!cloudData.playerName) cloudData.playerName = "Traveler";
         if (cloudData.currentTrackIndex === undefined) cloudData.currentTrackIndex = 0;
         if (cloudData.bgmVolume === undefined) cloudData.bgmVolume = 0.5;
         if (cloudData.isMusicMuted === undefined) cloudData.isMusicMuted = false;
 
-        // We refresh the bgmList from the local code to ensure file paths are always correct
         cloudData.bgmList = JSON.parse(JSON.stringify(game.bgmList));
 
         game = cloudData;
-        calculateOfflineEarnings();
+        if (typeof calculateOfflineEarnings === "function") calculateOfflineEarnings();
         updateUI();
         saveCloudGame();
         console.log("Sync Complete!");
@@ -288,34 +285,26 @@ function toggleAuth() {
 
 window.onclick = function (event) {
     const authOverlay = document.getElementById('auth-overlay');
-    const profOverlay = document.getElementById('profile-overlay');
     const settingsOverlay = document.getElementById('settings-overlay');
     const musicOverlay = document.getElementById('music-overlay');
 
     if (event.target == authOverlay) authOverlay.style.display = "none";
-    if (event.target == profOverlay) profOverlay.style.display = "none";
     if (event.target == settingsOverlay) settingsOverlay.style.display = "none";
     if (event.target == musicOverlay) musicOverlay.style.display = "none";
 }
 
-// --- SEND VERIFICATION EMAIL ---
-function sendVerification() {
+function resendVerification() {
     const user = auth.currentUser;
     if (user) {
         user.sendEmailVerification()
-            .then(() => {
-                showNotification("Verification link sent! Check your inbox.");
-            })
-            .catch((error) => {
-                showNotification("Error: " + error.message);
-            });
+            .then(() => showNotification("Verification link sent! Check your inbox."))
+            .catch((error) => showNotification("Error: " + error.message));
     }
 }
 
-// --- UPDATE EMAIL ADDRESS ---
-async function changeEmail() {
+async function updateEmail() {
     const user = auth.currentUser;
-    const newEmail = document.getElementById('new-email-input').value;
+    const newEmail = document.getElementById('update-email-input').value;
 
     if (!newEmail) {
         showNotification("Please enter a new email address.");
@@ -325,7 +314,6 @@ async function changeEmail() {
     try {
         await user.updateEmail(newEmail);
         showNotification("Email updated! A confirmation was sent to your old address.");
-
         game.playerEmail = newEmail;
         saveCloudGame();
     } catch (error) {
@@ -335,6 +323,11 @@ async function changeEmail() {
             showNotification(error.message);
         }
     }
+}
+
+// --- MUSIC HANDLING ---
+function openMusicSelect() {
+    openMusicModal();
 }
 
 function openMusicModal() {
@@ -348,6 +341,7 @@ function closeMusicModal() {
 
 function renderMusicList() {
     const container = document.getElementById('track-list-container');
+    if (!container) return;
     container.innerHTML = '';
 
     game.bgmList.forEach((track, index) => {
@@ -359,14 +353,22 @@ function renderMusicList() {
             <span>${track.title}</span>
             ${isPlaying ? '<small> (Playing)</small>' : ''}
         `;
-        btn.onclick = () => playTrack(index);
+        btn.onclick = () => { if (typeof playTrack === "function") playTrack(index); };
         container.appendChild(btn);
     });
 }
 
-function updateVolume(val) {
+function setVolume(val) {
+    if (window.bgmPlayer) {
+        window.bgmPlayer.volume = val;
+    }
+    
     game.bgmVolume = val;
-    bgmPlayer.volume = val;
+
+    const volPerc = document.getElementById('vol-perc');
+    if (volPerc) {
+        volPerc.innerText = Math.round(val * 100) + "%";
+    }
 }
 
 setInterval(saveCloudGame, 30000);
