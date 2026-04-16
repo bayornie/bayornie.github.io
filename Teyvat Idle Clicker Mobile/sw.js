@@ -1,23 +1,23 @@
-const CACHE_NAME = 'teyvat-v1';
+const CACHE_NAME = 'teyvat-v2';
 const ASSETS = [
-    '/Teyvat%20Idle%20Clicker%20Mobile/',
-    '/Teyvat%20Idle%20Clicker%20Mobile/index.html',
+    './',
+    './index.html',
     // --- CSS Files ---
-    '/Teyvat%20Idle%20Clicker%20Mobile/css/theme.css',
-    '/Teyvat%20Idle%20Clicker%20Mobile/css/layout.css',
-    '/Teyvat%20Idle%20Clicker%20Mobile/css/components.css',
-    '/Teyvat%20Idle%20Clicker%20Mobile/css/auth.css',
-    '/Teyvat%20Idle%20Clicker%20Mobile/css/special.css',
+    './css/theme.css?v=2',
+    './css/layout.css?v=2',
+    './css/components.css?v=2',
+    './css/auth.css?v=2',
+    './css/special.css?v=2',
     // --- JS Files ---
-    '/Teyvat%20Idle%20Clicker%20Mobile/javascript/config.js',
-    '/Teyvat%20Idle%20Clicker%20Mobile/javascript/core.js',
-    '/Teyvat%20Idle%20Clicker%20Mobile/javascript/mechanics.js',
-    '/Teyvat%20Idle%20Clicker%20Mobile/javascript/auth.js',
+    './javascript/config.js?v=2',
+    './javascript/core.js?v=2',
+    './javascript/mechanics.js?v=2',
+    './javascript/auth.js?v=2',
     // --- Essential Images ---
-    '/Teyvat%20Idle%20Clicker%20Mobile/img/primogem.png',
-    '/Teyvat%20Idle%20Clicker%20Mobile/img/PWA/icon-192.png',
-    '/Teyvat%20Idle%20Clicker%20Mobile/img/PWA/icon-512.png',
-    '/Teyvat%20Idle%20Clicker%20Mobile/manifest.json'
+    './img/primogem.png',
+    './img/icon-192.png',
+    './img/icon-512.png',
+    './manifest.json'
 ];
 
 // 1. Install Event: Saves the App Shell for offline use
