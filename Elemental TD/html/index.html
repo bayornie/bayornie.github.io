@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teyvat Tower Defense</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="game-ui">
+            <div id="ui-layer">
+                <div class="stat-box">Gold: <span id="gold-val">500</span></div>
+                <div class="stat-box">Lives: <span id="lives-val">25</span></div>
+                <div class="stat-box">Wave: <span id="wave-val">1</span></div>
+                <button id="next-wave-btn" onclick="startNextWave()">START WAVE</button>
+            </div>
+
+            <div id="tower-footer">
+                <div id="tower-menu">
+                    <button class="t-btn pyro" onclick="selectTower('pyro')">Pyro (100g)</button>
+                    <button class="t-btn cryo" onclick="selectTower('cryo')">Cryo (100g)</button>
+                    <button class="t-btn electro" onclick="selectTower('electro')">Electro (125g)</button>
+                    <button class="t-btn anemo" onclick="selectTower('anemo')">Anemo (125g)</button>
+                    <button class="t-btn geo" onclick="selectTower('geo')">Geo (150g)</button>
+                    <button class="t-btn hydro" onclick="selectTower('hydro')">Hydro (150g)</button>
+                    <button class="t-btn dendro" onclick="selectTower('dendro')">Dendro (175g)</button>
+                </div>
+            </div>
+
+            <div id="game-over-overlay">
+                <h1>TEYVAT CRUMBLED</h1>
+                <button id="rebuild-btn" onclick="resetGame()">REBUILD TEYVAT</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/script.js"></script>
+</body>
+
+</html>
