@@ -1,0 +1,23 @@
+{
+    "name": "Teyvat Idle Clicker Mobile",
+    "short_name": "TeyvatMobile",
+    "description": "A Genshin-Themed Idle Mobile Game.",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#060a16",
+    "theme_color": "#0c0f1d",
+    "icons": [
+        {
+            "src": "./img/PWA/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "./img/PWA/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
