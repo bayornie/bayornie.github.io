@@ -405,16 +405,29 @@ function handleMainClick() {
 }
 
 function getFinalClickPower() {
-    let base = game.clickPower || 1;
-    let multiplier = game.clickMultiplier || 1;
+    // 1. Calculate base from levels
+    let baseCP = 1;
+    game.clickUpgrades.forEach(up => {
+        baseCP += (Number(up.level) || 0) * (Number(up.power) || 0);
+    });
 
-    // This already handles Xiao (1.5x), Sucrose (1.15x), and Arlecchino (1.5x)
+    // 2. Get Hero's Wit
+    const heroWitBlessing = game.blessings.find(b => b.id === 'strong_start');
+    const heroWitBonus = (heroWitBlessing ? (Number(heroWitBlessing.level) || 0) * 100 : 0);
+
+    // 3. Get Multipliers (Temptation + Resonance)
+    const resonanceBlessing = game.blessings.find(b => b.id === 'resonance');
+    const resonanceMult = 1 + (resonanceBlessing ? (Number(resonanceBlessing.level) || 0) * 0.10 : 0);
+    const temptation = game.shopItems.find(item => item.id === 'buff_pot');
+    const temptationMult = 1 + (temptation ? (Number(temptation.level) || 0) * 0.5 : 0);
+    
+    let totalGameMult = (game.multiplier || 1) * resonanceMult * temptationMult;
+
+    // 4. Get Pet Buffs
     const petBuffs = calculatePetBuffs();
 
-    // We multiply the base by the active multipliers
-    let finalPower = base * multiplier * petBuffs.clickMult * petBuffs.globalMult;
-
-    return finalPower;
+    // 5. Final Calculation (Matches updateUI exactly)
+    return (baseCP + heroWitBonus) * totalGameMult * (petBuffs.clickMult || 1) * (petBuffs.globalMult || 1);
 }
 
 // --- PARTY & BUFF LOGIC ---
