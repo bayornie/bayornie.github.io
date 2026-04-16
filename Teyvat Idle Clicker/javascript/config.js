@@ -62,7 +62,7 @@ let game = {
     blessings: [
         { id: 'crit', name: "Adventurer's Luck", cost: 1, level: 0, desc: '+5% Crit Click Chance' },
         { id: 'fast_gen', name: "Ley Line Efficiency", cost: 2, level: 0, desc: '+10% Generator Speed' },
-        { id: 'strong_start', name: "Hero's Wit", cost: 5, level: 0, desc: 'Start with +5 Click Power' },
+        { id: 'strong_start', name: "Hero's Wit", cost: 5, level: 0, desc: 'Start with +100 Click Power' },
         { id: 'resonance', name: "Elemental Resonance", cost: 10, level: 0, desc: '+10% Total Multiplier' }
     ],
 
