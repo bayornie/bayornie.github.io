@@ -198,7 +198,6 @@ function updateUI() {
     const petBuffs = calculatePetBuffs();
 
     // --- 1. RECALCULATE BASE STATS ---
-    // Start at exactly 1. baseCP only grows if levels exist.
     let baseCP = 1;
     game.clickUpgrades.forEach(up => {
         baseCP += (Number(up.level) || 0) * (Number(up.power) || 0);
@@ -210,22 +209,27 @@ function updateUI() {
     });
 
     // --- 2. APPLY MULTIPLIERS ---
-    // Elemental Resonance logic (+10% per level)
     const resonanceBlessing = game.blessings.find(b => b.id === 'resonance');
     const resonanceMult = 1 + (resonanceBlessing ? (Number(resonanceBlessing.level) || 0) * 0.10 : 0);
 
-    // Adepti's Temptation (Shop Item / buff_pot) - kept as a background power boost
     const temptation = game.shopItems.find(item => item.id === 'buff_pot');
     const temptationMult = 1 + (temptation ? (Number(temptation.level) || 0) * 0.5 : 0);
 
-    // This is the "Moving Multiplier" display (Ascension Base * Resonance)
-    // We base the entire game's power on this variable
     let totalGameMult = (game.multiplier || 1) * resonanceMult;
 
     // --- 3. FINAL POWER CALCULATIONS ---
-    // Formula: (Base + Upgrades) * Multiplier * Shop Mult * Pet Mults
-    game.clickPower = baseCP * totalGameMult * temptationMult * (petBuffs.clickMult || 1) * (petBuffs.globalMult || 1);
-    let finalPPS = basePPS * totalGameMult * temptationMult * (petBuffs.ppsMult || 1) * (petBuffs.globalMult || 1);
+    // Hero's Wit logic: Add the 100s to baseCP BEFORE final calculation
+    const heroWitBlessing = game.blessings.find(b => b.id === 'strong_start');
+    const heroWitBonus = (heroWitBlessing ? (Number(heroWitBlessing.level) || 0) * 100 : 0);
+
+    // This makes your core base 101, 201, 301, etc.
+    let effectiveBaseCP = baseCP + heroWitBonus;
+
+    // Apply multipliers to the combined base
+    game.clickPower = effectiveBaseCP * totalGameMult * temptationMult * (petBuffs.clickMult || 1) * (petBuffs.globalMult || 1);
+    
+    // finalPPS (Removed temptationMult here as requested previously)
+    let finalPPS = basePPS * totalGameMult * (petBuffs.ppsMult || 1) * (petBuffs.globalMult || 1);
 
     game.currentDiscount = petBuffs.discount || 1;
 
@@ -242,7 +246,6 @@ function updateUI() {
     const cpEl = document.getElementById('stat-click') || document.getElementById('click-power-text');
     if (cpEl) cpEl.innerText = formatNumbers(game.clickPower);
 
-    // This shows the 1.00x - 1.10x etc. based on Elemental Resonance
     const multEl = document.getElementById('stat-mult');
     if (multEl) {
         multEl.innerText = totalGameMult.toFixed(2) + 'x';
@@ -253,6 +256,7 @@ function updateUI() {
     }
 
     // --- 5. DYNAMIC LIST RENDERING ---
+    // This is where the shop items get redrawn.
     renderList('click-upgrades', game.clickUpgrades, buyClickUpgrade);
     renderList('gen-upgrades', game.generators, buyGenerator);
 
@@ -366,26 +370,25 @@ function renderList(containerId, data, clickFn) {
 
     const existingCards = container.querySelectorAll('.upgrade-card');
 
+    // --- NEW: Check for Temptation Multiplier for the Preview ---
+    const temptation = game.shopItems.find(item => item.id === 'buff_pot');
+    const temptationMult = 1 + (temptation ? (Number(temptation.level) || 0) * 0.5 : 0);
+
     // --- PET DISCOUNT LOGIC ---
     const effectiveDiscount = game.currentDiscount || 1;
 
     data.forEach((item, index) => {
         const rate = item.rate || (item.power ? 1.5 : 1.75);
 
-        // Apply discount to the base item cost for Max calculation
         const discountedBaseCost = item.cost * effectiveDiscount;
-
         let displayAmt = buyAmount === 'max' ? getMaxAffordable(game.primos, discountedBaseCost, rate) : buyAmount;
         let effectiveAmt = (displayAmt <= 0) ? 1 : displayAmt;
 
-        // Calculate the total cost with the discount applied
         let totalCost = getMultiCost(item.cost, rate, effectiveAmt) * effectiveDiscount;
-
         const canAfford = game.primos >= totalCost;
         let displayLvl = item.level !== undefined ? item.level : item.count;
 
         let card = existingCards[index];
-
         if (!card) {
             card = document.createElement('div');
             card.className = 'upgrade-card';
@@ -394,13 +397,17 @@ function renderList(containerId, data, clickFn) {
 
         card.classList.toggle('disabled', !canAfford);
 
-        // Change text color to gold if a discount is active
         const costStyle = effectiveDiscount < 1 ? 'color: #ffe164; font-weight: bold;' : '';
+
+        // --- FIXED PREVIEW TEXT ---
+        // We multiply the displayed power by temptationMult so +10 becomes +15 in the UI
+        let powerValue = item.power ? (item.power * temptationMult) : (item.income * temptationMult);
+        let powerLabel = item.power ? `+${formatNumbers(powerValue)} Click` : `+${formatNumbers(powerValue)}/s`;
 
         const newHTML = `
             <div>
                 <strong>${item.name}</strong><br>
-                <small>${item.power ? '+' + item.power + ' Click' : '+' + item.income.toFixed(1) + '/s'}</small><br>
+                <small>${powerLabel}</small><br>
                 <small style="color: #64ffbf;">Buying: ${displayAmt}x</small>
             </div>
             <div>
@@ -416,7 +423,6 @@ function renderList(containerId, data, clickFn) {
         card.onclick = () => {
             if (canAfford) {
                 clickFn(index);
-                // No need for redundant updateUI() here if clickFn already calls it
             } else {
                 showNotification("Not enough Primogems!");
             }
