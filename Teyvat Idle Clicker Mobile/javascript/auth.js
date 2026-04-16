@@ -125,6 +125,7 @@ async function handleAuth(type) {
     }
 
     try {
+        // Keeping SESSION persistence as requested
         await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
 
         if (type === 'register') {
@@ -142,7 +143,15 @@ async function handleAuth(type) {
 
         document.getElementById('auth-overlay').style.display = 'none';
     } catch (error) {
-        showNotification(error.message);
+        // Improved Error Handling for PWA/Mobile Network issues
+        if (error.code === 'auth/network-request-failed') {
+            showNotification("The Ley Lines are blocked! Check your connection to enter Teyvat.");
+        } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+            showNotification("Invalid credentials, Traveler. Try again!");
+        } else {
+            // Fallback for other Firebase errors
+            showNotification(error.message);
+        }
     }
 }
 
