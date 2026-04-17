@@ -1,0 +1,47 @@
+:root {
+    --bg-dark: #0f1115;
+    --pyro-color: #ff4d4d;
+    --hydro-color: #2196f3;
+    --anemo-color: #33ffd1;
+    --electro-color: #b333ff;
+    --dendro-color: #72e000;
+    --cryo-color: #99ffff;
+    --geo-color: #ffcc33;
+    --gold-text: #ece5d8;
+}
+
+/* 2. Button Classes - Fixed Text Contrast */
+.pyro {
+    background-color: var(--pyro-color);
+    color: #ffffff;
+}
+
+.cryo {
+    background-color: var(--cryo-color);
+    color: #1a1d23;
+}
+
+.electro {
+    background-color: var(--electro-color);
+    color: #ffffff;
+}
+
+.anemo {
+    background-color: var(--anemo-color);
+    color: #1a1d23;
+}
+
+.geo {
+    background-color: var(--geo-color);
+    color: #1a1d23;
+}
+
+.hydro {
+    background-color: var(--hydro-color);
+    color: #ffffff;
+}
+
+.dendro {
+    background-color: var(--dendro-color);
+    color: #1a1d23;
+}
