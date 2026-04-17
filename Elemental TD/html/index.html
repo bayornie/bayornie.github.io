@@ -4,8 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teyvat Tower Defense</title>
-    <link rel="stylesheet" href="../css/style.css">
+    <title>Teyvat TD</title>
+    <link rel="stylesheet" href="../css/vartheme.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/ui.css">
 </head>
 
 <body>
@@ -17,6 +19,19 @@
                 <div class="stat-box">Lives: <span id="lives-val">25</span></div>
                 <div class="stat-box">Wave: <span id="wave-val">1</span></div>
                 <button id="next-wave-btn" onclick="startNextWave()">START WAVE</button>
+            </div>
+
+            <div id="tower-info-panel" style="display: none;">
+                <h3 id="info-type">PYRO TOWER</h3>
+                <p>Level: <span id="info-level">1</span></p>
+                <p>Damage: <span id="info-damage">10</span></p>
+                <p>Range: <span id="info-range">150</span></p>
+
+                <div class="info-btns">
+                    <button id="upgrade-btn">Upgrade (<span id="upgrade-cost">0</span>g)</button>
+                    <button id="sell-btn">Sell (<span id="sell-gold">0</span>g)</button>
+                    <button id="close-info">CLOSE</button>
+                </div>
             </div>
 
             <div id="tower-footer">
@@ -39,6 +54,8 @@
     </div>
 
     <script src="../js/config.js"></script>
+    <script src="../js/entities.js"></script>
+    <script src="../js/ui.js"></script>
     <script src="../js/script.js"></script>
 </body>
 
