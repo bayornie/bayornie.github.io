@@ -3,34 +3,58 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Packet Pulse | Network Manager</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../css/style.css">
 </head>
 
 <body>
-    <div class="container-fluid position-absolute top-0 start-0 z-3 pointer-events-none">
-        <div class="row p-3">
-            <div class="col-6">
-                <div class="badge bg-primary text-wrap p-2 shadow-sm">
-                    Bandwidth: <span id="currency">0 B</span>
+    <div id="game-container">
+        <div id="ui-layer">
+            <div class="stats container-fluid">
+                <div class="row w-100">
+                    <div class="col-6">
+                        <div class="badge-container pointer-events-auto">
+                            BANDWIDTH: <span id="currency">0 B</span>
+                        </div>
+                    </div>
+                    <div class="col-6 text-end">
+                        <button id="toggle-logs" class="btn-telemetry pointer-events-auto">
+                            SYSTEM TELEMETRY
+                        </button>
+                    </div>
                 </div>
             </div>
-            <div class="col-6 text-end">
-                <button class="btn btn-sm btn-outline-info shadow-sm px-3" style="pointer-events: auto;">
-                    SYSTEM LOGS
-                </button>
+
+            <div id="power-bi-panel" class="analytics-panel pointer-events-auto">
+                <h6>NETWORK TELEMETRY</h6>
+                <div class="hr-neon"></div>
+                <div id="analytics-content">
+                    <p>STATUS: <span class="text-success">OPTIMAL</span></p>
+                    <p>TOP NODE YIELD: <span id="best-node-id" class="text-info">--</span></p>
+                </div>
+            </div>
+
+            <div class="instructions">
+                DRAG TO CONNECT | SCROLL TO ZOOM | CLICK TO PROVISION
             </div>
         </div>
-    </div>
 
-    <canvas id="gameCanvas" class="w-100 h-100 bg-dark"></canvas>
+        <div id="system-log"></div>
+        <canvas id="gameCanvas"></canvas>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../scripts/items.js"></script>
     <script src="../scripts/script.js"></script>
+    <script>
+        const btn = document.getElementById('toggle-logs');
+        const panel = document.getElementById('power-bi-panel');
+        btn.addEventListener('click', () => {
+            panel.classList.toggle('active');
+        });
+    </script>
 </body>
 
 </html>

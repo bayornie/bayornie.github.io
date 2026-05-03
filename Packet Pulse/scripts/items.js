@@ -13,8 +13,35 @@ const WORLD_SIZE = 3000;
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 2.0;
 const ZOOM_SENSITIVITY = 0.001;
+const upgrades = {
+    // Hardware
+    enterpriseSwitch: { owned: false, cost: 5000, label: "Enterprise Core Switch" },
+    fiberOptics: { owned: false, cost: 15000, label: "ISP-Grade Fiber Optics" },
+    microwaveLink: { owned: false, cost: 25000, label: "Microwave PtP Link" },
+    cat6eShielding: { owned: false, cost: 3000, label: "Cat6e S/FTP Shielding" },
+    f5LoadBalancer: { owned: false, cost: 12000, label: "F5 Big-IP Load Balancer" },
+
+    // Software
+    activeDirectory: { owned: false, cost: 4500, label: "Active Directory (AD DS)" },
+    dhcpScoping: { owned: false, cost: 2500, label: "DHCP Super-Scoping" },
+    hyperVCluster: { owned: false, cost: 8000, label: "Hyper-V Cluster Scaling" },
+    ssdRaid10: { owned: false, cost: 10000, label: "SSD RAID 10 Array" },
+    gpoBoost: { owned: false, cost: 3500, label: "Group Policy Objects" },
+
+    // Analysis
+    powerBiDashboard: { owned: false, cost: 7000, label: "Power BI Dashboard" },
+    sqlIndexing: { owned: false, cost: 20000, label: "SQL Columnstore Indexing" },
+    unpivotingTool: { owned: false, cost: 5000, label: "Power Query Unpivoting" },
+
+    // Security
+    ciscoFirewall: { owned: false, cost: 9000, label: "Cisco Firepower" },
+    upsSystem: { owned: false, cost: 4000, label: "UPS System" },
+    aesEncryption: { owned: false, cost: 6000, label: "AES-256 Encryption" }
+};
 
 // Game State
+let maliciousPackets = [];
+let isSellMode = false;
 let scale = 1.0;
 let totalBytes = 0;
 let connections = [];
