@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
+    <title>Packet Pulse | Network Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+
+<body>
+    <div class="container-fluid position-absolute top-0 start-0 z-3 pointer-events-none">
+        <div class="row p-3">
+            <div class="col-6">
+                <div class="badge bg-primary text-wrap p-2 shadow-sm">
+                    Bandwidth: <span id="currency">0 B</span>
+                </div>
+            </div>
+            <div class="col-6 text-end">
+                <button class="btn btn-sm btn-outline-info shadow-sm px-3" style="pointer-events: auto;">
+                    SYSTEM LOGS
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" class="w-100 h-100 bg-dark"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../scripts/items.js"></script>
+    <script src="../scripts/script.js"></script>
+</body>
+
+</html>
