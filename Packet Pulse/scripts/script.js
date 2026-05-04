@@ -1,118 +1,12 @@
 // script.js
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-
-function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
-window.addEventListener('resize', resize);
-resize();
-
-function formatData(bytes) {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
-
-class Packet {
-    constructor(fromNode, toNode) {
-        this.from = fromNode;
-        this.to = toNode;
-        this.x = fromNode.x;
-        this.y = fromNode.y;
-        this.progress = 0;
-        this.reached = false;
-
-        // --- UPGRADE: Fiber Optics & VLAN Speed ---
-        let baseSpeed = upgrades.fiberOptics.owned ? 4.5 : 1.5;
-        // VLAN Segmentation: 50% faster if nodes share a VLAN ID
-        if (upgrades.enterpriseSwitch.owned && this.from.vlan === this.to.vlan) {
-            baseSpeed *= 1.5;
-        }
-        // GPO Boost: Small global multiplier
-        if (upgrades.gpoBoost.owned) baseSpeed *= 1.05;
-
-        this.speed = baseSpeed;
-    }
-
-    move() {
-        this.progress += this.speed / Math.hypot(this.to.x - this.from.x, this.to.y - this.from.y);
-        if (this.progress >= 1) {
-            this.reached = true;
-            this.completeTransmission();
-        } else {
-            this.x = this.from.x + (this.to.x - this.from.x) * this.progress;
-            this.y = this.from.y + (this.to.y - this.from.y) * this.progress;
-        }
-    }
-
-    draw(ctx) {
-        ctx.beginPath();
-        ctx.arc((this.x - camera.x) * scale, (this.y - camera.y) * scale, 4 * scale, 0, Math.PI * 2);
-        ctx.fillStyle = "#ff0055";
-        ctx.shadowBlur = 10 * scale;
-        ctx.shadowColor = "#ff0055";
-        ctx.fill();
-        ctx.closePath();
-    }
-
-    completeTransmission() {
-        // --- UPGRADE: SQL Indexing ---
-        let amount = upgrades.sqlIndexing.owned ? 128 : 32;
-
-        // --- UPGRADE: Cat6e Shielding ---
-        if (upgrades.cat6eShielding.owned && Math.random() < 0.10) {
-            amount *= 2;
-        }
-
-        // --- UPGRADE: AES-256 Encryption ---
-        if (upgrades.aesEncryption.owned) {
-            amount *= 1.1;
-        }
-
-        // --- ANALYSIS: Power BI Tracking ---
-        if (this.to) {
-            this.to.totalData = (this.to.totalData || 0) + amount;
-        }
-
-        totalBytes += amount;
-        document.getElementById('currency').innerText = formatData(totalBytes);
-    }
-}
-
-class MaliciousPacket extends Packet {
-    constructor(fromNode, toNode) {
-        super(fromNode, toNode);
-        this.color = "#ffff00";
-    }
-
-    draw(ctx) {
-        ctx.beginPath();
-        ctx.arc((this.x - camera.x) * scale, (this.y - camera.y) * scale, 6 * scale, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.shadowBlur = 15 * scale;
-        ctx.shadowColor = "#ffff00";
-        ctx.fill();
-        ctx.closePath();
-    }
-
-    completeTransmission() {
-        let penalty = 500;
-        if (upgrades.aesEncryption.owned) penalty *= 0.5;
-
-        totalBytes = Math.max(0, totalBytes - penalty);
-        showNotification("SECURITY BREACH: " + formatData(penalty) + " lost!");
-    }
-}
-
 function update() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    updateEmergencyUI();
+    drawGrid();
+
     // --- UPGRADE: SSD RAID 10 ---
-    const incomeRate = upgrades.ssdRaid10.owned ? 0.10 : 0.05;
+    const incomeRate = upgrades.ssdRaid10.owned ? 0.3 : 0.2;
     let previousTotal = Math.floor(totalBytes);
 
     nodes.forEach(node => {
@@ -171,72 +65,140 @@ function update() {
         p.draw(ctx);
     });
 
+    // --- Auto-Save ---
+    frameCount++;
+    if (frameCount % 300 === 0) {
+        if (typeof db !== 'undefined' && db && nodes && upgrades && camera && connections) {
+            saveGame(nodes, upgrades, camera, totalBytes, connections);
+            console.log("Network state backed up to IndexedDB.");
+        }
+    }
+
+    if (frameCount % 60 === 0) {
+        triggerRandomEvent();
+    }
+
     requestAnimationFrame(update);
+}
+
+function updateTelemetry(topNode) {
+    const yieldElement = document.getElementById('best-node-id');
+
+    if (upgrades.powerBiDashboard.owned && topNode) {
+        const yieldValue = ((topNode.totalData || 0) / (topNode.provisionCost || 1)).toFixed(2);
+        yieldElement.innerText = `${yieldValue}x ROI`;
+    } else {
+        yieldElement.innerText = "--";
+    }
 }
 
 function drawNodes() {
     let topNode = null;
     if (upgrades.powerBiDashboard.owned) {
-        topNode = nodes.reduce((prev, curr) => {
-            const prevYield = (prev.totalData || 0) / (prev.provisionCost || 1);
-            const currYield = (curr.totalData || 0) / (curr.provisionCost || 1);
-            return (currYield > prevYield) ? curr : prev;
-        });
+        const activeRemoteNodes = nodes.filter(n => n.active && !n.isHub);
+        if (activeRemoteNodes.length > 0) {
+            topNode = activeRemoteNodes.reduce((prev, curr) => {
+                const prevYield = (prev.totalData || 0) / (prev.provisionCost || 1);
+                const currYield = (curr.totalData || 0) / (curr.provisionCost || 1);
+                return (currYield > prevYield) ? curr : prev;
+            });
+        }
     }
+
+    // --- Identify Cheapest Node for Analysis Mode ---
+    const cheapestNode = (typeof isAnalysisMode !== 'undefined' && isAnalysisMode) ? getCheapestAvailableNode() : null;
 
     nodes.forEach(node => {
         const screenX = (node.x - camera.x) * scale;
         const screenY = (node.y - camera.y) * scale;
         const radius = 22 * scale;
 
-        // --- UPGRADE: Power BI / DAX Measure ---
+        // --- 1. Top Node Indicator ---
         if (upgrades.powerBiDashboard.owned && node === topNode && node.active && !node.isHub) {
+            ctx.save();
             ctx.beginPath();
+            const pulse = (Math.sin(Date.now() / 200) * 2) * scale;
             ctx.setLineDash([5 * scale, 5 * scale]);
-            ctx.arc(screenX, screenY, radius + (8 * scale), 0, Math.PI * 2);
+            ctx.arc(screenX, screenY, radius + (10 * scale) + pulse, 0, Math.PI * 2);
             ctx.strokeStyle = "#ffd700";
             ctx.lineWidth = 2 * scale;
             ctx.stroke();
-            ctx.setLineDash([]);
+            ctx.restore();
         }
 
-        ctx.shadowBlur = node.active ? 20 * scale : 0;
-        ctx.shadowColor = node.vlanColor || '#00f2ff';
+        // --- Cheapest Node Indicator ---
+        if (cheapestNode && node === cheapestNode) {
+            ctx.save();
+            ctx.beginPath();
+            const pulse = (Math.sin(Date.now() / 150) * 5) * scale;
+            ctx.arc(screenX, screenY, radius + (12 * scale) + pulse, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(0, 255, 150, 0.8)";
+            ctx.lineWidth = 3 * scale;
+            ctx.stroke();
+
+            ctx.fillStyle = "#00ff96";
+            ctx.font = `bold ${11 * scale}px Consolas`;
+            ctx.textAlign = "center";
+            ctx.fillText("CHEAPEST PATH", screenX, screenY + radius + (35 * scale));
+            ctx.restore();
+        }
+
+        // --- 2. Real Node Effect ---
+        ctx.save();
+        ctx.shadowBlur = node.active ? 25 * scale : 5 * scale;
+        ctx.shadowColor = node.active ? (node.vlanColor || '#00f2ff') : '#333';
+
+        const gradient = ctx.createRadialGradient(
+            screenX - radius * 0.3, screenY - radius * 0.3, radius * 0.1,
+            screenX, screenY, radius
+        );
+
+        if (node.active) {
+            gradient.addColorStop(0, '#fff');
+            gradient.addColorStop(0.3, node.vlanColor || '#00f2ff');
+            gradient.addColorStop(1, '#00444a');
+        } else {
+            gradient.addColorStop(0, '#444');
+            gradient.addColorStop(1, '#111');
+        }
 
         ctx.beginPath();
         ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
-        ctx.fillStyle = node.active ? (node.vlanColor || '#00f2ff') : '#1a1a2e';
+        ctx.fillStyle = gradient;
         ctx.fill();
 
-        ctx.strokeStyle = node.active ? '#fff' : 'rgba(255, 255, 255, 0.1)';
-        ctx.lineWidth = 3 * scale;
+        ctx.strokeStyle = node.active ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.1)';
+        ctx.lineWidth = 1 * scale;
         ctx.stroke();
-        ctx.closePath();
-        ctx.shadowBlur = 0;
+        ctx.restore();
 
+        // --- UI Labels & Recovery ---
         if (!node.active && scale > 0.4) {
-            const finalCost = upgrades.activeDirectory.owned ? node.provisionCost * 0.85 : node.provisionCost;
-            const label = formatData(finalCost);
-
+            const finalCost = (typeof upgrades !== 'undefined' && upgrades.activeDirectory.owned)
+                ? node.provisionCost * 0.85
+                : node.provisionCost;
             ctx.fillStyle = "#ff0055";
-            ctx.font = `${11 * scale}px Consolas`;
+            ctx.font = `bold ${12 * scale}px Consolas`;
             ctx.textAlign = "center";
-            ctx.fillText(label, screenX, screenY - (32 * scale));
+            ctx.fillText(formatData(finalCost), screenX, screenY - (radius + 12 * scale));
         }
 
-        // --- UPGRADE: Hyper-V  ---
         if (node.recoveryTimer > 0 && node.active) {
-            ctx.fillStyle = "#ffff00";
-            ctx.font = `bold ${10 * scale}px Consolas`;
-            ctx.fillText("RECOVERING...", screenX, screenY + (35 * scale));
+            const alpha = 0.5 + Math.sin(Date.now() / 100) * 0.5;
+            ctx.fillStyle = `rgba(255, 255, 0, ${alpha})`;
+            ctx.font = `bold ${11 * scale}px Consolas`;
+            ctx.textAlign = "center";
+            ctx.fillText("RECOVERING...", screenX, screenY + radius + (20 * scale));
         }
     });
+
+    // --- Push data to the UI ---
+    updateTelemetry(topNode);
 }
 
 function drawConnections() {
     ctx.lineWidth = 4 * scale;
     connections.forEach(conn => {
-        // Visual indicator for VLANs
         ctx.strokeStyle = (upgrades.enterpriseSwitch.owned && conn.from.vlan === conn.to.vlan)
             ? conn.from.vlanColor
             : 'rgba(255, 0, 255, 0.6)';
@@ -250,66 +212,20 @@ function drawConnections() {
 
 function drawTempLine() {
     if (!startNode) return;
-    
+
     ctx.beginPath();
     ctx.setLineDash([5 * scale, 5 * scale]);
-    
-    // Project start node to screen coordinates
+
     const startX = (startNode.x - camera.x) * scale;
     const startY = (startNode.y - camera.y) * scale;
-    
+
     ctx.moveTo(startX, startY);
     ctx.lineTo(mousePos.x, mousePos.y);
-    
+
     ctx.strokeStyle = 'rgba(0, 242, 255, 0.5)';
     ctx.lineWidth = 2 * scale;
     ctx.stroke();
     ctx.setLineDash([]);
-}
-
-function triggerRandomEvent() {
-    const eventChance = Math.random();
-
-    // 1. Network Glitch (Affects IPS)
-    if (eventChance < 0.05 && connections.length > 0) {
-        if (!upgrades.ips.owned) {
-            connections.splice(Math.floor(Math.random() * connections.length), 1);
-            showNotification("CRITICAL: Connection severed by Network Glitch!");
-        } else {
-            showNotification("IPS: Network Glitch detected and auto-repaired.");
-        }
-    }
-
-    // 2. Malicious Packet Spawn (Affects Firewall)
-    if (eventChance < 0.1) {
-        const randomNode = nodes[Math.floor(Math.random() * nodes.length)];
-        maliciousPackets.push(new MaliciousPacket(randomNode, hubNode));
-    }
-}
-
-function getBestROINode() {
-    return nodes.reduce((prev, curr) => {
-        const prevROI = (prev.totalData || 0) / (prev.provisionCost || 1);
-        const currROI = (curr.totalData || 0) / (curr.provisionCost || 1);
-        return (currROI > prevROI) ? curr : prev;
-    });
-}
-
-function showNotification(text) {
-    const log = document.getElementById('system-log') || createLogElement();
-    const entry = document.createElement('div');
-    entry.innerText = `[${new Date().toLocaleTimeString()}] ${text}`;
-    log.prepend(entry);
-
-    if (log.children.length > 5) log.lastChild.remove();
-}
-
-function createLogElement() {
-    const el = document.createElement('div');
-    el.id = 'system-log';
-    el.style = "position:absolute; bottom:20px; left:20px; color:#00f2ff; font-family:Consolas; font-size:12px; pointer-events:none;";
-    document.body.appendChild(el);
-    return el;
 }
 
 function applyZoom(delta, centerX, centerY) {
@@ -337,13 +253,13 @@ canvas.addEventListener('wheel', (e) => {
 }, { passive: false });
 
 canvas.addEventListener('pointerdown', (e) => {
-    const x = e.clientX;
-    const y = e.clientY;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
     const detectionRadius = 30 * scale;
 
     startNode = nodes.find(n => Math.hypot((n.x - camera.x) * scale - x, (n.y - camera.y) * scale - y) < detectionRadius);
 
-    // --- UPGRADE: Power Query Unpivoting (Selling) ---
     if (isSellMode && startNode && startNode.active && !startNode.isHub) {
         totalBytes += startNode.provisionCost * 0.8;
         startNode.active = false;
@@ -355,51 +271,37 @@ canvas.addEventListener('pointerdown', (e) => {
         isDragging = true;
     } else {
         isPanning = true;
-        lastPointer.x = e.clientX;
-        lastPointer.y = e.clientY;
-    }
-});
-
-canvas.addEventListener('pointermove', (e) => {
-    mousePos.x = e.clientX;
-    mousePos.y = e.clientY;
-
-    if (isPanning) {
-        const dx = e.clientX - lastPointer.x;
-        const dy = e.clientY - lastPointer.y;
-
-        camera.x -= dx / scale;
-        camera.y -= dy / scale;
-
-        lastPointer.x = e.clientX;
-        lastPointer.y = e.clientY;
+        lastPointer.x = x;
+        lastPointer.y = y;
     }
 });
 
 canvas.addEventListener('pointerup', (e) => {
     if (isDragging) {
-        const x = e.clientX;
-        const y = e.clientY;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
         const detectionRadius = 30 * scale;
         const endNode = nodes.find(n => Math.hypot((n.x - camera.x) * scale - x, (n.y - camera.y) * scale - y) < detectionRadius);
 
         if (endNode && endNode !== startNode) {
-            const dist = Math.hypot(startNode.x - endNode.x, startNode.y - endNode.y);
+            if (canConnect(startNode, endNode)) {
+                const dist = Math.hypot(startNode.x - endNode.x, startNode.y - endNode.y);
+                const canReach = upgrades.microwaveLink.owned || dist < 600;
 
-            // --- UPGRADE: Microwave PtP Link (Ignore distance) ---
-            const canConnect = upgrades.microwaveLink.owned || dist < 600;
+                if (canReach) {
+                    const connected = connections.some(c => (c.from === startNode && c.to === endNode) || (c.from === endNode && c.to === startNode));
+                    if (!connected) {
+                        const finalCost = upgrades.activeDirectory.owned ? endNode.provisionCost * 0.85 : endNode.provisionCost;
 
-            if (canConnect) {
-                const connected = connections.some(c => (c.from === startNode && c.to === endNode) || (c.from === endNode && c.to === startNode));
-                if (!connected) {
-                    const finalCost = upgrades.activeDirectory.owned ? endNode.provisionCost * 0.85 : endNode.provisionCost;
-
-                    if (endNode.active || totalBytes >= finalCost) {
-                        if (!endNode.active) {
-                            totalBytes -= finalCost;
-                            endNode.active = true;
+                        if (endNode.active || totalBytes >= finalCost) {
+                            if (!endNode.active) {
+                                totalBytes -= finalCost;
+                                endNode.active = true;
+                            }
+                            connections.push({ from: startNode, to: endNode });
                         }
-                        connections.push({ from: startNode, to: endNode });
                     }
                 }
             }
@@ -407,6 +309,26 @@ canvas.addEventListener('pointerup', (e) => {
     }
     isDragging = false;
     isPanning = false;
+});
+
+canvas.addEventListener('pointermove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mousePos.x = e.clientX - rect.left;
+    mousePos.y = e.clientY - rect.top;
+
+    if (isPanning) {
+        const currentX = e.clientX - rect.left;
+        const currentY = e.clientY - rect.top;
+
+        const dx = currentX - lastPointer.x;
+        const dy = currentY - lastPointer.y;
+
+        camera.x -= dx / scale;
+        camera.y -= dy / scale;
+
+        lastPointer.x = currentX;
+        lastPointer.y = currentY;
+    }
 });
 
 // Mobile Pinch-to-Zoom
@@ -433,4 +355,42 @@ canvas.addEventListener('touchend', () => {
     initialDist = 0;
 });
 
-update();
+// Initialization sequence
+initDB().then(() => {
+    console.log("Database initialized. Checking for saves...");
+    return loadGame();
+}).then(savedData => {
+    if (savedData) {
+        totalBytes = savedData.totalBytes;
+        nodes = savedData.nodes;
+        camera = savedData.camera;
+        connections = savedData.connections || [];
+
+        for (let key in upgrades) {
+            if (savedData.upgrades && savedData.upgrades[key]) {
+                upgrades[key].owned = savedData.upgrades[key].owned;
+            }
+        }
+
+        if (typeof renderUpgrades === 'function') renderUpgrades();
+
+        if (nodes.length > 0) {
+            nodes[0].isHub = true;
+            nodes[0].active = true;
+            nodes[0].provisionCost = 0;
+            hubNode = nodes[0];
+        }
+
+        console.log("Network state restored and Hub properties verified.");
+    }
+
+    const purgeBtn = document.getElementById('purge-threats');
+    if (purgeBtn) {
+        purgeBtn.addEventListener('click', manualPurge);
+    }
+
+    update();
+}).catch(err => {
+    console.error("Critical Boot Error:", err);
+    update();
+});

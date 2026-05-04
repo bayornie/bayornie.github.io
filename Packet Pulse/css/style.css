@@ -19,6 +19,11 @@ html {
 canvas {
     display: block;
     cursor: crosshair;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    background: radial-gradient(circle at center, #000d1a 0%, #000000 100%);
 }
 
 #ui-layer {
@@ -27,14 +32,14 @@ canvas {
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; 
+    pointer-events: none;
     color: #00f2ff;
     z-index: 10;
 }
 
-.stats, 
-.badge-container, 
-.btn-telemetry, 
+.stats,
+.badge-container,
+.btn-telemetry,
 .analytics-panel {
     pointer-events: auto;
 }
@@ -49,9 +54,22 @@ canvas {
 .badge-container {
     background: rgba(0, 242, 255, 0.1);
     border: 1px solid #00f2ff;
-    padding: 8px 15px;
+    padding: 10px 20px;
     border-radius: 4px;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 15px;
+    min-width: 200px; 
+    font-family: 'Consolas', monospace;
+    pointer-events: auto;
+    white-space: nowrap;
+    text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+}
+
+#currency {
+    color: #00f2ff;
+    font-weight: bold;
+    margin-left: auto; 
 }
 
 .btn-telemetry {
@@ -83,6 +101,33 @@ canvas {
 
 .analytics-panel.active {
     transform: translateX(0);
+}
+
+.analysis-container {
+    position: absolute;
+    top: 75 px;
+    left: 20px;
+    z-index: 100;
+    width: fit-content;
+}
+
+#toggle-analysis {
+    width: 220px;
+    background: rgba(0, 242, 255, 0.05);
+    border: 1px solid #f73a3a;
+    color: #f73a3a;
+    padding: 6px 15px;
+    font-family: 'Consolas', monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+#toggle-analysis:hover {
+    background: rgba(0, 242, 255, 0.2);
+    box-shadow: 0 0 10px rgba(0, 242, 255, 0.4);
 }
 
 .hr-neon {
@@ -118,7 +163,50 @@ canvas {
     font-size: 0.75rem;
     white-space: nowrap;
     text-transform: uppercase;
-    pointer-events: none; 
+    pointer-events: none;
+}
+
+#emergency-protocols {
+    position: absolute; 
+    bottom: 500px;
+    left: 20px;
+    z-index: 100;
+    transition: opacity 0.3s ease;
+}
+
+#purge-threats {
+    border-color: #ff0055 !important;
+    color: #ff0055 !important;
+    background: rgba(255, 0, 85, 0.1) !important;
+    font-weight: bold;
+    letter-spacing: 2px;
+    padding: 12px 25px;
+    border-width: 2px;
+    text-shadow: 0 0 10px rgba(255, 0, 85, 0.5);
+    animation: pulse-red 2s infinite; 
+}
+
+#purge-threats:hover {
+    background: rgba(255, 0, 85, 0.3) !important;
+    box-shadow: 0 0 20px rgba(255, 0, 85, 0.6);
+    transform: scale(1.05);
+}
+
+#purge-threats:active {
+    transform: scale(0.95);
+    background: rgba(255, 0, 85, 0.5) !important;
+}
+
+@keyframes pulse-red {
+    0% {
+        box-shadow: 0 0 0 0px rgba(255, 0, 85, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 15px rgba(255, 0, 85, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0px rgba(255, 0, 85, 0);
+    }
 }
 
 @keyframes slideIn {
@@ -126,8 +214,73 @@ canvas {
         opacity: 0;
         transform: translateX(-20px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
     }
+}
+
+/* --- CUSTOM SHOP STYLE --- */
+.modal-content.terminal-style {
+    background: rgba(5, 5, 8, 0.98);
+    border: 1px solid #00f2ff;
+    border-radius: 0;
+    box-shadow: 0 0 30px rgba(0, 242, 255, 0.3);
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(0, 242, 255, 0.3);
+    letter-spacing: 2px;
+}
+
+#upgrade-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+#upgrade-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+#upgrade-list::-webkit-scrollbar-thumb {
+    background: #00f2ff;
+}
+
+.upgrade-item {
+    background: rgba(0, 242, 255, 0.05);
+    border-left: 3px solid #ff0055;
+    transition: 0.2s ease-in-out;
+    margin-bottom: 10px;
+}
+
+.upgrade-item:hover {
+    background: rgba(0, 242, 255, 0.15);
+    box-shadow: -5px 0 15px rgba(255, 0, 85, 0.2);
+}
+
+.btn-buy {
+    background: transparent;
+    border: 1px solid #00f2ff;
+    color: #00f2ff;
+    font-family: 'Consolas', monospace;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: 0.2s;
+    cursor: pointer;
+}
+
+.btn-buy:hover:not(:disabled) {
+    background: #00f2ff;
+    color: #050508;
+    box-shadow: 0 0 15px #00f2ff;
+}
+
+.btn-buy:disabled {
+    border-color: #333;
+    color: #555;
+    cursor: not-allowed;
+}
+
+.btn-close-white {
+    filter: invert(1) grayscale(100%) brightness(200%) sepia(100%) hue-rotate(150deg);
 }

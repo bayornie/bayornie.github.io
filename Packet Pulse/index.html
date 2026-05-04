@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Packet Pulse | Network Manager</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
@@ -14,17 +14,36 @@
         <div id="ui-layer">
             <div class="stats container-fluid">
                 <div class="row w-100">
-                    <div class="col-6">
+                    <div class="col-5">
                         <div class="badge-container pointer-events-auto">
-                            BANDWIDTH: <span id="currency">0 B</span>
+                            <span class="label">BANDWIDTH:</span>
+                            <span id="currency">0 B</span>
                         </div>
                     </div>
-                    <div class="col-6 text-end">
+
+                    <div class="col-7 text-end">
+                        <button id="toggle-shop" class="btn-telemetry pointer-events-auto me-2"
+                            style="border-color: #ff0055; color: #ff0055;" data-bs-toggle="modal"
+                            data-bs-target="#procurementModal">
+                            PROCUREMENT
+                        </button>
                         <button id="toggle-logs" class="btn-telemetry pointer-events-auto">
                             SYSTEM TELEMETRY
                         </button>
                     </div>
                 </div>
+            </div>
+
+            <div class="analysis-container pointer-events-auto">
+                <button id="toggle-analysis" class="btn-telemetry" onclick="toggleAnalysisMode()">
+                    ANALYSIS: OFF
+                </button>
+            </div>
+
+            <div id="emergency-protocols" class="pointer-events-auto">
+                <button id="purge-threats" class="btn-telemetry">
+                    PURGE THREAT: 5,000 KB
+                </button>
             </div>
 
             <div id="power-bi-panel" class="analytics-panel pointer-events-auto">
@@ -37,7 +56,7 @@
             </div>
 
             <div class="instructions">
-                DRAG TO CONNECT | SCROLL TO ZOOM | CLICK TO PROVISION
+                DRAG TO CONNECT | SCROLL TO ZOOM
             </div>
         </div>
 
@@ -45,14 +64,42 @@
         <canvas id="gameCanvas"></canvas>
     </div>
 
+    <div class="modal fade" id="procurementModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content terminal-style">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">PROCUREMENT LOG</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="upgrade-list" style="max-height: 450px; overflow-y: auto; padding-right: 10px;">
+                        <!-- JS will inject .upgrade-item divs here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="../scripts/items.js"></script>
-    <script src="../scripts/script.js"></script>
+    <script src="scripts/database.js"></script>
+    <script src="scripts/canvas.js"></script>
+    <script src="scripts/items.js"></script>
+    <script src="scripts/class.js"></script>
+    <script src="scripts/events.js"></script>
+    <script src="scripts/script.js"></script>
+
     <script>
-        const btn = document.getElementById('toggle-logs');
-        const panel = document.getElementById('power-bi-panel');
-        btn.addEventListener('click', () => {
-            panel.classList.toggle('active');
+        const btnLogs = document.getElementById('toggle-logs');
+        const panelLogs = document.getElementById('power-bi-panel');
+        btnLogs.addEventListener('click', () => {
+            panelLogs.classList.toggle('active');
+        });
+
+        const modalEl = document.getElementById('procurementModal');
+        modalEl.addEventListener('show.bs.modal', () => {
+            if (typeof renderUpgrades === "function") {
+                renderUpgrades();
+            }
         });
     </script>
 </body>
