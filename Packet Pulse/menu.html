@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Packet Pulse | Menu</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/menu.css" rel="stylesheet">
+</head>
+
+<body>
+    <div id="main-menu" class="menu-overlay d-flex align-items-center justify-content-center">
+        <div class="container text-center">
+
+            <!-- Hero Logo -->
+            <div class="row mb-4">
+                <div class="col">
+                    <img src="img/Packet Pulse Icon.png" alt="Packet Pulse"
+                        class="menu-logo img-fluid rounded-5 shadow-lg">
+                </div>
+            </div>
+
+            <!-- Single Play Action -->
+            <div class="row justify-content-center">
+                <div class="col-12 col-sm-8 col-md-6 col-lg-4">
+                    <button class="btn-start-game w-100 py-3" onclick="enterGame()">
+                        START SIMULATION
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function enterGame() {
+            window.location.href = "index.html";
+        }
+    </script>
+</body>
+
+</html>
