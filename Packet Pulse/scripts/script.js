@@ -1,4 +1,12 @@
 // script.js
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('Network Simulator: Service Worker active.'))
+      .catch(err => console.error('PWA Registration failed:', err));
+  });
+}
+
 function update() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
