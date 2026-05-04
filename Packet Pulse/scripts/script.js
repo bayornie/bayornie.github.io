@@ -196,6 +196,13 @@ function drawNodes() {
     updateTelemetry(topNode);
 }
 
+function centerCameraOnHub() {
+    if (hubNode) {
+        camera.x = hubNode.x - (window.innerWidth / 2) / scale;
+        camera.y = hubNode.y - (window.innerHeight / 2) / scale;
+    }
+}
+
 function drawConnections() {
     ctx.lineWidth = 4 * scale;
     connections.forEach(conn => {
@@ -332,10 +339,61 @@ canvas.addEventListener('pointermove', (e) => {
 });
 
 // Mobile Pinch-to-Zoom
-let initialDist = 0;
-canvas.addEventListener('touchmove', (e) => {
-    if (e.touches.length === 2) {
+canvas.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+
+    const rect = canvas.getBoundingClientRect();
+
+    if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+        const touchDetectionRadius = 45 * scale;
+
+        startNode = nodes.find(n =>
+            Math.hypot((n.x - camera.x) * scale - x, (n.y - camera.y) * scale - y) < touchDetectionRadius
+        );
+
+        if (startNode) {
+            isDragging = true;
+            mousePos.x = x;
+            mousePos.y = y;
+        } else {
+            isPanning = true;
+            lastPointer.x = x;
+            lastPointer.y = y;
+        }
+    } else if (e.touches.length === 2) {
         isPanning = false;
+        isDragging = false;
+        initialDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+        );
+    }
+}, { passive: false });
+
+canvas.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+
+    if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+
+        if (isDragging) {
+            mousePos.x = x;
+            mousePos.y = y;
+        } else if (isPanning) {
+            const dx = x - lastPointer.x;
+            const dy = y - lastPointer.y;
+            camera.x -= dx / scale;
+            camera.y -= dy / scale;
+            lastPointer.x = x;
+            lastPointer.y = y;
+        }
+    } else if (e.touches.length === 2) {
         const dist = Math.hypot(
             e.touches[0].clientX - e.touches[1].clientX,
             e.touches[0].clientY - e.touches[1].clientY
@@ -343,16 +401,26 @@ canvas.addEventListener('touchmove', (e) => {
 
         if (initialDist > 0) {
             const zoomDelta = (dist - initialDist) * 0.005;
-            const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-            const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+            const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
             applyZoom(zoomDelta, midX, midY);
         }
         initialDist = dist;
     }
 }, { passive: false });
 
-canvas.addEventListener('touchend', () => {
-    initialDist = 0;
+canvas.addEventListener('touchend', (e) => {
+    isDragging = false;
+    isPanning = false;
+    startNode = null;
+
+    if (e.touches.length < 2) {
+        initialDist = 0;
+    }
+}, { passive: false });
+
+window.addEventListener('orientationchange', () => {
+    setTimeout(resize, 100);
 });
 
 // Initialization sequence
@@ -381,13 +449,23 @@ initDB().then(() => {
             hubNode = nodes[0];
         }
 
-        console.log("Network state restored and Hub properties verified.");
+        console.log("Network state restored.");
+    } else {
+        if (nodes.length > 0) {
+            hubNode = nodes[0];
+            hubNode.isHub = true;
+            hubNode.active = true;
+        }
+        centerCameraOnHub();
+        console.log("No save found. Camera centered on Hub.");
     }
 
     const purgeBtn = document.getElementById('purge-threats');
     if (purgeBtn) {
         purgeBtn.addEventListener('click', manualPurge);
     }
+
+    if (typeof resize === 'function') resize();
 
     update();
 }).catch(err => {

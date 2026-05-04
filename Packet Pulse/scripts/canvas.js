@@ -3,9 +3,13 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 function resize() {
-    const rect = canvas.getBoundingClientRect();
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    
+    if (typeof hubNode !== 'undefined' && hubNode) {
+        camera.x = hubNode.x - (canvas.width / 2) / scale;
+        camera.y = hubNode.y - (canvas.height / 2) / scale;
+    }
 }
 
 window.addEventListener('resize', resize);

@@ -10,10 +10,52 @@ html {
     font-family: 'Consolas', 'Segoe UI', monospace;
 }
 
+@media screen and (max-width: 768px) {
+    .badge-container {
+        min-width: 140px;
+        padding: 5px 10px;
+        font-size: 0.9rem;
+    }
+    
+    .btn-telemetry {
+        padding: 6px 10px;
+        font-size: 0.7rem;
+    }
+
+    .instructions {
+        display: none;
+    }
+
+    #emergency-protocols {
+        bottom: 120px; 
+    }
+}
+
+#orientation-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #050508;
+    z-index: 9999;
+    color: #00f2ff;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+@media screen and (max-width: 900px) and (orientation: portrait) {
+    #orientation-overlay { display: flex; }
+}
+
 #game-container {
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
+    overflow: hidden;
+    overscroll-behavior: none;
 }
 
 canvas {
@@ -24,6 +66,10 @@ canvas {
     left: 0;
     z-index: 1;
     background: radial-gradient(circle at center, #000d1a 0%, #000000 100%);
+    touch-action: none; 
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;   
 }
 
 #ui-layer {
