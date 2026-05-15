@@ -147,7 +147,7 @@ async function handleAuth(type) {
 }
 
 auth.onAuthStateChanged((user) => {
-    const profilePanel = document.getElementById('profile-panel'); 
+    const profilePanel = document.getElementById('profile-panel');
     const loggedOutView = document.getElementById('logged-out-view');
     const loggedInView = document.getElementById('logged-in-view');
     const authOverlay = document.getElementById('auth-overlay');
@@ -160,12 +160,6 @@ auth.onAuthStateChanged((user) => {
         if (loggedInView) loggedInView.style.display = 'block';
 
         loadCloudGame(user.uid);
-        
-        setTimeout(() => {
-            const tabName = document.getElementById('prof-name-tab');
-            if (tabName) tabName.innerText = (game && game.playerName) ? game.playerName : "Traveler";
-            if (typeof updateUI === "function") updateUI();
-        }, 500);
 
     } else {
         isLoggedIn = false;
@@ -175,7 +169,7 @@ auth.onAuthStateChanged((user) => {
 
         const miniList = document.getElementById('active-pets-mini');
         if (miniList) miniList.innerHTML = '';
-        
+
         const tabName = document.getElementById('prof-name-tab');
         if (tabName) tabName.innerText = "Traveler";
     }
@@ -185,6 +179,12 @@ async function saveCloudGame() {
     game.lastLogin = Date.now();
     const user = auth.currentUser;
     if (user && isLoggedIn) {
+        // Safety check: If the local name is "Traveler" but we are logged in
+        if (game.playerName === "Traveler") {
+            console.log("Sync in progress... save paused to protect username.");
+            return;
+        }
+
         await db.collection("users").doc(user.uid).set(game);
         console.log("Cloud Saved!");
     }
@@ -261,7 +261,7 @@ async function loadCloudGame(uid) {
 
         if (cloudData.seelies === undefined) cloudData.seelies = 0;
         if (cloudData.prestigePoints === undefined) cloudData.prestigePoints = 0;
-        if (!cloudData.playerName) cloudData.playerName = "Traveler";
+        cloudData.playerName = cloudData.playerName || cloudData.username || cloudData.displayName || "Traveler";
         if (cloudData.currentTrackIndex === undefined) cloudData.currentTrackIndex = 0;
         if (cloudData.bgmVolume === undefined) cloudData.bgmVolume = 0.5;
         if (cloudData.isMusicMuted === undefined) cloudData.isMusicMuted = false;
@@ -325,7 +325,7 @@ async function updateEmail() {
     }
 }
 
-// --- MUSIC HANDLING ---
+// --- MUSIC HANDLING --- //
 function openMusicSelect() {
     openMusicModal();
 }
@@ -362,13 +362,66 @@ function setVolume(val) {
     if (window.bgmPlayer) {
         window.bgmPlayer.volume = val;
     }
-    
+
     game.bgmVolume = val;
 
     const volPerc = document.getElementById('vol-perc');
     if (volPerc) {
         volPerc.innerText = Math.round(val * 100) + "%";
     }
+}
+
+// --- LEADERBOARD --- //
+function updatePlayerScore(score) {
+    const db = firebase.firestore();
+    const user = firebase.auth().currentUser;
+
+    if (user) {
+        db.collection("users").doc(user.uid).set({
+            totalPrimos: score,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+    }
+}
+
+function loadLeaderboard() {
+    const db = firebase.firestore();
+    const list = document.getElementById('leaderboard-list');
+    if (!list) return;
+
+    db.collection("users")
+        .orderBy("totalPrimosEver", "desc")
+        .limit(10)
+        .get()
+        .then((querySnapshot) => {
+            list.innerHTML = "";
+            let rank = 1;
+
+            if (querySnapshot.empty) {
+                list.innerHTML = "<tr><td colspan='3'>No travelers found.</td></tr>";
+                return;
+            }
+
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const name = data.playerName || data.username || data.displayName || "Unknown Traveler";
+                const score = Math.floor(data.totalPrimosEver || 0);
+
+                list.innerHTML += `
+                    <tr>
+                        <td>${rank++}</td>
+                        <td>${name}</td>    
+                        <td class="highlight">${score.toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+        })
+        .catch(err => {
+            console.error("Leaderboard error:", err);
+            if (typeof showNotification === "function") {
+                showNotification("Failed to load rankings.");
+            }
+        });
 }
 
 setInterval(saveCloudGame, 30000);

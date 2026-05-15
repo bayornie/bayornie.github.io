@@ -33,6 +33,7 @@
         <button class="nav-item" onclick="showPanel('shop')">Shop</button>
         <button class="nav-item" onclick="showPanel('pets')">Party</button>
         <button class="nav-item" onclick="showPanel('stats')">Statistics</button>
+        <button class="nav-item" onclick="showPanel('leaderboard'); loadLeaderboard();">Leaderboard</button>
         <button class="nav-item" onclick="showPanel('profile-panel')">PROFILE</button>
     </nav>
 
@@ -251,6 +252,25 @@
                     </div>
                 </div>
             </div>
+            </div>
+        </section>
+
+        <section id="leaderboard-panel" class="game-panel">
+            <div class="leaderboard-card">
+                <h2 class="panel-title">Teyvat Rankings</h2>
+                <div class="leaderboard-container">
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Traveler</th>
+                                <th>Total Primos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-list">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
     </main>
