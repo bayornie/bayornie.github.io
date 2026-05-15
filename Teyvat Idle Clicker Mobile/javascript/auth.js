@@ -1,3 +1,5 @@
+let isDataLoaded = false;
+
 // --- AUTH & CLOUD SAVE LOGIC ---
 function openAuth() {
     clearAuthInputs();
@@ -56,6 +58,7 @@ function closeSettings() {
 function handleLogout() {
     auth.signOut().then(() => {
         isLoggedIn = false;
+        isDataLoaded = false;
 
         // 1. Hide User Data Panels
         const profilePanel = document.getElementById('profile-panel');
@@ -178,8 +181,8 @@ auth.onAuthStateChanged((user) => {
 async function saveCloudGame() {
     game.lastLogin = Date.now();
     const user = auth.currentUser;
-    if (user && isLoggedIn) {
-        // Safety check: If the local name is "Traveler" but we are logged in
+
+    if (user && isLoggedIn && isDataLoaded) {
         if (game.playerName === "Traveler") {
             console.log("Sync in progress... save paused to protect username.");
             return;
@@ -187,6 +190,8 @@ async function saveCloudGame() {
 
         await db.collection("users").doc(user.uid).set(game);
         console.log("Cloud Saved!");
+    } else {
+        console.log("Save blocked: Data not yet loaded from cloud.");
     }
 }
 
@@ -265,14 +270,21 @@ async function loadCloudGame(uid) {
         if (cloudData.currentTrackIndex === undefined) cloudData.currentTrackIndex = 0;
         if (cloudData.bgmVolume === undefined) cloudData.bgmVolume = 0.5;
         if (cloudData.isMusicMuted === undefined) cloudData.isMusicMuted = false;
-
         cloudData.bgmList = JSON.parse(JSON.stringify(game.bgmList));
 
         game = cloudData;
+        isDataLoaded = true;
+
+        const tabName = document.getElementById('prof-name-tab');
+        if (tabName) {
+            tabName.innerText = game.playerName;
+        }
         if (typeof calculateOfflineEarnings === "function") calculateOfflineEarnings();
+
         updateUI();
         saveCloudGame();
-        console.log("Sync Complete!");
+
+        console.log("Sync Complete! Player: " + game.playerName);
     }
 }
 
