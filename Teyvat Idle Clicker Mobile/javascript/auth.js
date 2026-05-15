@@ -275,10 +275,18 @@ async function loadCloudGame(uid) {
         game = cloudData;
         isDataLoaded = true;
 
-        const tabName = document.getElementById('prof-name-tab');
-        if (tabName) {
-            tabName.innerText = game.playerName;
+        if (!game.playerName || game.playerName === "Traveler") {
+            const user = auth.currentUser;
+            const emailName = user.email ? user.email.split('@')[0] : "Traveler";
+            game.playerName = cloudData.username || cloudData.displayName || emailName;
         }
+
+        const tabName = document.getElementById('prof-name-tab');
+        const travelerName = document.querySelector('.traveler-name');
+
+        if (tabName) tabName.innerText = game.playerName;
+        if (travelerName) travelerName.innerText = game.playerName;
+
         if (typeof calculateOfflineEarnings === "function") calculateOfflineEarnings();
 
         updateUI();
