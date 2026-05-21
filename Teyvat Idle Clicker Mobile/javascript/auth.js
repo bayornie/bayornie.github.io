@@ -24,23 +24,22 @@ function openProfile() {
 
         // --- DIRECT ENGINE EVALUATION ---
         
-        // 1. Calculate Click Power directly from system calculations or fallback variables
+        // 1. Calculate Click Power
         const clickPowerEl = document.getElementById('tab-click-power');
         if (clickPowerEl) {
-            let actualClickPower = 1; // Default baseline value
+            let actualClickPower = 1;
             if (typeof getClickPower === "function") {
                 actualClickPower = getClickPower();
             } else if (game.clickPower) {
                 actualClickPower = game.clickPower;
             } else if (Array.isArray(game.clickUpgrades)) {
-                // Calculation fallback: Base + (Level * Power per level)
                 actualClickPower = game.clickUpgrades.reduce((total, up) => total + ((up.level || 0) * (up.power || 0)), 1);
             }
             
             clickPowerEl.innerText = typeof formatNumbers === "function" ? formatNumbers(actualClickPower) : actualClickPower;
         }
 
-        // 2. Calculate Passive Income directly from generator objects or arrays
+        // 2. Calculate Generator Income
         const passiveIncomeEl = document.getElementById('tab-pps');
         if (passiveIncomeEl) {
             let actualPPS = 0;
@@ -49,7 +48,6 @@ function openProfile() {
             } else if (game.pps) {
                 actualPPS = game.pps;
             } else if (Array.isArray(game.generators)) {
-                // Aggregates total production output: Sum of (Quantity owned * individual structural income)
                 actualPPS = game.generators.reduce((total, gen) => total + ((gen.count || gen.level || 0) * (gen.income || 0)), 0);
             }
             
@@ -57,7 +55,6 @@ function openProfile() {
             passiveIncomeEl.innerText = formattedPPS + "/s";
         }
 
-        // Sync remaining standard template data fields
         updateUI();
 
         if (typeof showPanel === "function") {
@@ -423,14 +420,14 @@ function setVolume(val) {
     }
 }
 
-// --- LEADERBOARD --- //
+// --- LEADERBOARD FUNCTIONS --- //
 function updatePlayerScore(score) {
     const db = firebase.firestore();
     const user = firebase.auth().currentUser;
 
     if (user) {
         db.collection("users").doc(user.uid).set({
-            totalPrimos: score,
+            totalPrimosEver: score,
             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
     }
@@ -450,22 +447,34 @@ function loadLeaderboard() {
             let rank = 1;
 
             if (querySnapshot.empty) {
-                list.innerHTML = "<tr><td colspan='3'>No travelers found.</td></tr>";
+                list.innerHTML = "<tr><td colspan='3' style='text-align:center; opacity:0.5;'>No travelers found.</td></tr>";
                 return;
             }
+
+            const currentUser = firebase.auth().currentUser;
 
             querySnapshot.forEach((doc) => {
                 const data = doc.data();
                 const name = data.playerName || data.username || data.displayName || "Unknown Traveler";
-                const score = Math.floor(data.totalPrimosEver || 0);
+                const rawScore = Math.floor(data.totalPrimosEver || 0);
+                const scoreDisplay = typeof formatNumbers === "function" ? formatNumbers(rawScore) : rawScore.toLocaleString();
+                const row = document.createElement('tr');
+                
+                if (rank === 1) row.classList.add('rank-1');
+                else if (rank === 2) row.classList.add('rank-2');
+                else if (rank === 3) row.classList.add('rank-3');
 
-                list.innerHTML += `
-                    <tr>
-                        <td>${rank++}</td>
-                        <td>${name}</td>    
-                        <td class="highlight">${score.toLocaleString()}</td>
-                    </tr>
+                if (currentUser && doc.id === currentUser.uid) {
+                    row.classList.add('current-user-row');
+                }
+
+                row.innerHTML = `
+                    <td>${rank++}</td>
+                    <td>${name}</td>    
+                    <td class="highlight">${scoreDisplay}</td>
                 `;
+
+                list.appendChild(row);
             });
         })
         .catch(err => {
