@@ -17,16 +17,49 @@ function clearAuthInputs() {
 function openProfile() {
     const user = auth.currentUser;
     if (user) {
-        // Updated: Targets the .traveler-name class in your new premium card
         const travelerName = document.querySelector('.traveler-name');
         if (travelerName) {
             travelerName.innerText = game.playerName || "Traveler";
         }
 
-        // Sync all data rows in the profile tab
+        // --- DIRECT ENGINE EVALUATION ---
+        
+        // 1. Calculate Click Power directly from system calculations or fallback variables
+        const clickPowerEl = document.getElementById('tab-click-power');
+        if (clickPowerEl) {
+            let actualClickPower = 1; // Default baseline value
+            if (typeof getClickPower === "function") {
+                actualClickPower = getClickPower();
+            } else if (game.clickPower) {
+                actualClickPower = game.clickPower;
+            } else if (Array.isArray(game.clickUpgrades)) {
+                // Calculation fallback: Base + (Level * Power per level)
+                actualClickPower = game.clickUpgrades.reduce((total, up) => total + ((up.level || 0) * (up.power || 0)), 1);
+            }
+            
+            clickPowerEl.innerText = typeof formatNumbers === "function" ? formatNumbers(actualClickPower) : actualClickPower;
+        }
+
+        // 2. Calculate Passive Income directly from generator objects or arrays
+        const passiveIncomeEl = document.getElementById('tab-pps');
+        if (passiveIncomeEl) {
+            let actualPPS = 0;
+            if (typeof getPrimosPerSecond === "function") {
+                actualPPS = getPrimosPerSecond();
+            } else if (game.pps) {
+                actualPPS = game.pps;
+            } else if (Array.isArray(game.generators)) {
+                // Aggregates total production output: Sum of (Quantity owned * individual structural income)
+                actualPPS = game.generators.reduce((total, gen) => total + ((gen.count || gen.level || 0) * (gen.income || 0)), 0);
+            }
+            
+            const formattedPPS = typeof formatNumbers === "function" ? formatNumbers(actualPPS) : actualPPS;
+            passiveIncomeEl.innerText = formattedPPS + "/s";
+        }
+
+        // Sync remaining standard template data fields
         updateUI();
 
-        // Updated: showPanel handles the visibility logic for the profile-panel
         if (typeof showPanel === "function") {
             showPanel('profile');
         } else {
@@ -38,12 +71,11 @@ function openProfile() {
             settingsOverlay.style.display = 'none';
         }
     } else {
-        showNotification("Please login to view profile!");
+        if (typeof showNotification === "function") showNotification("Please login to view profile!");
     }
 }
 
 function toggleProfileView() {
-    // Note: in your HTML, profile-panel is a section, settings-overlay is a flex overlay
     const profPanel = document.getElementById('profile-panel');
     if (profPanel) profPanel.style.display = 'none';
     document.getElementById('settings-overlay').style.display = 'flex';

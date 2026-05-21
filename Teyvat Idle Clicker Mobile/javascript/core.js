@@ -266,11 +266,10 @@ function updateProfileTabStats() {
 }
 
 function updateUI() {
-    // --- 0. PET BUFF CALCULATIONS ---
+    // --- PET BUFF CALCULATIONS ---
     const petBuffs = calculatePetBuffs();
 
-    // --- 1. RECALCULATE BASE STATS ---
-    // Start with core base of 1
+    // --- RECALCULATE BASE STATS ---
     let baseCP = 1;
     game.clickUpgrades.forEach(up => {
         baseCP += (Number(up.level) || 0) * (Number(up.power) || 0);
@@ -281,7 +280,7 @@ function updateUI() {
         basePPS += (Number(g.income) || 0) * (Number(g.count) || 0);
     });
 
-    // --- 2. APPLY MULTIPLIERS ---
+    // --- APPLY MULTIPLIERS ---
     const resonanceBlessing = game.blessings.find(b => b.id === 'resonance');
     const resonanceMult = 1 + (resonanceBlessing ? (Number(resonanceBlessing.level) || 0) * 0.10 : 0);
 
@@ -290,31 +289,29 @@ function updateUI() {
 
     let totalGameMult = (game.multiplier || 1) * resonanceMult;
 
-    // --- 3. FINAL POWER CALCULATIONS ---
-    // Get Seelie level and calculate its portion of the base
+    // --- FINAL POWER CALCULATIONS ---
     const seelieBlessing = game.blessings.find(b => b.id === 'strong_start');
     const seelieBonus = (seelieBlessing ? (Number(seelieBlessing.level) || 0) * 100 : 0);
 
-    // This is the "Per Click" value you want.
-    // If upgrades are 300 and level is 1, this is exactly 401.
     let effectiveBaseCP = baseCP + seelieBonus;
 
-    // Apply multipliers to the combined base
     game.clickPower = (effectiveBaseCP * totalGameMult * temptationMult * (petBuffs.clickMult || 1) * (petBuffs.globalMult || 1)) + (petBuffs.flatClick || 0);
     
     let finalPPS = basePPS * totalGameMult * temptationMult * (petBuffs.ppsMult || 1) * (petBuffs.globalMult || 1);
 
+    game.pps = finalPPS; 
+
     game.currentDiscount = petBuffs.discount || 1;
 
-    // --- 4. MAIN RESOURCE DISPLAYS ---
+    // --- MAIN RESOURCE DISPLAYS ---
     const primoEl = document.getElementById('primogems') || document.getElementById('primo-count');
     if (primoEl) primoEl.innerText = formatNumbers(game.primos);
 
     const statPrimosEl = document.getElementById('stat-primogems');
     if (statPrimosEl) statPrimosEl.innerText = formatNumbers(game.primos);
 
-    const tabPrimosEl = document.getElementById('stat-primos-mobile');
-    if (tabPrimosEl) tabPrimosEl.innerText = formatNumbers(game.primos);
+    const statPrimosMobile = document.getElementById('stat-primos-mobile');
+    if (statPrimosMobile) statPrimosMobile.innerText = formatNumbers(game.primos);
 
     const ppsEl = document.getElementById('stat-pps') || document.getElementById('primos-per-sec');
     if (ppsEl) ppsEl.innerText = formatNumbers(finalPPS);
@@ -323,9 +320,19 @@ function updateUI() {
     if (cpEl) cpEl.innerText = formatNumbers(game.clickPower);
 
     const multEl = document.getElementById('stat-mult');
-    if (multEl) {
-        multEl.innerText = totalGameMult.toFixed(2) + 'x';
-    }
+    if (multEl) multEl.innerText = totalGameMult.toFixed(2) + 'x';
+
+    const profName = document.getElementById('prof-name-tab');
+    if (profName) profName.innerText = game.playerName || "Traveler";
+
+    const tabCurrentPrimos = document.getElementById('tab-current-primos');
+    if (tabCurrentPrimos) tabCurrentPrimos.innerText = formatNumbers(game.primos);
+
+    const tabClickPower = document.getElementById('tab-click-power');
+    if (tabClickPower) tabClickPower.innerText = formatNumbers(game.clickPower);
+
+    const tabPps = document.getElementById('tab-pps');
+    if (tabPps) tabPps.innerText = formatNumbers(finalPPS) + "/s";
 
     const totalEverVal = formatNumbers(game.totalPrimosEver);
     if (document.getElementById('stat-total-ever')) {
@@ -335,11 +342,11 @@ function updateUI() {
         document.getElementById('tab-total-ever').innerText = totalEverVal;
     }
 
-    // --- 5. DYNAMIC LIST RENDERING ---
+    // --- DYNAMIC LIST RENDERING ---
     renderList('click-upgrades', game.clickUpgrades, buyClickUpgrade);
     renderList('gen-upgrades', game.generators, buyGenerator);
 
-    // --- 6. SPECIAL STATS & BUTTONS ---
+    // --- SPECIAL STATS & BUTTONS ---
     const prestigeDisplay = document.getElementById('stat-prestige');
     if (prestigeDisplay) {
         prestigeDisplay.innerText = formatNumbers(game.prestigePoints || 0);
