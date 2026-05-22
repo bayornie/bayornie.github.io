@@ -329,6 +329,18 @@
     display: flex !important;
 }
 
+.leaderboard-card .panel-title {
+    display: block;
+    text-align: center;
+    font-size: 1.6rem;
+    color: var(--accent-gold);
+    margin: 0 auto 20px auto;
+    padding-bottom: 12px;
+    border-bottom: 2px solid rgba(236, 229, 216, 0.1);
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
 .leaderboard-card {
     background: rgba(18, 24, 32, 0.7);
     backdrop-filter: blur(12px);

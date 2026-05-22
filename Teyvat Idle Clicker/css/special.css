@@ -361,8 +361,16 @@
     cursor: not-allowed;
 }
 
-.pet-card.rarity-4 { border: 2px solid #9062d1; } /* Purple */
-.pet-card.rarity-5 { border: 2px solid #eac05e; } /* Gold */
+.pet-card.rarity-4 {
+    border: 2px solid #9062d1;
+}
+
+/* Purple */
+.pet-card.rarity-5 {
+    border: 2px solid #eac05e;
+}
+
+/* Gold */
 
 .pet-card.active {
     background: rgba(255, 255, 255, 0.1);
@@ -413,7 +421,7 @@
 .pet-buff-value {
     font-size: 0.9rem;
     font-weight: bold;
-    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
 .mini-pet-icon {
@@ -423,4 +431,166 @@
     border-radius: 50%;
     background: #2a2c31;
     border: 1px solid #444;
+}
+
+/* --- LEADERBOARD DESIGN --- */
+#leaderboard-panel {
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#leaderboard-panel.active {
+    display: flex !important;
+}
+
+.leaderboard-card .panel-title {
+    display: block;
+    text-align: center;
+    font-size: 1.6rem;
+    color: var(--accent-gold);
+    margin: 0 auto 20px auto;
+    padding-bottom: 12px;
+    border-bottom: 2px solid rgba(236, 229, 216, 0.1);
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.leaderboard-card {
+    background: rgba(18, 24, 32, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(141, 192, 255, 0.15);
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%;
+    max-width: 800px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.leaderboard-container {
+    max-height: 500px;
+    overflow-y: auto;
+    margin-top: 15px;
+    padding-right: 4px;
+}
+
+.leaderboard-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.leaderboard-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.leaderboard-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 185, 142, 0.3);
+    border-radius: 4px;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    text-align: left;
+}
+
+.leaderboard-table th {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(255, 255, 255, 0.4);
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    white-space: nowrap;
+}
+
+.leaderboard-table th:nth-child(1) {
+    width: 60px;
+    text-align: center;
+}
+
+.leaderboard-table th:nth-child(2) {
+    text-align: left;
+}
+
+.leaderboard-table th:nth-child(3) {
+    width: 150px;
+    text-align: right;
+}
+
+.leaderboard-table tbody tr {
+    background: rgba(255, 255, 255, 0.03);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.leaderboard-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.07);
+    transform: translateX(4px);
+}
+
+.leaderboard-table td {
+    padding: 14px 16px;
+    color: #e2e8f0;
+    font-size: 0.95rem;
+    vertical-align: middle;
+}
+
+.leaderboard-table td:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+    font-weight: bold;
+    text-align: center;
+    width: 60px;
+}
+
+.leaderboard-table td:nth-child(2) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.leaderboard-table td:last-child {
+    width: 150px;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    text-align: right;
+    font-family: 'Courier New', Courier, monospace;
+    white-space: nowrap;
+}
+
+/* --- PODIUM SHINE ELEMENTS (TOP 3 STYLES) --- */
+.leaderboard-table tr.rank-1 {
+    background: rgba(255, 215, 0, 0.08);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.leaderboard-table tr.rank-1 td:first-child {
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.leaderboard-table tr.rank-2 {
+    background: rgba(192, 192, 192, 0.08);
+}
+
+.leaderboard-table tr.rank-2 td:first-child {
+    color: #c0c0c0;
+    text-shadow: 0 0 10px rgba(192, 192, 192, 0.5);
+}
+
+.leaderboard-table tr.rank-3 {
+    background: rgba(205, 127, 50, 0.08)
+}
+
+.leaderboard-table tr.rank-3 td:first-child {
+    color: #cd7f32;
+    text-shadow: 0 0 10px rgba(205, 127, 50, 0.5);
+}
+
+.leaderboard-table tr.current-user-row {
+    border: 1px solid rgba(0, 185, 142, 0.4);
+    background: rgba(0, 185, 142, 0.05);
 }

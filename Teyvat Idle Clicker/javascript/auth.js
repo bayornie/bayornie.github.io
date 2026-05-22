@@ -369,4 +369,69 @@ function updateVolume(val) {
     bgmPlayer.volume = val;
 }
 
+// --- LEADERBOARD FUNCTIONS --- //
+function updatePlayerScore(score) {
+    const db = firebase.firestore();
+    const user = firebase.auth().currentUser;
+
+    if (user) {
+        db.collection("users").doc(user.uid).set({
+            totalPrimosEver: score,
+            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+    }
+}
+
+function loadLeaderboard() {
+    const db = firebase.firestore();
+    const list = document.getElementById('leaderboard-list');
+    if (!list) return;
+
+    db.collection("users")
+        .orderBy("totalPrimosEver", "desc")
+        .limit(10)
+        .get()
+        .then((querySnapshot) => {
+            list.innerHTML = "";
+            let rank = 1;
+
+            if (querySnapshot.empty) {
+                list.innerHTML = "<tr><td colspan='3' style='text-align:center; opacity:0.5;'>No travelers found.</td></tr>";
+                return;
+            }
+
+            const currentUser = firebase.auth().currentUser;
+
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const name = data.playerName || data.username || data.displayName || "Unknown Traveler";
+                const rawScore = Math.floor(data.totalPrimosEver || 0);
+                const scoreDisplay = typeof formatNumbers === "function" ? formatNumbers(rawScore) : rawScore.toLocaleString();
+                const row = document.createElement('tr');
+                
+                if (rank === 1) row.classList.add('rank-1');
+                else if (rank === 2) row.classList.add('rank-2');
+                else if (rank === 3) row.classList.add('rank-3');
+
+                if (currentUser && doc.id === currentUser.uid) {
+                    row.classList.add('current-user-row');
+                }
+
+                row.innerHTML = `
+                    <td>${rank++}</td>
+                    <td>${name}</td>    
+                    <td class="highlight">${scoreDisplay}</td>
+                `;
+
+                list.appendChild(row);
+            });
+        })
+        .catch(err => {
+            console.error("Leaderboard error:", err);
+            if (typeof showNotification === "function") {
+                showNotification("Failed to load rankings.");
+            }
+        });
+}
+
 setInterval(saveCloudGame, 30000);

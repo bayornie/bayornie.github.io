@@ -58,9 +58,10 @@
         <div class="nav-item active" onclick="showPanel('home')">Home</div>
         <div class="nav-item" onclick="showPanel('upgrades')">Upgrades</div>
         <div class="nav-item" onclick="showPanel('generators')">Generators</div>
-        <div class="nav-item" onclick="showPanel('prestige')">Prestige</div>
+        <div class="nav-item" onclick="showPanel('prestige')">Ascension</div>
         <div class="nav-item" onclick="showPanel('shop')">Shop</div>
         <div class="nav-item" onclick="showPanel('pets')">Companions</div>
+        <button class="nav-item" onclick="showPanel('leaderboard'); loadLeaderboard();">Leaderboard</button>
     </nav>
 
     <main>
@@ -163,6 +164,25 @@
             </div>
 
             <div id="pets-grid" class="list-container pets-grid">
+            </div>
+        </section>
+
+        <section id="leaderboard-panel" class="game-panel">
+            <div class="leaderboard-card">
+                <h2 class="panel-title">Teyvat Rankings</h2>
+                <div class="leaderboard-container">
+                    <table class="leaderboard-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Traveler</th>
+                                <th>Total Primos</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-list">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
     </main>
