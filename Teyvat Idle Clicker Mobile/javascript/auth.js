@@ -85,6 +85,13 @@ function closeSettings() {
 }
 
 function handleLogout() {
+    // Hide the main screen containers immediately to prevent layout popping
+    const appContainer = document.getElementById('game-app') || document.body;
+    if (appContainer) {
+        appContainer.style.opacity = '0';
+        appContainer.style.pointerEvents = 'none';
+    }
+
     auth.signOut().then(() => {
         isLoggedIn = false;
         isDataLoaded = false;
@@ -99,10 +106,6 @@ function handleLogout() {
         const miniList = document.getElementById('mini-pet-list');
         if (miniList) miniList.innerHTML = '';
 
-        // 3. Show the Login / Register overlay
-        const authOverlay = document.getElementById('auth-overlay');
-        if (authOverlay) authOverlay.style.display = 'flex';
-
         showNotification("Logged out successfully!");
 
         if (typeof clearAuthInputs === 'function') clearAuthInputs();
@@ -110,6 +113,10 @@ function handleLogout() {
         // 4. Reload the page
         location.reload();
     }).catch((error) => {
+        if (appContainer) {
+            appContainer.style.opacity = '1';
+            appContainer.style.pointerEvents = 'auto';
+        }
         console.error("Logout Error:", error);
         showNotification("Error logging out.");
     });

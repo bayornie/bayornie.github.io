@@ -390,7 +390,7 @@ function calculateOfflineEarnings() {
     let secondsAway = Math.floor((now - lastLogin) / 1000);
     if (secondsAway <= 30) return;
 
-    const maxSeconds = 36000;
+    const maxSeconds = 36000; // 10 Hours
     if (secondsAway > maxSeconds) secondsAway = maxSeconds;
 
     const earned = secondsAway * game.pps;
@@ -418,6 +418,7 @@ function showOfflineModal(amount, h, m) {
     if (timeText) timeText.innerText = `You were away for ${h > 0 ? h + "h " : ""}${m}m`;
     if (amountText) amountText.innerText = Math.floor(amount).toLocaleString();
 
+    // Force it to show
     modal.style.setProperty('display', 'flex', 'important');
 }
 
