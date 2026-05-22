@@ -759,10 +759,16 @@ function renderAchievements() {
 
     const userIsLoggedIn = (typeof isLoggedIn !== 'undefined' && isLoggedIn);
 
-    // Calculate total passive generators owned safely
+    // Calculate total passive generators owned safely using a reducer
     let totalGeneratorsOwned = 0;
     if (game.generators && Array.isArray(game.generators)) {
         totalGeneratorsOwned = game.generators.reduce((sum, g) => sum + (parseInt(g.count) || 0), 0);
+    }
+
+    // Calculate total click upgrade levels safely using a reducer
+    let totalClickUpgradesOwned = 0;
+    if (game.clickUpgrades && Array.isArray(game.clickUpgrades)) {
+        totalClickUpgradesOwned = game.clickUpgrades.reduce((sum, up) => sum + (parseInt(up.level) || 0), 0);
     }
 
     // Loop directly over the game object's array
@@ -775,9 +781,18 @@ function renderAchievements() {
             let displayCurrent = "0";
 
             if (userIsLoggedIn) {
-                if (ach.type === 'clicks') currentProgress = parseInt(game.clicks) || 0;
-                if (ach.type === 'totalPrimos') currentProgress = parseInt(game.totalPrimosEver) || parseInt(game.primos) || 0;
-                if (ach.type === 'totalGenerators') currentProgress = totalGeneratorsOwned;
+                if (ach.type === 'clicks') {
+                    currentProgress = parseInt(game.clicks) || 0;
+                }
+                else if (ach.type === 'clickUpgrades') {
+                    currentProgress = totalClickUpgradesOwned;
+                }
+                else if (ach.type === 'totalGenerators') {
+                    currentProgress = totalGeneratorsOwned;
+                }
+                else if (ach.type === 'totalPrimos') {
+                    currentProgress = parseInt(game.totalPrimosEver) || parseInt(game.primos) || 0;
+                }
 
                 pct = Math.min(100, Math.floor((currentProgress / ach.target) * 100));
                 displayCurrent = typeof formatNumbers === 'function' ? formatNumbers(Math.floor(currentProgress)) : Math.floor(currentProgress).toLocaleString();
@@ -833,16 +848,16 @@ function updateAchievements() {
         game.completedAchievements = [];
     }
 
-    // Rely explicitly on the loaded game property
-    const data = game.achievementsData || [];
+    // Rely on your global application data definitions
+    const data = window.achievementsData || [];
     const userIsLoggedIn = (typeof isLoggedIn !== 'undefined' && isLoggedIn);
     let stateChanged = false;
 
     if (userIsLoggedIn && data.length > 0) {
         let totalGeneratorsOwned = null;
+        let totalClickUpgradesOwned = null;
 
         data.forEach(ach => {
-            // Skip checking achievements that are already finished/claimed
             if (game.completedAchievements.includes(ach.id)) return;
 
             let currentProgress = 0;
@@ -850,8 +865,13 @@ function updateAchievements() {
             if (ach.type === 'clicks') {
                 currentProgress = parseInt(game.clicks) || 0;
             }
-            else if (ach.type === 'totalPrimos') {
-                currentProgress = parseInt(game.totalPrimosEver) || parseInt(game.primos) || 0;
+            else if (ach.type === 'clickUpgrades') {
+                if (totalClickUpgradesOwned === null) {
+                    totalClickUpgradesOwned = (game.clickUpgrades && Array.isArray(game.clickUpgrades))
+                        ? game.clickUpgrades.reduce((sum, up) => sum + (parseInt(up.level) || 0), 0)
+                        : 0;
+                }
+                currentProgress = totalClickUpgradesOwned;
             }
             else if (ach.type === 'totalGenerators') {
                 if (totalGeneratorsOwned === null) {
@@ -861,8 +881,10 @@ function updateAchievements() {
                 }
                 currentProgress = totalGeneratorsOwned;
             }
+            else if (ach.type === 'totalPrimos') {
+                currentProgress = parseInt(game.totalPrimosEver) || parseInt(game.primos) || 0;
+            }
 
-            // Mark as finished/claimed when reaching milestones!
             if (currentProgress >= ach.target) {
                 game.completedAchievements.push(ach.id);
                 stateChanged = true;
@@ -872,15 +894,14 @@ function updateAchievements() {
             }
         });
 
-        // If something was finished/claimed during this check tick, update metrics and cloud save
         if (stateChanged) {
             if (typeof calculatePPS === 'function') calculatePPS();
             if (typeof saveCloudGame === 'function') saveCloudGame();
             
-            // Re-draw live progress indicators immediately if a panel is actively open
             const container = document.getElementById('achievements-list');
             if (container && container.parentElement.classList.contains('active')) {
-                renderAchievements();
+                if (typeof renderAchievements === 'function') renderAchievements();
+                else if (typeof updateUI === 'function') updateUI();
             }
         }
     }

@@ -313,6 +313,10 @@ async function loadCloudGame(uid) {
             cloudData.completedAchievements = [];
         }
 
+        if (window.achievementsData) {
+            cloudData.achievementsData = window.achievementsData;
+        }
+
         game = cloudData;
         isDataLoaded = true;
 

@@ -112,9 +112,51 @@ let game = {
 };
 
 window.achievementsData = [
-    { id: 'clicks_100', title: 'Novice Clicker', desc: 'Click the Primogem 100 times.', type: 'clicks', target: 100, bonus: 0.01 },
-    { id: 'clicks_1000', title: 'Dedicated Path', desc: 'Click the Primogem 1,000 times.', type: 'clicks', target: 1000, bonus: 0.02 },
-    { id: 'primos_10k', title: 'Stash Accumulator', desc: 'Earn 10,000 total Primogems ever.', type: 'totalPrimos', target: 10000, bonus: 0.01 },
-    { id: 'primos_1m', title: 'Gilded Fortune', desc: 'Earn 1,000,000 total Primogems ever.', type: 'totalPrimos', target: 1000000, bonus: 0.03 },
-    { id: 'gens_10', title: 'Resource Manager', desc: 'Own 10 total passive generators simultaneously.', type: 'totalGenerators', target: 10, bonus: 0.02 }
+    // ─── PATH 1: THE CLICKER'S JOURNEY (10 Achievements) ───
+    { id: 'clicks_100', title: 'Novice Clicker', desc: 'Click the central Primogem 100 times.', type: 'clicks', target: 100, bonus: 0.01 },
+    { id: 'clicks_1k', title: 'Steady Rhythm', desc: 'Click the central Primogem 1,000 times.', type: 'clicks', target: 1000, bonus: 0.01 },
+    { id: 'clicks_10k', title: 'Dedicated Path', desc: 'Click the central Primogem 10,000 times.', type: 'clicks', target: 10000, bonus: 0.02 },
+    { id: 'clicks_100k', title: 'Fervent Tap', desc: 'Click the central Primogem 100,000 times.', type: 'clicks', target: 100000, bonus: 0.02 },
+    { id: 'clicks_1m', title: 'Calloused Fingers', desc: 'Click the central Primogem 1,000,000 times.', type: 'clicks', target: 1000000, bonus: 0.03 },
+    { id: 'clicks_10m', title: 'Unstoppable Momentum', desc: 'Click the central Primogem 10,000,000 times.', type: 'clicks', target: 10000000, bonus: 0.03 },
+    { id: 'clicks_100m', title: 'Legendary Tempo', desc: 'Click the central Primogem 100,000,000 times.', type: 'clicks', target: 100000000, bonus: 0.04 },
+    { id: 'clicks_1b', title: 'Shattered Mouse', desc: 'Click the central Primogem 1,000,000,000 times.', type: 'clicks', target: 1000000000, bonus: 0.04 },
+    { id: 'clicks_10b', title: 'God of Friction', desc: 'Click the central Primogem 10,000,000,000 times.', type: 'clicks', target: 10000000000, bonus: 0.05 },
+    { id: 'clicks_100b', title: 'Teyvat Celestial Clicker', desc: 'Click the central Primogem 100,000,000,000 times.', type: 'clicks', target: 100000000000, bonus: 0.06 },
+
+    // ─── PATH 2: THE TOOL MASTER (10 Achievements) ───
+    { id: 'upgrades_10', title: 'Sharpened Edge', desc: 'Reach 10 total click upgrade levels.', type: 'clickUpgrades', target: 10, bonus: 0.01 },
+    { id: 'upgrades_100', title: 'Enchanted Tools', desc: 'Reach 100 total click upgrade levels.', type: 'clickUpgrades', target: 100, bonus: 0.01 },
+    { id: 'upgrades_1k', title: 'Heavy Handed', desc: 'Reach 1,000 total click upgrade levels.', type: 'clickUpgrades', target: 1000, bonus: 0.02 },
+    { id: 'upgrades_10k', title: 'Impact Mastery', desc: 'Reach 10,000 total click upgrade levels.', type: 'clickUpgrades', target: 10000, bonus: 0.02 },
+    { id: 'upgrades_100k', title: 'Kinetic Overload', desc: 'Reach 100,000 total click upgrade levels.', type: 'clickUpgrades', target: 100000, bonus: 0.03 },
+    { id: 'upgrades_1m', title: 'Sonic Strike', desc: 'Reach 1,000,000 total click upgrade levels.', type: 'clickUpgrades', target: 1000000, bonus: 0.03 },
+    { id: 'upgrades_10m', title: 'Continental Cleaver', desc: 'Reach 10,000,000 total click upgrade levels.', type: 'clickUpgrades', target: 10000000, bonus: 0.04 },
+    { id: 'upgrades_100m', title: 'Relic Unleashed', desc: 'Reach 100,000,000 total click upgrade levels.', type: 'clickUpgrades', target: 100000000, bonus: 0.04 },
+    { id: 'upgrades_1b', title: 'Subatomic Impact', desc: 'Reach 1,000,000,000 total click upgrade levels.', type: 'clickUpgrades', target: 1000000000, bonus: 0.05 },
+    { id: 'upgrades_10b', title: 'Ascended Might', desc: 'Reach 10,000,000,000 total click upgrade levels.', type: 'clickUpgrades', target: 10000000000, bonus: 0.06 },
+
+    // ─── PATH 3: INDUSTRIAL REVOLUTION (10 Achievements) ───
+    { id: 'gens_10', title: 'Resource Manager', desc: 'Own 10 total passive generators.', type: 'totalGenerators', target: 10, bonus: 0.01 },
+    { id: 'gens_100', title: 'Automated Outpost', desc: 'Own 100 total passive generators.', type: 'totalGenerators', target: 100, bonus: 0.01 },
+    { id: 'gens_1k', title: 'Factory Blueprint', desc: 'Own 1,000 total passive generators.', type: 'totalGenerators', target: 1000, bonus: 0.02 },
+    { id: 'gens_10k', title: 'Production Line', desc: 'Own 10,000 total passive generators.', type: 'totalGenerators', target: 10000, bonus: 0.02 },
+    { id: 'gens_100k', title: 'Industrial District', desc: 'Own 100,000 total passive generators.', type: 'totalGenerators', target: 100000, bonus: 0.03 },
+    { id: 'gens_1m', title: 'Teyvat Conglomerate', desc: 'Own 1,000,000 total passive generators.', type: 'totalGenerators', target: 1000000, bonus: 0.03 },
+    { id: 'gens_10m', title: 'Automated Empire', desc: 'Own 10,000,000 total passive generators.', type: 'totalGenerators', target: 10000000, bonus: 0.04 },
+    { id: 'gens_100m', title: 'Mechanical Overlord', desc: 'Own 100,000,000 total passive generators.', type: 'totalGenerators', target: 100000000, bonus: 0.04 },
+    { id: 'gens_1b', title: 'Dyson Swarm Blueprint', desc: 'Own 1,000,000,000 total passive generators.', type: 'totalGenerators', target: 1000000000, bonus: 0.05 },
+    { id: 'gens_10b', title: 'Infinite Engine', desc: 'Own 10,000,000,000 total passive generators.', type: 'totalGenerators', target: 10000000000, bonus: 0.06 },
+
+    // ─── PATH 4: TREASURE HOARDER (10 Total Primogems Achievements) ───
+    { id: 'primos_1k', title: 'Genshin Pocket Money', desc: 'Earn 1,000 total Primogems ever.', type: 'totalPrimos', target: 1000, bonus: 0.01 },
+    { id: 'primos_10k', title: 'Welkin Moon Stash', desc: 'Earn 10,000 total Primogems ever.', type: 'totalPrimos', target: 10000, bonus: 0.01 },
+    { id: 'primos_100k', title: 'Hoarder Cache', desc: 'Earn 100,000 total Primogems ever.', type: 'totalPrimos', target: 100000, bonus: 0.02 },
+    { id: 'primos_1m', title: 'Abyssal Fortune', desc: 'Earn 1,000,000 total Primogems ever.', type: 'totalPrimos', target: 1000000, bonus: 0.02 },
+    { id: 'primos_10m', title: 'Secret Treasury', desc: 'Earn 10,000,000 total Primogems ever.', type: 'totalPrimos', target: 10000000, bonus: 0.03 },
+    { id: 'primos_100m', title: 'Mora Rivalry', desc: 'Earn 100,000,000 total Primogems ever.', type: 'totalPrimos', target: 100000000, bonus: 0.03 },
+    { id: 'primos_1b', title: 'Northland Bank Vault', desc: 'Earn 1,000,000,000 total Primogems ever.', type: 'totalPrimos', target: 1000000000, bonus: 0.04 },
+    { id: 'primos_10b', title: 'Archon Wealth', desc: 'Earn 10,000,000,000 total Primogems ever.', type: 'totalPrimos', target: 10000000000, bonus: 0.04 },
+    { id: 'primos_100b', title: 'Celestial Capital', desc: 'Earn 100,000,000,000 total Primogems ever.', type: 'totalPrimos', target: 100000000000, bonus: 0.05 },
+    { id: 'primos_1t', title: 'Phanes Sovereign Reserve', desc: 'Earn 1,000,000,000,000 total Primogems ever.', type: 'totalPrimos', target: 1000000000000, bonus: 0.06 }
 ];
