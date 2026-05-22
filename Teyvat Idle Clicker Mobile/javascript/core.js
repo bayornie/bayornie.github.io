@@ -23,7 +23,7 @@ function playTrack(index) {
     game.currentTrackIndex = index;
     const track = game.bgmList[index];
 
-    window.bgmPlayer = bgmPlayer; 
+    window.bgmPlayer = bgmPlayer;
     bgmPlayer.src = track.file;
     bgmPlayer.volume = game.bgmVolume;
 
@@ -85,6 +85,8 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
         openAuth();
         return;
     }
+
+    game.clicks = (parseInt(game.clicks) || 0) + 1;
 
     let amount = getFinalClickPower();
     const buffs = calculatePetBuffs();
@@ -150,6 +152,10 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
     let display = `${label} +${formatNumbers(amount)}`.trim();
     spawnText(e.clientX, e.clientY, display, color);
 
+    if (typeof updateAchievements === 'function') {
+        updateAchievements();
+    }
+
     updateUI();
 });
 
@@ -169,7 +175,8 @@ setInterval(() => {
     // 3. Get Game Multipliers (including Resonance Blessing if it exists)
     const resonanceBlessing = game.blessings.find(b => b.id === 'resonance');
     const resonanceMult = 1 + (resonanceBlessing ? resonanceBlessing.level * 0.10 : 0);
-    const totalGameMult = (game.multiplier || 1) * resonanceMult;
+    const achievementBonus = getAchievementMultiplierBonus();
+    const totalGameMult = (game.multiplier || 1) * resonanceMult * (1.0 + achievementBonus);
 
     // 4. Calculate Final Income 
     let finalPPS = basePPS * petBuffs.ppsMult * (petBuffs.globalMult || 1) * totalGameMult;
@@ -208,25 +215,25 @@ function showPanel(panelId) {
     const targetPanel = document.getElementById(targetId) || document.getElementById(panelId);
 
     if (targetPanel) {
-        targetPanel.style.display = 'flex'; 
+        targetPanel.style.display = 'flex';
         targetPanel.style.flexDirection = 'column';
-        targetPanel.style.alignItems = 'center'; 
+        targetPanel.style.alignItems = 'center';
         targetPanel.style.textAlign = 'center';
         targetPanel.classList.add('active');
 
         // --- THE FIX FOR LABELS & CARDS ---
-        const stretchContainers = targetPanel.querySelectorAll('.upgrade-list, .shop-grid, .pet-list, .profile-container, .stats-container, #shop-container, #pet-shop-container');
+        const stretchContainers = targetPanel.querySelectorAll('.upgrade-list, .shop-grid, .pet-list, .profile-container, .stats-container, #shop-container, #pet-shop-container, .leaderboard-card');
         stretchContainers.forEach(container => {
             container.style.width = '100%';
             container.style.display = 'flex';
             container.style.flexDirection = 'column';
-            container.style.alignItems = 'stretch'; 
+            container.style.alignItems = 'stretch';
         });
     }
 
     // 3. UPDATE NAV BUTTONS
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    
+
     // Safety check for the active nav item
     if (window.event && window.event.currentTarget && window.event.currentTarget.classList.contains('nav-item')) {
         window.event.currentTarget.classList.add('active');
@@ -244,6 +251,9 @@ function showPanel(panelId) {
     if (panelId.includes('shop')) {
         renderShopItems();
         renderPetShop();
+    }
+    if (panelId.includes('achievements')) {
+        renderAchievements();
     }
 
     // Refresh stats for Profile or Statistics tabs
@@ -287,7 +297,9 @@ function updateUI() {
     const temptation = game.shopItems.find(item => item.id === 'buff_pot');
     const temptationMult = 1 + (temptation ? (Number(temptation.level) || 0) * 0.5 : 0);
 
-    let totalGameMult = (game.multiplier || 1) * resonanceMult;
+    const achievementBonus = getAchievementMultiplierBonus();
+
+    let totalGameMult = (game.multiplier || 1) * resonanceMult * (1.0 + achievementBonus);
 
     // --- FINAL POWER CALCULATIONS ---
     const seelieBlessing = game.blessings.find(b => b.id === 'strong_start');
@@ -296,10 +308,10 @@ function updateUI() {
     let effectiveBaseCP = baseCP + seelieBonus;
 
     game.clickPower = (effectiveBaseCP * totalGameMult * temptationMult * (petBuffs.clickMult || 1) * (petBuffs.globalMult || 1)) + (petBuffs.flatClick || 0);
-    
+
     let finalPPS = basePPS * totalGameMult * temptationMult * (petBuffs.ppsMult || 1) * (petBuffs.globalMult || 1);
 
-    game.pps = finalPPS; 
+    game.pps = finalPPS;
 
     game.currentDiscount = petBuffs.discount || 1;
 
@@ -728,6 +740,149 @@ function renderPets() {
 
     if (document.getElementById('party-count')) {
         document.getElementById('party-count').innerText = game.activePets.length;
+    }
+}
+
+function renderAchievements() {
+    const container = document.getElementById('achievements-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!game.achievementsData || game.achievementsData.length === 0) {
+        if (window.achievementsData) {
+            game.achievementsData = window.achievementsData;
+        } else {
+            console.warn("Achievements layout data could not be found in window scope.");
+            return;
+        }
+    }
+
+    const userIsLoggedIn = (typeof isLoggedIn !== 'undefined' && isLoggedIn);
+
+    // Calculate total passive generators owned safely
+    let totalGeneratorsOwned = 0;
+    if (game.generators && Array.isArray(game.generators)) {
+        totalGeneratorsOwned = game.generators.reduce((sum, g) => sum + (parseInt(g.count) || 0), 0);
+    }
+
+    // Loop directly over the game object's array
+    game.achievementsData.forEach(ach => {
+        try {
+            const isOwned = game.completedAchievements && game.completedAchievements.includes(ach.id);
+
+            let currentProgress = 0;
+            let pct = 0;
+            let displayCurrent = "0";
+
+            if (userIsLoggedIn) {
+                if (ach.type === 'clicks') currentProgress = parseInt(game.clicks) || 0;
+                if (ach.type === 'totalPrimos') currentProgress = parseInt(game.totalPrimosEver) || parseInt(game.primos) || 0;
+                if (ach.type === 'totalGenerators') currentProgress = totalGeneratorsOwned;
+
+                pct = Math.min(100, Math.floor((currentProgress / ach.target) * 100));
+                displayCurrent = typeof formatNumbers === 'function' ? formatNumbers(Math.floor(currentProgress)) : Math.floor(currentProgress).toLocaleString();
+            }
+
+            const displayTarget = typeof formatNumbers === 'function' ? formatNumbers(ach.target) : ach.target.toLocaleString();
+
+            const card = document.createElement('div');
+            card.className = `achievement-row ${isOwned ? 'completed' : ''}`;
+            card.style.textAlign = 'left';
+
+            if (!userIsLoggedIn) {
+                card.style.opacity = '0.4';
+                card.style.filter = 'grayscale(1) brightness(0.6)';
+                card.style.pointerEvents = 'none';
+            }
+
+            const qtyDisplay = isOwned ? 'MAX' : `${displayCurrent}/${displayTarget}`;
+            const rewardText = !userIsLoggedIn ? 'CLOUD SAVE REQUIRED' : `+${(ach.bonus * 100)}% MULT`;
+
+            card.innerHTML = `
+                <div class="achievement-header" style="display: flex; justify-content: space-between; width: 100%;">
+                    <span class="achievement-title" style="font-weight: 600;">
+                        ${ach.title} ${isOwned ? '✓' : ''}
+                    </span>
+                    <span class="achievement-reward" style="color: ${!userIsLoggedIn ? '#8a9ba8' : '#ffd700'}; font-size: 0.75rem; letter-spacing: 1px; text-transform: uppercase;">
+                        ${rewardText}
+                    </span>
+                </div>
+                <div class="achievement-desc" style="opacity: 0.6; font-size: 0.8rem; color: rgba(255, 255, 255, 0.5);">${ach.desc}</div>
+                <div class="achievement-progress-container" style="display: flex; align-items: center; gap: 12px; margin-top: 4px; width: 100%;">
+                    <div class="achievement-progress-bg" style="flex-grow: 1; height: 6px; background: rgba(255, 255, 255, 0.05); border-radius: 3px; overflow: hidden;">
+                        <div class="achievement-progress-bar" style="width: ${pct}%; height: 100%; transition: width 0.3s ease; background: ${!userIsLoggedIn ? '#4a5568' : 'linear-gradient(90deg, #00b98e, #64ffbf)'};"></div>
+                    </div>
+                    <div class="achievement-qty" style="font-size: 0.75rem; font-family: 'Courier New', Courier, monospace; color: rgba(255, 255, 255, 0.7); min-width: 75px; text-align: right;">
+                        ${userIsLoggedIn ? qtyDisplay : 'LOCKED'}
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(card);
+        } catch (err) {
+            console.error("Error rendering individual achievement row: ", err);
+        }
+    });
+}
+
+function updateAchievements() {
+    if (!game) return;
+    
+    // Ensure tracker history array is stable
+    if (!game.completedAchievements || !Array.isArray(game.completedAchievements)) {
+        game.completedAchievements = [];
+    }
+
+    // Rely explicitly on the loaded game property
+    const data = game.achievementsData || [];
+    const userIsLoggedIn = (typeof isLoggedIn !== 'undefined' && isLoggedIn);
+    let stateChanged = false;
+
+    if (userIsLoggedIn && data.length > 0) {
+        let totalGeneratorsOwned = null;
+
+        data.forEach(ach => {
+            // Skip checking achievements that are already finished/claimed
+            if (game.completedAchievements.includes(ach.id)) return;
+
+            let currentProgress = 0;
+
+            if (ach.type === 'clicks') {
+                currentProgress = parseInt(game.clicks) || 0;
+            }
+            else if (ach.type === 'totalPrimos') {
+                currentProgress = parseInt(game.totalPrimosEver) || parseInt(game.primos) || 0;
+            }
+            else if (ach.type === 'totalGenerators') {
+                if (totalGeneratorsOwned === null) {
+                    totalGeneratorsOwned = (game.generators && Array.isArray(game.generators))
+                        ? game.generators.reduce((sum, g) => sum + (parseInt(g.count) || 0), 0)
+                        : 0;
+                }
+                currentProgress = totalGeneratorsOwned;
+            }
+
+            // Mark as finished/claimed when reaching milestones!
+            if (currentProgress >= ach.target) {
+                game.completedAchievements.push(ach.id);
+                stateChanged = true;
+                if (typeof showNotification === 'function') {
+                    showNotification(`Achievement Unlocked: ${ach.title}!`);
+                }
+            }
+        });
+
+        // If something was finished/claimed during this check tick, update metrics and cloud save
+        if (stateChanged) {
+            if (typeof calculatePPS === 'function') calculatePPS();
+            if (typeof saveCloudGame === 'function') saveCloudGame();
+            
+            // Re-draw live progress indicators immediately if a panel is actively open
+            const container = document.getElementById('achievements-list');
+            if (container && container.parentElement.classList.contains('active')) {
+                renderAchievements();
+            }
+        }
     }
 }
 

@@ -33,6 +33,8 @@ let game = {
     playerName: "Traveler",
     primos: 0,
     totalPrimosEver: 0,
+    clicks: 0,
+    completedAchievements: [],
     lastWarpTime: 0,
     prestigePoints: 0,
     multiplier: 1.0,
@@ -108,3 +110,11 @@ let game = {
     bgmVolume: 0.5,
     isMusicMuted: false
 };
+
+window.achievementsData = [
+    { id: 'clicks_100', title: 'Novice Clicker', desc: 'Click the Primogem 100 times.', type: 'clicks', target: 100, bonus: 0.01 },
+    { id: 'clicks_1000', title: 'Dedicated Path', desc: 'Click the Primogem 1,000 times.', type: 'clicks', target: 1000, bonus: 0.02 },
+    { id: 'primos_10k', title: 'Stash Accumulator', desc: 'Earn 10,000 total Primogems ever.', type: 'totalPrimos', target: 10000, bonus: 0.01 },
+    { id: 'primos_1m', title: 'Gilded Fortune', desc: 'Earn 1,000,000 total Primogems ever.', type: 'totalPrimos', target: 1000000, bonus: 0.03 },
+    { id: 'gens_10', title: 'Resource Manager', desc: 'Own 10 total passive generators simultaneously.', type: 'totalGenerators', target: 10, bonus: 0.02 }
+];

@@ -22,10 +22,10 @@ function buyClickUpgrade(index) {
     if (game.primos >= totalCost) {
         game.primos -= totalCost;
         up.level += countToBuy;
-        
+
         // Cost scaling logic
         up.cost *= Math.pow(rate, countToBuy);
-        
+
         updateUI();
         saveCloudGame();
     } else if (buyAmount !== 'max') {
@@ -56,10 +56,10 @@ function buyGenerator(index) {
     if (game.primos >= totalCost) {
         game.primos -= totalCost;
         gen.count += countToBuy;
-        
+
         // Cost scaling logic
         gen.cost *= Math.pow(rate, countToBuy);
-        
+
         updateUI();
         saveCloudGame();
     } else if (buyAmount !== 'max') {
@@ -255,7 +255,7 @@ function ascend() {
 
     game.prestigePoints = (game.prestigePoints || 0) + pointsGained;
 
-    game.multiplier = 1; 
+    game.multiplier = 1;
     game.primos = 0;
     game.clickPower = 1;
 
@@ -314,6 +314,27 @@ function getDiscountedCost(baseCost) {
     return baseCost * discount;
 }
 
+function getAchievementMultiplierBonus() {
+    let totalBonus = 0;
+
+    // Guard clause: if nothing is completed yet, return 0% extra bonus
+    if (!game.completedAchievements || game.completedAchievements.length === 0) {
+        return 0;
+    }
+
+    // Use game data if available, otherwise look at your window global config array
+    const data = game.achievementsData || window.achievementsData || [];
+
+    game.completedAchievements.forEach(completedId => {
+        const achConfig = data.find(a => a.id === completedId);
+        if (achConfig && achConfig.bonus) {
+            totalBonus += achConfig.bonus;
+        }
+    });
+
+    return totalBonus;
+}
+
 function togglePetEquip(petId) {
     const activeIndex = game.activePets.indexOf(petId);
     if (activeIndex > -1) {
@@ -336,6 +357,8 @@ function togglePetEquip(petId) {
 }
 
 function handleMainClick() {
+    game.clicks = (parseInt(game.clicks) || 0) + 1;
+
     clickCounter++;
     const buffs = calculatePetBuffs();
     let power = getFinalClickPower();
@@ -358,6 +381,10 @@ function handleMainClick() {
     let color = isCrit ? "#ff4e4e" : "#ffffff";
     spawnText(x, y, `+${formatNumbers(power)}`, color);
 
+    if (typeof updateAchievements === 'function') {
+        updateAchievements();
+    }
+
     updateUI();
 }
 
@@ -371,7 +398,7 @@ function getFinalClickPower() {
     // 2. Add Seelie Blessing directly to that base
     const seelieBlessing = game.blessings.find(b => b.id === 'strong_start');
     const seelieBonus = (seelieBlessing ? (Number(seelieBlessing.level) || 0) * 100 : 0);
-    
+
     let totalBase = base + seelieBonus;
 
     // 3. Apply all multipliers to the new combined base
@@ -406,12 +433,12 @@ function calculatePetBuffs() {
 function toggleParticles() {
     game.settings = game.settings || { particles: true };
     game.settings.particles = !game.settings.particles;
-    
+
     const btn = document.getElementById('pref-particles');
     if (btn) {
         btn.innerText = game.settings.particles ? "ON" : "OFF";
     }
-    
+
     showNotification(`Particles ${game.settings.particles ? 'Enabled' : 'Disabled'}`);
     saveCloudGame();
 }

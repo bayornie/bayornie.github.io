@@ -307,6 +307,11 @@ async function loadCloudGame(uid) {
         if (cloudData.bgmVolume === undefined) cloudData.bgmVolume = 0.5;
         if (cloudData.isMusicMuted === undefined) cloudData.isMusicMuted = false;
         cloudData.bgmList = JSON.parse(JSON.stringify(game.bgmList));
+        if (cloudData.clicks === undefined) cloudData.clicks = 0;
+        if (cloudData.totalPrimosEver === undefined) cloudData.totalPrimosEver = cloudData.primos || 0;
+        if (!cloudData.completedAchievements || !Array.isArray(cloudData.completedAchievements)) {
+            cloudData.completedAchievements = [];
+        }
 
         game = cloudData;
         isDataLoaded = true;
@@ -324,6 +329,7 @@ async function loadCloudGame(uid) {
         if (travelerName) travelerName.innerText = game.playerName;
 
         if (typeof calculateOfflineEarnings === "function") calculateOfflineEarnings();
+        if (typeof updateAchievements === "function") updateAchievements();
 
         updateUI();
         saveCloudGame();
@@ -492,4 +498,4 @@ function loadLeaderboard() {
         });
 }
 
-setInterval(saveCloudGame, 30000);
+setInterval(saveCloudGame, 10000);
