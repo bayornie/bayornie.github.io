@@ -255,6 +255,10 @@ function showPanel(panelId) {
     if (panelId.includes('achievements')) {
         renderAchievements();
     }
+    if (panelId === 'fate-shop' || panelId === 'fate-shop-panel') {
+        document.getElementById('fate-shop-panel').style.display = 'block';
+        renderFateShop();
+    }
 
     // Refresh stats for Profile or Statistics tabs
     if (panelId.includes('profile') || panelId.includes('stats')) {
@@ -287,7 +291,14 @@ function updateUI() {
 
     let basePPS = 0;
     game.generators.forEach(g => {
-        basePPS += (Number(g.income) || 0) * (Number(g.count) || 0);
+        let genIncome = Number(g.income) || 0;
+
+        // Katheryne's Directive: Affects the BASE income of the generator directly (+15% per level)
+        if (game.katheryneMultiplier) {
+            genIncome *= game.katheryneMultiplier;
+        }
+
+        basePPS += genIncome * (Number(g.count) || 0);
     });
 
     // --- APPLY MULTIPLIERS ---
@@ -309,7 +320,13 @@ function updateUI() {
 
     game.clickPower = (effectiveBaseCP * totalGameMult * temptationMult * (petBuffs.clickMult || 1) * (petBuffs.globalMult || 1)) + (petBuffs.flatClick || 0);
 
+    // Calculate regular passive income with general multipliers
     let finalPPS = basePPS * totalGameMult * temptationMult * (petBuffs.ppsMult || 1) * (petBuffs.globalMult || 1);
+
+    // Abyssal Leyline Shard: Multiplies final generator output by x2.5)
+    if (game.abyssalGeneratorMultiplier) {
+        finalPPS *= game.abyssalGeneratorMultiplier;
+    }
 
     game.pps = finalPPS;
 
@@ -741,6 +758,139 @@ function renderPets() {
     if (document.getElementById('party-count')) {
         document.getElementById('party-count').innerText = game.activePets.length;
     }
+}
+
+function renderFateShop() {
+    // 1. Update the live counter values inside the permanent HTML header structures
+    const acquaintCountEl = document.getElementById('fate-shop-acquaint-count');
+    const intertwinedCountEl = document.getElementById('fate-shop-intertwined-count');
+    
+    if (acquaintCountEl) acquaintCountEl.innerText = game.acquaintFates || 0;
+    if (intertwinedCountEl) intertwinedCountEl.innerText = game.intertwinedFates || 0;
+
+    // 2. Target the exact grid IDs defined inside your index.html panel
+    const acquaintGrid = document.getElementById('acquaint-grid');
+    const intertwinedGrid = document.getElementById('intertwined-grid');
+    
+    // Safety exit check to prevent errors if the elements aren't rendered yet
+    if (!acquaintGrid || !intertwinedGrid) return; 
+    
+    // Clear out the cards inside the grids to prevent duplicate duplication loops
+    acquaintGrid.innerHTML = '';
+    intertwinedGrid.innerHTML = '';
+
+    // SAFETY CATCH: If fateShopItems array got flattened or hasn't loaded yet, drop execution gracefully
+    if (!game.fateShopItems || !Array.isArray(game.fateShopItems)) {
+        console.warn("Fate Shop structural arrays are not initialized yet.");
+        return;
+    }
+
+    // 3. Loop through your game save object's array and build out the item cards
+    game.fateShopItems.forEach(item => {
+        const balance = item.costType === 'intertwined' ? (game.intertwinedFates || 0) : (game.acquaintFates || 0);
+        const canAfford = balance >= item.cost;
+        
+        const textEmoji = item.costType === 'intertwined' ? '✨' : '💫';
+        const accentColor = item.costType === 'intertwined' ? '#b7a8ff' : '#8deaff';
+
+        const card = document.createElement('div');
+        card.className = `upgrade-card ${!canAfford ? 'disabled' : ''}`;
+        
+        card.style.cssText = `
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(18, 22, 35, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            gap: 14px;
+            transition: all 0.2s ease;
+        `;
+
+        card.innerHTML = `
+            <div style="
+                width: 46px; 
+                height: 46px; 
+                background: rgba(255, 255, 255, 0.03); 
+                border: 1px solid rgba(255, 255, 255, 0.08); 
+                border-radius: 10px; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+                flex-shrink: 0;
+                box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+            ">
+                <span style="font-size: 1.6rem; filter: drop-shadow(0 0 6px ${accentColor}60);">${textEmoji}</span>
+            </div>
+
+            <div style="flex-grow: 1; text-align: left; display: flex; flex-direction: column; gap: 3px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <strong style="color: #fff; font-size: 0.95rem; font-weight: 600; letter-spacing: 0.3px;">${item.name}</strong>
+                    <span style="
+                        background: rgba(255, 255, 255, 0.05); 
+                        color: rgba(255, 255, 255, 0.4); 
+                        font-size: 0.68rem; 
+                        padding: 1px 6px; 
+                        border-radius: 4px; 
+                        font-weight: 700;
+                        text-transform: uppercase;
+                    ">Shop</span>
+                </div>
+                <small style="color: rgba(255, 255, 255, 0.45); font-size: 0.8rem; line-height: 1.3;">
+                    ${item.desc || 'No description provided.'}
+                </small>
+            </div>
+
+            <div style="
+                text-align: right; 
+                display: flex; 
+                flex-direction: column; 
+                justify-content: center; 
+                align-items: flex-end;
+                padding-left: 10px;
+            ">
+                <span style="font-size: 0.72rem; color: rgba(255, 255, 255, 0.35); text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 2px;">Cost</span>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: ${accentColor}; font-weight: 700; font-size: 1.15rem; letter-spacing: -0.3px;">
+                        ${item.cost}
+                    </span>
+                    <span style="font-size: 0.95rem; opacity: 0.85;">${textEmoji}</span>
+                </div>
+            </div>
+        `;
+
+        if (canAfford) {
+            card.onmouseenter = () => {
+                card.style.background = 'rgba(24, 29, 47, 0.85)';
+                card.style.border = `1px solid ${accentColor}35`;
+                card.style.boxShadow = `0 4px 20px ${accentColor}08`;
+            };
+            card.onmouseleave = () => {
+                card.style.background = 'rgba(18, 22, 35, 0.65)';
+                card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+                card.style.boxShadow = 'none';
+            };
+        } else {
+            card.style.opacity = '0.35';
+            card.style.cursor = 'not-allowed';
+        }
+
+        card.onclick = () => {
+            if (canAfford) {
+                buyFateShopItem(item.id);
+            } else {
+                showNotification("Insufficient Fates for this transaction.");
+            }
+        };
+
+        if (item.costType === 'intertwined') {
+            intertwinedGrid.appendChild(card);
+        } else {
+            acquaintGrid.appendChild(card);
+        }
+    });
 }
 
 function renderAchievements() {

@@ -31,6 +31,7 @@
         <button class="nav-item" onclick="showPanel('generators')">Generators</button>
         <button class="nav-item" onclick="showPanel('prestige')">Ascension</button>
         <button class="nav-item" onclick="showPanel('shop')">Shop</button>
+        <button class="nav-item" onclick="showPanel('fate-shop')">Fates Shop</button>
         <button class="nav-item" onclick="showPanel('pets')">Companions</button>
         <button class="nav-item" onclick="showPanel('stats')">Statistics</button>
         <button class="nav-item" onclick="showPanel('achievements')">Achievements</button>
@@ -126,7 +127,7 @@
         </section>
 
         <section id="upgrades-panel" class="game-panel">
-            <h2 class="panel-title">Click Upgrades</h2>
+            <h1 class="panel-title">Click Upgrades</h1>
             <div class="buy-multipliers">
                 <button onclick="setBuyAmount(1)" class="btn-mult active">1x</button>
                 <button onclick="setBuyAmount(5)" class="btn-mult">5x</button>
@@ -139,7 +140,7 @@
         </section>
 
         <section id="generators-panel" class="game-panel">
-            <h2 class="panel-title">Resource Generators</h2>
+            <h1 class="panel-title">Resource Generators</h1>
             <div class="buy-multipliers">
                 <button onclick="setBuyAmount(1)" class="btn-mult active">1x</button>
                 <button onclick="setBuyAmount(5)" class="btn-mult">5x</button>
@@ -152,7 +153,7 @@
         </section>
 
         <section id="prestige-panel" class="game-panel">
-            <h2 class="panel-title">Ascension</h2>
+            <h1 class="panel-title">Ascension</h1>
             <div class="prestige-currency">
                 <strong>Prestige Points: </strong>
                 <span id="stat-prestige" class="highlight">0</span>
@@ -168,8 +169,85 @@
             <div id="pet-shop-list-5" class="list-container"></div>
         </section>
 
+        <section id="fate-shop-panel" class="game-panel" style="display: none;">
+            <h1 class="panel-title">Mystical Fate Smeltery</h1>
+            <div class="smeltery-banner">
+                <p>
+                    Condense your massive overflow of Primogems into pure, condensed interstellar Fates. Presenting
+                    these highly concentrated cosmic anomalies to the active leylines unlocks ultimate permanent
+                    breakthroughs.
+                </p>
+
+                <div class="fate-vault">
+                    <div class="vault-node acquaint">
+                        <span>💫</span>
+                        <div>
+                            <div class="vault-node-title">Acquaint Fates</div>
+                            <div id="fate-shop-acquaint-count" class="vault-node-count acquaint">0</div>
+                        </div>
+                    </div>
+                    <div class="vault-node intertwined">
+                        <span>✨</span>
+                        <div>
+                            <div class="vault-node-title">Intertwined Fates</div>
+                            <div id="fate-shop-intertwined-count" class="vault-node-count intertwined">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="smeltery-section-title">
+                <span>🔨</span> Archon Forging Stations
+            </h2>
+            <div class="forge-stations-grid">
+                <div class="forge-station-card acquaint">
+                    <div>
+                        <h3 class="acquaint">💫 Familiar Resonance</h3>
+                        <p>Compresses stellar dust clusters. Used to acquire intermediate auxiliary boosts and generator
+                            efficiencies.</p>
+                    </div>
+                    <div class="forge-action-row">
+                        <div class="forge-quantity-wrapper">
+                            <label class="forge-quantity-label" for="forge-acquaint-amount">Amount to Forge</label>
+                            <input type="number" id="forge-acquaint-amount" class="forge-quantity-input" value="1"
+                                min="1" max="999">
+                        </div>
+                        <button class="equip-btn acquaint" onclick="forgeFate('acquaint')">
+                            Forge Acquaint Fate <span>(Cost: 160K Primos)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="forge-station-card intertwined">
+                    <div>
+                        <h3 class="intertwined">✨ Intertwined Ascension</h3>
+                        <p>Binds divergent paths together. Spent exclusively on supreme reality-warping global
+                            multipliers.</p>
+                    </div>
+                    <div class="forge-action-row">
+                        <div class="forge-quantity-wrapper">
+                            <label class="forge-quantity-label" for="forge-intertwined-amount">Amount to Forge</label>
+                            <input type="number" id="forge-intertwined-amount" class="forge-quantity-input" value="1"
+                                min="1" max="999">
+                        </div>
+                        <button class="equip-btn intertwined" onclick="forgeFate('intertwined')">
+                            Forge Intertwined Fate <span>(Cost: 1.60M Primos)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="smeltery-catalogs">
+                <h3 class="smeltery-section-title sub acquaint">💫 Acquaint Souvenirs</h3>
+                <div id="acquaint-grid" class="smeltery-item-catalog-grid acquaint"></div>
+
+                <h3 class="smeltery-section-title sub intertwined">✨ Intertwined Relics</h3>
+                <div id="intertwined-grid" class="smeltery-item-catalog-grid intertwined"></div>
+            </div>
+        </section>
+
         <section id="pets-panel" class="game-panel">
-            <h2 class="panel-title">Companions</h2>
+            <h1 class="panel-title">Companions</h1>
             <div class="party-slots-info">Active: <span id="party-count" class="highlight">0</span> / 4</div>
             <div id="pets-grid" class="list-container pets-grid"></div>
         </section>

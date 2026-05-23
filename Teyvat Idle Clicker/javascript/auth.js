@@ -282,6 +282,28 @@ async function loadCloudGame(uid) {
             }
         });
 
+        // --- NEW: MERGE AND STABILIZE FATE SHOP ARRAY DEFINITIONS ---
+        if (!cloudData.fateShopItems || !Array.isArray(cloudData.fateShopItems)) {
+            cloudData.fateShopItems = JSON.parse(JSON.stringify(game.fateShopItems));
+        } else {
+            game.fateShopItems.forEach((localFateItem, index) => {
+                if (!cloudData.fateShopItems[index]) {
+                    cloudData.fateShopItems.push(localFateItem);
+                } else {
+                    // Update descriptions and names natively from your newest local code arrays
+                    cloudData.fateShopItems[index].name = localFateItem.name;
+                    cloudData.fateShopItems[index].desc = localFateItem.desc;
+                    cloudData.fateShopItems[index].cost = localFateItem.cost;
+                    cloudData.fateShopItems[index].costType = localFateItem.costType;
+                }
+            });
+        }
+
+        // Keep your fallback layer safe for tracking multipliers
+        if (cloudData.katheryneMultiplier === undefined) cloudData.katheryneMultiplier = 1;
+        if (cloudData.clickMultiplier === undefined) cloudData.clickMultiplier = 1;
+        if (cloudData.abyssalGeneratorMultiplier === undefined) cloudData.abyssalGeneratorMultiplier = 1;
+
         if (cloudData.ownedPets === undefined) cloudData.ownedPets = [];
         if (cloudData.activePets === undefined) cloudData.activePets = [];
         if (!cloudData.pets) cloudData.pets = JSON.parse(JSON.stringify(game.pets));
@@ -336,6 +358,12 @@ async function loadCloudGame(uid) {
         if (typeof updateAchievements === "function") updateAchievements();
 
         updateUI();
+        
+        // CRITICAL: Force the Fate Shop items layout to render upon successful login
+        if (typeof renderFateShop === "function") {
+            renderFateShop();
+        }
+        
         saveCloudGame();
 
         console.log("Sync Complete! Player: " + game.playerName);

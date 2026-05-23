@@ -44,6 +44,8 @@ let game = {
     seelies: 0,
     ownedPets: [],
     activePets: [],
+    intertwinedFates: 0,
+    acquaintFates: 0,
 
     clickUpgrades: [
         { id: 'hands', name: 'Stronger Hands', cost: 10, power: 1, level: 0, rate: 1.2 },
@@ -73,6 +75,42 @@ let game = {
         { id: 'seelie', name: "Follower Seelie", cost: 150000, level: 0, desc: "A helpful spirit that clicks for you once every 3 seconds." },
         { id: 'buff_pot', name: "Adepti's Temptation", cost: 300000, level: 0, desc: "Permanently increases click multiplier by +0.5x." },
         { id: 'primordial_shard', name: "Primordial Shard", cost: 750000, level: 0, desc: "Permanently increases generator multipliers by 10%." }
+    ],
+
+    fateShopItems: [
+        {
+            id: 'adventurer_efficiency',
+            name: "Katheryne's Directive",
+            costType: 'acquaint',
+            cost: 4,
+            desc: 'Permanently increases all generator base outputs by +15%.',
+            purchased: 0
+        },
+        {
+            id: 'resonance_booster',
+            name: 'Stardust Resonance',
+            costType: 'acquaint',
+            cost: 8,
+            desc: 'Adds an extra 0.5x to your global display multiplier.',
+            purchased: 0
+        },
+
+        {
+            id: 'celestia_blessing',
+            name: 'Blessing of Celestia',
+            costType: 'intertwined',
+            cost: 5,
+            desc: 'Permanently increases Click Multiplier by +2.0x.',
+            purchased: 0
+        },
+        {
+            id: 'abyss_leak',
+            name: 'Abyssal Leyline Shard',
+            costType: 'intertwined',
+            cost: 10,
+            desc: 'Permanently amplifies global passive income (PPS) output by x2.0.',
+            purchased: 0
+        }
     ],
 
     pets: [

@@ -194,6 +194,48 @@ function buyPet(petId) {
     }
 }
 
+function buyFateShopItem(itemId) {
+    const item = game.fateShopItems.find(i => i.id === itemId);
+    if (!item) return;
+
+    const balance = item.costType === 'intertwined' ? (game.intertwinedFates || 0) : (game.acquaintFates || 0);
+
+    if (balance < item.cost) {
+        const fateName = item.costType === 'intertwined' ? 'Intertwined Fates' : 'Acquaint Fates';
+        showNotification(`You need ${item.cost} ${fateName} for this!`);
+        return;
+    }
+
+    // Deduct Fate currency
+    if (item.costType === 'intertwined') game.intertwinedFates -= item.cost;
+    if (item.costType === 'acquaint') game.acquaintFates -= item.cost;
+
+    if (item.id === 'adventurer_efficiency') {
+        // Katheryne's Directive: Adds +15% to base multiplier
+        game.katheryneMultiplier = (game.katheryneMultiplier || 1) + 0.15;
+        showNotification("Generators updated! Base production efficiency increased by +15%.");
+    } 
+    else if (item.id === 'resonance_booster') {
+        // Stardust Resonance: Adds +0.5x to your Global Multiplier Scale
+        game.multiplier = (game.multiplier || 1) + 0.5;
+        showNotification("Global multiplier boosted by +0.5x!");
+    } 
+    else if (item.id === 'celestia_blessing') {
+        // Blessing of Celestia: Doubles overall Click Power (x2.0)
+        game.clickMultiplier = (game.clickMultiplier || 1) * 2;
+        showNotification("The Heavens smile upon you! Click power doubled x2.0.");
+    } 
+    else if (item.id === 'abyss_leak') {
+        // Abyssal Leyline Shard: Only multiplies generator incomes by x2.5
+        game.abyssalGeneratorMultiplier = (game.abyssalGeneratorMultiplier || 1) * 2.5; 
+        showNotification("Abyssal leak! All generator income multiplied by x2.5.");
+    }
+
+    updateUI();
+    saveCloudGame();
+    renderFateShop();
+}
+
 // --- SEELIE AUTO-CLICKER SYSTEM ---
 setInterval(() => {
     if (!isLoggedIn) return;
@@ -255,7 +297,11 @@ function ascend() {
 
     game.prestigePoints = (game.prestigePoints || 0) + pointsGained;
 
+    // --- RESET REWARDS & NEW MULTIPLIERS ---
     game.multiplier = 1;
+    game.clickMultiplier = 1;
+    game.katheryneMultiplier = 1;
+    game.abyssalGeneratorMultiplier = 1;
     game.primos = 0;
     game.clickPower = 1;
 
@@ -407,7 +453,7 @@ function getFinalClickPower() {
     const resonanceBlessing = game.blessings.find(b => b.id === 'resonance');
     const resonanceMult = 1 + (resonanceBlessing ? (Number(resonanceBlessing.level) || 0) * 0.10 : 0);
 
-    return totalBase * multiplier * resonanceMult * (petBuffs.clickMult || 1) * (petBuffs.globalMult || 1);
+    return totalBase * multiplier * resonanceMult * (petBuffs.clickMult || 1) * (petBuffs.globalMult || 1) * (game.multiplier || 1);
 }
 
 function calculatePetBuffs() {
@@ -427,6 +473,29 @@ function calculatePetBuffs() {
     });
     if (buffs.discount < 0.1) buffs.discount = 0.1;
     return buffs;
+}
+
+function forgeFate(fateType) {
+    const forgePrice = (fateType === 'intertwined') ? 1600000 : 160000;
+
+    if (game.primos >= forgePrice) {
+        game.primos -= forgePrice;
+        
+        if (fateType === 'intertwined') {
+            game.intertwinedFates = (game.intertwinedFates || 0) + 1;
+            showNotification("Successfully forged 1 Intertwined Fate! ✨");
+        } else if (fateType === 'acquaint') {
+            game.acquaintFates = (game.acquaintFates || 0) + 1;
+            showNotification("Successfully forged 1 Acquaint Fate! 💫");
+        }
+
+        updateUI();
+        saveCloudGame();
+        renderFateShop(); 
+    } else {
+        const displayPrice = fateType === 'intertwined' ? "1.60M" : "160K";
+        showNotification(`Insufficient Primogems! Forging requires ${displayPrice}.`);
+    }
 }
 
 // --- VISUAL SETTINGS ---

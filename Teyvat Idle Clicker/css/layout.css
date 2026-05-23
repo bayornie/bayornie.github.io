@@ -75,7 +75,7 @@ main {
     width: 100%;
     height: 100%;
     overflow-y: auto;
-    padding: 100px 20px 40px 20px; 
+    padding: 100px 20px 140px 20px; 
     -webkit-overflow-scrolling: touch;
     box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
     box-sizing: border-box;
@@ -124,6 +124,14 @@ main {
 .upgrade-item, .shop-item, .pet-card {
     text-align: left;
     width: 100%;
+}
+
+/* Inject an extra blank safety zone right at the end of scrollable lists */
+.list-container,
+.forge-stations-grid,
+#smeltery-catalogs,
+.stats-content {
+    margin-bottom: 50px !important;
 }
 
 #pets-panel.active,
