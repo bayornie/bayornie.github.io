@@ -136,7 +136,7 @@ let game = {
         { id: 2, title: "Columbina's Lullaby", file: "sounds/bgm/Columbina's Lullaby  Genshin Impact Ver. 6.0 Luna I OST.mp3" },
         { id: 3, title: "Dragonspine Ice Crystal (Piano)", file: "sounds/bgm/Dragonspine Ice Crystal (Piano).mp3" },
         { id: 4, title: "Dusk in Mondstadt", file: "sounds/bgm/Dusk in Mondstadt.mp3" },
-        { id: 5, title: "Falls of Maples", file: "sounds/bgm/Falls of Maples.mp3" },
+        { id: 5, title: "Fall of Maples", file: "sounds/bgm/Fall of Maples.mp3" },
         { id: 6, title: "Genshin Impact Main Theme", file: "sounds/bgm/Genshin Impact Main Theme - Yu-Peng Chen.mp3" },
         { id: 7, title: "Innocent Age", file: "sounds/bgm/Innocent Age.mp3" },
         { id: 8, title: "Journey into Sweet Dreams", file: "sounds/bgm/Journey into Sweet Dreams.mp3" },
