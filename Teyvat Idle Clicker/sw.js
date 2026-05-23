@@ -1,4 +1,4 @@
-const CACHE_NAME = 'teyvat-idle-v3.01';
+const CACHE_NAME = 'teyvat-idle-v3.1';
 const ASSETS = [
     '/Teyvat%20Idle%20Clicker%20Mobile/',
     '/Teyvat%20Idle%20Clicker%20Mobile/index.html',
