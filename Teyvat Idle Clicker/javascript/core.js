@@ -159,43 +159,6 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
     updateUI();
 });
 
-// Block Right-Click Context Menu
-document.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-});
-
-// Block Common Inspection Keyboard Combinations
-document.addEventListener('keydown', (e) => {
-    // 1. Block F12
-    if (e.key === 'F12') {
-        e.preventDefault();
-        return false;
-    }
-
-    // Convert key to lowercase to account for Caps Lock / Shift cases safely
-    const key = e.key.toLowerCase();
-
-    // 2. Block Ctrl+Shift+I / Cmd+Alt+I (Inspect element)
-    // 3. Block Ctrl+Shift+J / Cmd+Alt+J (Open Console)
-    // 4. Block Ctrl+Shift+C / Cmd+Alt+C (Toggle element selector)
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && (key === 'i' || key === 'j' || key === 'c')) {
-        e.preventDefault();
-        return false;
-    }
-
-    // Mac specific alternate DevTools shortcut: Cmd + Option + I / J / C
-    if (e.metaKey && e.altKey && (key === 'i' || key === 'j' || key === 'c')) {
-        e.preventDefault();
-        return false;
-    }
-
-    // 5. Block Ctrl+U / Cmd+U (View Source Code Layout)
-    if ((e.ctrlKey || e.metaKey) && key === 'u') {
-        e.preventDefault();
-        return false;
-    }
-});
-
 // Passive Income Loop
 setInterval(() => {
     if (!isLoggedIn) return;
