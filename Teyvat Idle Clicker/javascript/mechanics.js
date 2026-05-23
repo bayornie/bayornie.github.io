@@ -476,6 +476,12 @@ function calculatePetBuffs() {
 }
 
 function forgeFate(fateType) {
+    if (!isLoggedIn) {
+        showNotification("Login to forge Fates!");
+        if (typeof openAuth === "function") openAuth();
+        return;
+    }
+
     const forgePrice = (fateType === 'intertwined') ? 1600000 : 160000;
 
     if (game.primos >= forgePrice) {
