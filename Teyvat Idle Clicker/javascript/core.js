@@ -17,15 +17,15 @@ bgmPlayer.volume = game.bgmVolume;
 function playTrack(index) {
     if (!game.bgmList || game.bgmList.length === 0) return;
 
-    // Boundary checks for the loop
-    if (index >= game.bgmList.length) index = 0; 
+    if (index >= game.bgmList.length) index = 0;
     if (index < 0) index = game.bgmList.length - 1;
 
     game.currentTrackIndex = index;
     const track = game.bgmList[index];
 
+    window.bgmPlayer = bgmPlayer;
     bgmPlayer.src = track.file;
-    bgmPlayer.volume = game.bgmVolume || 0.5;
+    bgmPlayer.volume = game.bgmVolume;
 
     if (!game.isMusicMuted) {
         bgmPlayer.play().catch(e => {
@@ -41,6 +41,37 @@ function playTrack(index) {
 bgmPlayer.onended = () => {
     playTrack(game.currentTrackIndex + 1);
 };
+
+// --- AUTH FUNCTIONS ---
+function handleLogout() {
+    auth.signOut().then(() => {
+        isLoggedIn = false;
+
+        // 1. Hide Game UI Panels
+        const profilePanel = document.getElementById('profile-panel');
+        if (profilePanel) profilePanel.style.display = 'none';
+
+        const settingsOverlay = document.getElementById('settings-overlay');
+        if (settingsOverlay) settingsOverlay.style.display = 'none';
+
+        // 2. Clear visual character icons
+        const miniList = document.getElementById('mini-pet-list');
+        if (miniList) miniList.innerHTML = '';
+
+        // 3. Reset stats
+        document.querySelectorAll('.stat-primos').forEach(el => el.innerText = '0');
+
+        showNotification("Logged out successfully!");
+
+        if (typeof clearAuthInputs === 'function') clearAuthInputs();
+
+        // 4. Force reload to return to the initial state
+        location.reload();
+    }).catch((error) => {
+        console.error("Logout Error:", error);
+        showNotification("Error during logout.");
+    });
+}
 
 // --- CORE LOGIC ---
 document.getElementById('click-area').addEventListener('mousedown', (e) => {
@@ -61,7 +92,7 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
     const buffs = calculatePetBuffs();
 
     clickCounter++;
-    
+
     // --- RAINCUTTER LOGIC (Xingqiu) ---
     let isRaincutter = false;
     if (game.activePets && game.activePets.includes('xingqiu') && clickCounter % 25 === 0) {
@@ -105,7 +136,7 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
             label = "FREEZE!";
             color = "#8deaff"; // Cryo Blue
         } else if (rolledBlessingCrit) {
-            totalCritMult = 2.0; 
+            totalCritMult = 2.0;
             label = "CRIT!";
             color = "#ff4e4e"; // Standard Red Crit
         }
@@ -124,7 +155,7 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
     if (typeof updateAchievements === 'function') {
         updateAchievements();
     }
-    
+
     updateUI();
 });
 
@@ -172,42 +203,83 @@ function showNotification(message) {
 }
 
 function showPanel(panelId) {
-    document.querySelectorAll('.game-panel').forEach(p => p.classList.remove('active'));
-    const targetPanel = document.getElementById(`${panelId}-panel`);
-    if (targetPanel) targetPanel.classList.add('active');
+    // 1. THE GREAT RESET (Fixes Stacking/Bleeding)
+    const allPanels = document.querySelectorAll('.game-panel, .overlay, .auth-overlay, .modal-overlay, #settings-overlay, #music-overlay, #auth-overlay');
+    allPanels.forEach(p => {
+        p.style.display = 'none';
+        p.classList.remove('active');
+    });
 
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    if (window.event && window.event.currentTarget) {
-        window.event.currentTarget.classList.add('active');
-    } else {
-        // Fallback: If clicked via code, find the nav item by text
-        const navItems = document.querySelectorAll('.nav-item');
-        navItems.forEach(item => {
-            if (item.innerText.toLowerCase() === panelId.toLowerCase()) {
-                item.classList.add('active');
-            }
+    // 2. TARGET THE NEW PANEL
+    let targetId = panelId.includes('-panel') ? panelId : `${panelId}-panel`;
+    const targetPanel = document.getElementById(targetId) || document.getElementById(panelId);
+
+    if (targetPanel) {
+        targetPanel.style.display = 'flex';
+        targetPanel.style.flexDirection = 'column';
+        targetPanel.style.alignItems = 'center';
+        targetPanel.style.textAlign = 'center';
+        targetPanel.classList.add('active');
+
+        // --- THE FIX FOR LABELS & CARDS ---
+        const stretchContainers = targetPanel.querySelectorAll('.upgrade-list, .shop-grid, .pet-list, .profile-container, .stats-container, #shop-container, #pet-shop-container, .leaderboard-card');
+        stretchContainers.forEach(container => {
+            container.style.width = '100%';
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.alignItems = 'stretch';
         });
     }
 
-    // --- Tab Rendering Logic ---
-    if (panelId === 'upgrades') renderList('click-upgrades', game.clickUpgrades, buyClickUpgrade);
-    if (panelId === 'generators') renderList('gen-upgrades', game.generators, buyGenerator);
-    if (panelId === 'prestige') { renderPrestigeUpgrades(); }
-    if (panelId === 'pets') { renderPets(); }
-    if (panelId === 'shop') {
+    // 3. UPDATE NAV BUTTONS
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+    // Safety check for the active nav item
+    if (window.event && window.event.currentTarget && window.event.currentTarget.classList.contains('nav-item')) {
+        window.event.currentTarget.classList.add('active');
+    } else {
+        // Fallback: Find the button by its onclick attribute if event isn't available
+        const navBtn = document.querySelector(`nav button[onclick*="'${panelId}'"]`);
+        if (navBtn) navBtn.classList.add('active');
+    }
+
+    // 4. DATA RE-RENDERING
+    if (panelId.includes('upgrades')) renderList('click-upgrades', game.clickUpgrades, buyClickUpgrade);
+    if (panelId.includes('generators')) renderList('gen-upgrades', game.generators, buyGenerator);
+    if (panelId.includes('prestige')) renderPrestigeUpgrades();
+    if (panelId.includes('pets')) renderPets();
+    if (panelId.includes('shop')) {
         renderShopItems();
         renderPetShop();
     }
-    if (panelId === 'achievements'){
+    if (panelId.includes('achievements')) {
         renderAchievements();
+    }
+
+    // Refresh stats for Profile or Statistics tabs
+    if (panelId.includes('profile') || panelId.includes('stats')) {
+        if (typeof updateProfileTabStats === 'function') updateProfileTabStats();
     }
 }
 
+// Maps the 'Select Track' button in HTML to the modal logic
+function openMusicSelect() {
+    showPanel('music');
+}
+
+function updateProfileTabStats() {
+    const totalEver = document.getElementById('tab-total-ever');
+    const currentPrimos = document.getElementById('tab-current-primos');
+
+    if (totalEver) totalEver.innerText = formatNumbers(game.totalPrimosEver);
+    if (currentPrimos) currentPrimos.innerText = formatNumbers(game.primos);
+}
+
 function updateUI() {
-    // --- 0. PET BUFF CALCULATIONS ---
+    // --- PET BUFF CALCULATIONS ---
     const petBuffs = calculatePetBuffs();
 
-    // --- 1. RECALCULATE BASE STATS ---
+    // --- RECALCULATE BASE STATS ---
     let baseCP = 1;
     game.clickUpgrades.forEach(up => {
         baseCP += (Number(up.level) || 0) * (Number(up.power) || 0);
@@ -218,7 +290,7 @@ function updateUI() {
         basePPS += (Number(g.income) || 0) * (Number(g.count) || 0);
     });
 
-    // --- 2. APPLY MULTIPLIERS ---
+    // --- APPLY MULTIPLIERS ---
     const resonanceBlessing = game.blessings.find(b => b.id === 'resonance');
     const resonanceMult = 1 + (resonanceBlessing ? (Number(resonanceBlessing.level) || 0) * 0.10 : 0);
 
@@ -229,28 +301,29 @@ function updateUI() {
 
     let totalGameMult = (game.multiplier || 1) * resonanceMult * (1.0 + achievementBonus);
 
-    // --- 3. FINAL POWER CALCULATIONS ---
-    // Hero's Wit logic: Add the 100s to baseCP BEFORE final calculation
-    const heroWitBlessing = game.blessings.find(b => b.id === 'strong_start');
-    const heroWitBonus = (heroWitBlessing ? (Number(heroWitBlessing.level) || 0) * 100 : 0);
+    // --- FINAL POWER CALCULATIONS ---
+    const seelieBlessing = game.blessings.find(b => b.id === 'strong_start');
+    const seelieBonus = (seelieBlessing ? (Number(seelieBlessing.level) || 0) * 100 : 0);
 
-    // This makes your core base 101, 201, 301, etc.
-    let effectiveBaseCP = baseCP + heroWitBonus;
+    let effectiveBaseCP = baseCP + seelieBonus;
 
-    // Apply multipliers to the combined base
-    game.clickPower = effectiveBaseCP * totalGameMult * temptationMult * (petBuffs.clickMult || 1) * (petBuffs.globalMult || 1);
-    
-    // finalPPS (Removed temptationMult here as requested previously)
-    let finalPPS = basePPS * totalGameMult * (petBuffs.ppsMult || 1) * (petBuffs.globalMult || 1);
+    game.clickPower = (effectiveBaseCP * totalGameMult * temptationMult * (petBuffs.clickMult || 1) * (petBuffs.globalMult || 1)) + (petBuffs.flatClick || 0);
+
+    let finalPPS = basePPS * totalGameMult * temptationMult * (petBuffs.ppsMult || 1) * (petBuffs.globalMult || 1);
+
+    game.pps = finalPPS;
 
     game.currentDiscount = petBuffs.discount || 1;
 
-    // --- 4. MAIN RESOURCE DISPLAYS ---
+    // --- MAIN RESOURCE DISPLAYS ---
     const primoEl = document.getElementById('primogems') || document.getElementById('primo-count');
     if (primoEl) primoEl.innerText = formatNumbers(game.primos);
 
-    const statTotalEl = document.getElementById('stat-total');
-    if (statTotalEl) statTotalEl.innerText = formatNumbers(game.primos);
+    const statPrimosEl = document.getElementById('stat-primogems');
+    if (statPrimosEl) statPrimosEl.innerText = formatNumbers(game.primos);
+
+    const statPrimosMobile = document.getElementById('stat-primos-mobile');
+    if (statPrimosMobile) statPrimosMobile.innerText = formatNumbers(game.primos);
 
     const ppsEl = document.getElementById('stat-pps') || document.getElementById('primos-per-sec');
     if (ppsEl) ppsEl.innerText = formatNumbers(finalPPS);
@@ -259,20 +332,33 @@ function updateUI() {
     if (cpEl) cpEl.innerText = formatNumbers(game.clickPower);
 
     const multEl = document.getElementById('stat-mult');
-    if (multEl) {
-        multEl.innerText = totalGameMult.toFixed(2) + 'x';
-    }
+    if (multEl) multEl.innerText = totalGameMult.toFixed(2) + 'x';
 
+    const profName = document.getElementById('prof-name-tab');
+    if (profName) profName.innerText = game.playerName || "Traveler";
+
+    const tabCurrentPrimos = document.getElementById('tab-current-primos');
+    if (tabCurrentPrimos) tabCurrentPrimos.innerText = formatNumbers(game.primos);
+
+    const tabClickPower = document.getElementById('tab-click-power');
+    if (tabClickPower) tabClickPower.innerText = formatNumbers(game.clickPower);
+
+    const tabPps = document.getElementById('tab-pps');
+    if (tabPps) tabPps.innerText = formatNumbers(finalPPS) + "/s";
+
+    const totalEverVal = formatNumbers(game.totalPrimosEver);
     if (document.getElementById('stat-total-ever')) {
-        document.getElementById('stat-total-ever').innerText = formatNumbers(game.totalPrimosEver);
+        document.getElementById('stat-total-ever').innerText = totalEverVal;
+    }
+    if (document.getElementById('tab-total-ever')) {
+        document.getElementById('tab-total-ever').innerText = totalEverVal;
     }
 
-    // --- 5. DYNAMIC LIST RENDERING ---
-    // This is where the shop items get redrawn.
+    // --- DYNAMIC LIST RENDERING ---
     renderList('click-upgrades', game.clickUpgrades, buyClickUpgrade);
     renderList('gen-upgrades', game.generators, buyGenerator);
 
-    // --- 6. SPECIAL STATS & BUTTONS ---
+    // --- SPECIAL STATS & BUTTONS ---
     const prestigeDisplay = document.getElementById('stat-prestige');
     if (prestigeDisplay) {
         prestigeDisplay.innerText = formatNumbers(game.prestigePoints || 0);
@@ -381,26 +467,22 @@ function renderList(containerId, data, clickFn) {
     if (!container) return;
 
     const existingCards = container.querySelectorAll('.upgrade-card');
-
-    // --- NEW: Check for Temptation Multiplier for the Preview ---
-    const temptation = game.shopItems.find(item => item.id === 'buff_pot');
-    const temptationMult = 1 + (temptation ? (Number(temptation.level) || 0) * 0.5 : 0);
-
-    // --- PET DISCOUNT LOGIC ---
     const effectiveDiscount = game.currentDiscount || 1;
 
     data.forEach((item, index) => {
         const rate = item.rate || (item.power ? 1.5 : 1.75);
-
         const discountedBaseCost = item.cost * effectiveDiscount;
+
         let displayAmt = buyAmount === 'max' ? getMaxAffordable(game.primos, discountedBaseCost, rate) : buyAmount;
         let effectiveAmt = (displayAmt <= 0) ? 1 : displayAmt;
 
         let totalCost = getMultiCost(item.cost, rate, effectiveAmt) * effectiveDiscount;
+
         const canAfford = game.primos >= totalCost;
         let displayLvl = item.level !== undefined ? item.level : item.count;
 
         let card = existingCards[index];
+
         if (!card) {
             card = document.createElement('div');
             card.className = 'upgrade-card';
@@ -408,18 +490,12 @@ function renderList(containerId, data, clickFn) {
         }
 
         card.classList.toggle('disabled', !canAfford);
-
         const costStyle = effectiveDiscount < 1 ? 'color: #ffe164; font-weight: bold;' : '';
-
-        // --- FIXED PREVIEW TEXT ---
-        // We multiply the displayed power by temptationMult so +10 becomes +15 in the UI
-        let powerValue = item.power ? (item.power * temptationMult) : (item.income * temptationMult);
-        let powerLabel = item.power ? `+${formatNumbers(powerValue)} Click` : `+${formatNumbers(powerValue)}/s`;
 
         const newHTML = `
             <div>
                 <strong>${item.name}</strong><br>
-                <small>${powerLabel}</small><br>
+                <small>${item.power ? '+' + item.power + ' Click' : '+' + item.income.toFixed(1) + '/s'}</small><br>
                 <small style="color: #64ffbf;">Buying: ${displayAmt}x</small>
             </div>
             <div>
@@ -470,7 +546,6 @@ function renderShopItems() {
     if (!container) return;
     container.innerHTML = '';
 
-    // Ensure items exist in the game object
     if (!game.shopItems || game.shopItems.length === 0) {
         game.shopItems = [
             { id: 'time_warp', name: 'Time Warp', cost: 500, desc: 'Instantly gain 30 minutes of passive income.' },
@@ -480,14 +555,12 @@ function renderShopItems() {
 
     game.shopItems.forEach((item, index) => {
         const card = document.createElement('div');
-
-        // --- COOLDOWN LOGIC ---
         let isOnCooldown = false;
         let cooldownText = "";
 
         if (item.id === 'time_warp' && game.lastWarpTime) {
             const now = Date.now();
-            const cooldownPeriod = 3600000; // 1 hour in ms
+            const cooldownPeriod = 3600000;
             const timePassed = now - game.lastWarpTime;
 
             if (timePassed < cooldownPeriod) {
@@ -500,7 +573,6 @@ function renderShopItems() {
         const isMaxSeelie = item.id === 'seelie' && (game.seelies || 0) >= 3;
         const canAfford = game.primos >= item.cost;
 
-        // Matches your .upgrade-card.disabled CSS
         card.className = `upgrade-card ${(!canAfford || isMaxSeelie || isOnCooldown) ? 'disabled' : ''}`;
 
         let costDisplay;
@@ -509,7 +581,6 @@ function renderShopItems() {
         } else if (isOnCooldown) {
             costDisplay = `<span class="highlight">${cooldownText}</span>`;
         } else {
-            // Using formatNumbers for consistent 1.0K, 1.0M styling
             costDisplay = `Cost: <span class="highlight">${formatNumbers(item.cost)}</span>`;
         }
 
@@ -525,9 +596,9 @@ function renderShopItems() {
 
         card.onclick = () => {
             if (isMaxSeelie) {
-                showNotification("You already have the maximum number of Seelies!");
+                showNotification("Maximum number of Seelies reached!");
             } else if (isOnCooldown) {
-                showNotification("This item is still on cooldown!");
+                showNotification("Item is still on cooldown!");
             } else {
                 buyShopItem(index);
             }
@@ -542,23 +613,19 @@ function renderPetShop() {
     const container5 = document.getElementById('pet-shop-list-5');
     if (!container4 || !container5) return;
 
-    container4.innerHTML = '';
+    container4.innerHTML = `<h2 class="shop-section-title">RECRUIT COMPANIONS</h2>`;
     container5.innerHTML = '';
 
     const availablePets = game.pets.filter(pet => !game.ownedPets.includes(pet.id));
 
     availablePets.forEach((pet) => {
         const card = document.createElement('div');
-
         const effectiveDiscount = game.currentDiscount || 1;
         const finalCost = pet.cost * effectiveDiscount;
         const canAfford = game.primos >= finalCost;
-        const is5Star = pet.rarity === 5;
 
-        // Apply classes for rarity and the disabled state if too expensive
         card.className = `pet-card rarity-${pet.rarity} ${(!canAfford || !isLoggedIn) ? 'disabled' : ''}`;
 
-        // Buff Text Logic
         let buffText = "";
         if (pet.buffType === 'click') buffText = `+${(pet.buffValue * 100)}% Click`;
         else if (pet.buffType === 'pps_mult') buffText = `${pet.buffValue}x PPS`;
@@ -566,41 +633,29 @@ function renderPetShop() {
         else if (pet.buffType === 'discount') buffText = `-${(pet.buffValue * 100)}% Cost`;
         else buffText = pet.buffType.replace('_', ' ');
 
-        // Visual feedback for discounted prices
-        const costStyle = (effectiveDiscount < 1) ? 'color: #ffe164; font-weight: bold;' : 'color: #64ffbf;';
-
-        // Get glow color for the vision tag
-        let glowColor = "#ffffff";
-        if (pet.vision === 'Pyro') glowColor = "#ff4e4e";
-        else if (pet.vision === 'Anemo') glowColor = "#72e5d3";
-        else if (pet.vision === 'Cryo') glowColor = "#a0e9ff";
-        else if (pet.vision === 'Electro') glowColor = "#d28fd6";
-        else if (pet.vision === 'Geo') glowColor = "#e3b342";
-        else if (pet.vision === 'Hydro') glowColor = "#4cc2f1";
-        else if (pet.vision === 'Dendro') glowColor = "#a5c83b";
+        const visionColors = {
+            'Pyro': "#ff4e4e", 'Anemo': "#72e5d3", 'Cryo': "#a0e9ff",
+            'Electro': "#d28fd6", 'Geo': "#e3b342", 'Hydro': "#4cc2f1", 'Dendro': "#a5c83b"
+        };
+        let glowColor = visionColors[pet.vision] || "#ffffff";
 
         card.innerHTML = `
-            <div class="pet-card-main">
-                <div class="pet-card-left">
-                    <div class="pet-icon-wrapper">
-                        <img src="${pet.icon}" alt="${pet.name}" class="pet-chibi" draggable="false">
-                        <div class="vision-tag" style="background: ${glowColor}; color: #000;">
-                            ${pet.vision}
-                        </div>
-                    </div>
-                    <div class="pet-info">
-                        <strong class="pet-name">${pet.name}</strong>
-                        <div class="pet-buff-tag">${buffText}</div>
-                    </div>
-                </div>
-                <div class="pet-card-right" style="text-align: right;">
-                    <span class="pet-cost" style="${costStyle}">${formatNumbers(finalCost)}</span>
-                    <br><small style="font-size: 0.6rem; color: white; opacity: 0.7; letter-spacing: 1px;">PRIMOGEMS</small>
+            <div class="pet-icon-wrapper">
+                <img src="${pet.icon}" alt="${pet.name}" class="pet-chibi" draggable="false">
+                <div class="vision-tag" style="background: ${glowColor}; color: #000;">
+                    ${pet.vision}
                 </div>
             </div>
-            <button class="equip-btn" style="background: rgba(255, 255, 255, 0.15); margin-top: 10px;">
-                RECRUIT
-            </button>
+            <div class="pet-main-info">
+                <strong class="pet-name">${pet.name}</strong>
+                <div class="pet-buff-tag">${buffText}</div>
+                <div class="pet-mobile-cost">
+                    <span style="${effectiveDiscount < 1 ? 'color: #ffe164;' : 'color: #64ffbf;'}">
+                        ${formatNumbers(finalCost)} Primos
+                    </span>
+                </div>
+            </div>
+            <button class="pet-btn">RECRUIT</button>
         `;
 
         card.onclick = () => {
@@ -614,7 +669,6 @@ function renderPetShop() {
                 game.primos -= finalCost;
                 game.ownedPets.push(pet.id);
                 showNotification(`${pet.name} joined your party!`);
-
                 renderPetShop();
                 if (typeof renderPets === 'function') renderPets();
                 updateUI();
@@ -624,7 +678,7 @@ function renderPetShop() {
             }
         };
 
-        if (is5Star) container5.appendChild(card);
+        if (pet.rarity === 5) container5.appendChild(card);
         else container4.appendChild(card);
     });
 }
@@ -639,7 +693,6 @@ function renderPets() {
         const isActive = game.activePets.includes(pet.id);
 
         const card = document.createElement('div');
-        // Combined your rarity classes with the active/locked states
         card.className = `pet-card rarity-${pet.rarity} ${!isOwned ? 'locked' : ''} ${isActive ? 'active' : ''}`;
 
         const visionColors = {
@@ -648,33 +701,27 @@ function renderPets() {
         };
         const glowColor = visionColors[pet.vision] || '#ffffff';
 
-        // Dynamic Glow for active pets
         if (isActive) card.style.boxShadow = `0 0 15px ${glowColor}`;
 
-        // Buff Text for the Tag
         let buffText = "";
         if (pet.buffType === 'click') buffText = `+${(pet.buffValue * 100)}% Click`;
         else if (pet.buffType === 'pps_mult') buffText = `${pet.buffValue}x PPS`;
         else buffText = pet.buffType.replace('_', ' ');
 
-
         card.innerHTML = `
-            <div class="pet-card-main">
-                <div class="pet-card-left">
-                    <div class="pet-icon-wrapper">
-                        <img src="${pet.icon}" class="pet-chibi" alt="${pet.name}" draggable="false">
-                        <div class="vision-tag" style="background: ${glowColor}; color: #000;">
-                            ${pet.vision}
-                        </div>
-                    </div>
-                    <div class="pet-info">
-                        <div class="pet-name">${pet.name}</div>
-                        <div class="pet-buff-tag">${buffText}</div>
-                    </div>
+            <div class="pet-icon-wrapper">
+                <img src="${pet.icon}" class="pet-chibi" alt="${pet.name}" draggable="false" 
+                     style="${!isOwned ? 'filter: grayscale(1) brightness(0.5);' : ''}">
+                <div class="vision-tag" style="background: ${glowColor}; color: #000;">
+                    ${pet.vision}
                 </div>
             </div>
-            <button class="equip-btn ${isActive ? 'active' : ''}">
-                ${isActive ? 'UNEQUIP' : (isOwned ? 'EQUIP' : 'LOCKED')}
+            <div class="pet-main-info">
+                <div class="pet-name">${pet.name}</div>
+                <div class="pet-buff-tag">${buffText}</div>
+            </div>
+            <button class="pet-btn ${isActive ? 'active' : ''}">
+                ${isActive ? 'REMOVE' : (isOwned ? 'DEPLOY' : 'LOCKED')}
             </button>
         `;
 
@@ -891,7 +938,7 @@ function updateSidebarParty() {
     miniList.innerHTML = '';
 
     game.activePets.forEach(petId => {
-        const petData = config.pets.find(p => p.id === petId);
+        const petData = game.pets.find(p => p.id === petId);
         if (petData) {
             const img = document.createElement('img');
             img.src = petData.icon;
@@ -904,22 +951,13 @@ function updateSidebarParty() {
 
 function setBuyAmount(amt) {
     buyAmount = amt;
-
-    // Update button visuals
     document.querySelectorAll('.btn-mult').forEach(btn => {
         const btnText = btn.innerText.toLowerCase().replace('x', '');
         const targetText = amt.toString().toLowerCase();
-
-        if (btnText === targetText) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
-        }
+        if (btnText === targetText) btn.classList.add('active');
+        else btn.classList.remove('active');
     });
-
-    if (typeof updateUI === "function") {
-        updateUI();
-    }
+    if (typeof updateUI === "function") updateUI();
 }
 
 function getMultiCost(baseCost, rate, count) {
@@ -932,10 +970,11 @@ function getMaxAffordable(primos, currentCost, rate) {
     return n;
 }
 
-function spawnText(x, y, txt) {
+function spawnText(x, y, txt, color = "#ffffff") {
     const el = document.createElement('div');
     el.className = 'float-text';
     el.innerText = txt;
+    el.style.color = color;
     const randomX = (Math.random() - 0.5) * 40;
     const randomY = (Math.random() - 0.5) * 20;
     el.style.left = (x + randomX) + 'px';

@@ -1,58 +1,269 @@
 :root {
     --bg-dark: #0c0f12;
-    --panel-bg: rgba(22, 26, 33, 0.9);
+    --panel-bg: rgba(26, 31, 39, 0.95);
     --primo-blue: #ade5ff;
     --primo-dark: #3b6291;
     --accent-gold: #ece5d8;
+    --btn-gold: #e3bc82;
+    --btn-gold-dark: #c69f60;
     --text-gray: #bdc2c6;
-    --card-bg: rgba(35, 41, 51, 0.75);
+    --card-bg: rgba(45, 52, 64, 0.8);
     --neon-blue: #6ee7b7;
 }
 
-body {
+* {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
     background-color: var(--bg-dark);
     color: var(--accent-gold);
-    font-family: 'Segoe UI', sans-serif;
-    margin: 0;
-    display: flex;
-    height: 100vh;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
 }
 
-body,
-html {
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    overflow: hidden;
-}
-
+/* Music Modal Styling (Genshin List Style) */
 .music-card {
+    width: 95% !important;
+    max-width: 420px;
     max-height: 80vh;
+    background: var(--panel-bg);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    border: 1px solid rgba(236, 229, 216, 0.2);
 }
 
 #track-list-container {
     width: 100%;
     overflow-y: auto;
-    margin: 20px 0;
-    padding-right: 5px;
+    margin: 15px 0;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+    -webkit-overflow-scrolling: touch; 
 }
 
 #track-list-container .nav-item {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(110, 231, 183, 0.2);
-    padding: 15px;
+    border: 1px solid rgba(236, 229, 216, 0.1);
+    padding: 18px 15px;
     text-align: left;
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    color: var(--text-gray);
 }
 
 #track-list-container .nav-item.active {
-    border-color: var(--neon-blue);
-    background: rgba(110, 231, 183, 0.733);
+    border-color: var(--btn-gold);
+    background: rgba(227, 188, 130, 0.15);
+    color: var(--btn-gold);
+    font-weight: bold;
+}
+
+#track-list-container .nav-item:active {
+    transform: scale(0.97);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Global Button Feel */
+button:active {
+    transform: scale(0.95);
+    filter: brightness(1.1);
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    pointer-events: none;
+}
+
+.profile-layout-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 30px;
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+}
+
+.profile-card {
+    background: rgba(15, 23, 31, 0.7);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(100, 255, 191, 0.2);
+    border-radius: 16px;
+    padding: 30px;
+    width: 45%;
+    max-width: 450px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-title-large {
+    color: #ffffff;
+    text-transform: uppercase;
+    font-weight: 800;
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.traveler-name {
+    color: #64ffbf;
+    text-align: center;
+    font-size: 1.2rem;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+
+.data-label {
+    color: #8899a6;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin: 20px 0 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 5px;
+}
+
+.data-list-group {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.data-row.no-border {
+    border-bottom: none;
+    padding: 8px 0;
+}
+
+.icon-label, .pref-label {
+    color: #ffffff;
+    font-weight: 500;
+}
+
+.value.highlight {
+    color: #64ffbf;
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+
+input[type="email"] {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(100, 255, 191, 0.2);
+    border-radius: 8px;
+    color: #ffffff;
+    padding: 12px;
+    width: 100%;
+    margin: 10px 0;
+    box-sizing: border-box;
+}
+
+.action-btn, .toggle-btn {
+    background: rgba(100, 255, 191, 0.1);
+    border: 1px solid rgba(100, 255, 191, 0.3);
+    color: #64ffbf;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+.select-btn {
+    background: rgba(100, 255, 191, 0.1);
+    border: 1px solid rgba(100, 255, 191, 0.3);
+    color: #64ffbf;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    width: auto;
+    min-width: 120px;
+    cursor: pointer;
+}
+
+.toggle-btn {
+    width: auto;
+    font-size: .8rem;
+    padding: 4px 10px;
+}
+
+.volume-control {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+}
+
+.slider {
+    width: 100%;
+}
+
+@media (max-width: 900px) {
+    .profile-layout-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    .profile-card {
+        width: 100%;
+        max-width: 450px;
+    }
+}
+
+.volume-container {
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(100, 255, 191, 0.1);
+}
+
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.1);
+    height: 4px;
+    border-radius: 2px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    background: #64ffbf;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 10px rgba(100, 255, 191, 0.5);
 }
