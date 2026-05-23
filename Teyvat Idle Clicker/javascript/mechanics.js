@@ -22,11 +22,15 @@ function buyClickUpgrade(index) {
     if (game.primos >= totalCost) {
         game.primos -= totalCost;
         up.level += countToBuy;
-        
-        // We removed the manual "+=" line because updateUI() calculates 
-        // the power perfectly based on your levels and multiplier.
-        
+
+        // Cost scaling logic
         up.cost *= Math.pow(rate, countToBuy);
+
+        // --- ADDED: Fire achievement evaluator loop ---
+        if (typeof updateAchievements === 'function') {
+            updateAchievements();
+        }
+
         updateUI();
         saveCloudGame();
     } else if (buyAmount !== 'max') {
@@ -57,10 +61,15 @@ function buyGenerator(index) {
     if (game.primos >= totalCost) {
         game.primos -= totalCost;
         gen.count += countToBuy;
-        
+
         // Cost scaling logic
         gen.cost *= Math.pow(rate, countToBuy);
-        
+
+        // --- ADDED: Fire achievement evaluator loop ---
+        if (typeof updateAchievements === 'function') {
+            updateAchievements();
+        }
+
         updateUI();
         saveCloudGame();
     } else if (buyAmount !== 'max') {
@@ -95,6 +104,25 @@ function buyShopItem(index) {
 
     let item = game.shopItems[index];
 
+    // --- Run Time Warp validation BEFORE charging money or scaling to fix infinite duplication exploit ---
+    if (item.id === 'time_warp') {
+        const now = Date.now();
+        const cooldown = 3600 * 1000;
+        const timePassed = now - (game.lastWarpTime || 0);
+
+        if (timePassed < cooldown) {
+            const minutesLeft = Math.ceil((cooldown - timePassed) / 60000);
+            showNotification(`Time Warp is on cooldown! Wait ${minutesLeft}m.`);
+            return;
+        }
+    }
+
+    // --- SEELIE MAX CHECK ---
+    if (item.id === 'seelie' && (item.level || 0) >= 3) {
+        showNotification("You can only carry 3 Seelies at a time!");
+        return;
+    }
+
     // Define rates for price scaling
     const rates = {
         'time_warp': 1.2,
@@ -105,12 +133,6 @@ function buyShopItem(index) {
     const rate = rates[item.id] || 2;
 
     if (game.primos >= item.cost) {
-        // --- SEELIE MAX CHECK ---
-        if (item.id === 'seelie' && (item.level || 0) >= 3) {
-            showNotification("You can only carry 3 Seelies at a time!");
-            return;
-        }
-
         game.primos -= item.cost;
 
         // Initialize level if it doesn't exist, then increment
@@ -118,25 +140,12 @@ function buyShopItem(index) {
 
         // --- SPECIAL EFFECTS ---
         if (item.id === 'time_warp') {
-            const now = Date.now();
-            const cooldown = 3600 * 1000;
-            const timePassed = now - (game.lastWarpTime || 0);
-
-            if (timePassed < cooldown) {
-                const minutesLeft = Math.ceil((cooldown - timePassed) / 60000);
-                showNotification(`Time Warp is on cooldown! Wait ${minutesLeft}m.`);
-                // Refund since we stopped the purchase
-                game.primos += item.cost;
-                item.level--;
-                return;
-            }
-
             let totalPPS = 0;
             game.generators.forEach(g => totalPPS += (g.income * g.count));
             let bonus = (totalPPS * game.multiplier) * 1800;
 
             game.primos += bonus;
-            game.lastWarpTime = now;
+            game.lastWarpTime = Date.now();
             showNotification(`Time Warped! Gained ${Math.floor(bonus).toLocaleString()} Primos!`);
         }
 
@@ -164,6 +173,11 @@ function buyShopItem(index) {
 
         // --- SCALE COST FOR NEXT PURCHASE ---
         item.cost = Math.floor(item.cost * rate);
+
+        // --- ADDED: Fire achievement evaluator loop ---
+        if (typeof updateAchievements === 'function') {
+            updateAchievements();
+        }
 
         updateUI();
         renderShopItems();
@@ -273,7 +287,7 @@ function ascend() {
     game.prestigePoints = (game.prestigePoints || 0) + pointsGained;
 
     // Reset Multiplier and stats for a clean run
-    game.multiplier = 1; 
+    game.multiplier = 1;
     game.primos = 0;
     game.clickPower = 1;
 
@@ -352,6 +366,27 @@ function getDiscountedCost(baseCost) {
     return baseCost * discount;
 }
 
+function getAchievementMultiplierBonus() {
+    let totalBonus = 0;
+
+    // Guard clause: if nothing is completed yet, return 0% extra bonus
+    if (!game.completedAchievements || game.completedAchievements.length === 0) {
+        return 0;
+    }
+
+    // Use game data if available, otherwise look at your window global config array
+    const data = game.achievementsData || window.achievementsData || [];
+
+    game.completedAchievements.forEach(completedId => {
+        const achConfig = data.find(a => a.id === completedId);
+        if (achConfig && achConfig.bonus) {
+            totalBonus += achConfig.bonus;
+        }
+    });
+
+    return totalBonus;
+}
+
 function togglePetEquip(petId) {
     const activeIndex = game.activePets.indexOf(petId);
 
@@ -377,6 +412,8 @@ function togglePetEquip(petId) {
 }
 
 function handleMainClick() {
+    game.clicks = (parseInt(game.clicks) || 0) + 1;
+
     clickCounter++;
     const buffs = calculatePetBuffs();
     let power = getFinalClickPower();
@@ -401,6 +438,10 @@ function handleMainClick() {
     let color = buffs.critChance > 0 ? "#ff4e4e" : "#ffffff";
     spawnText(x, y, `+${formatNumbers(power)}`, color);
 
+    if (typeof updateAchievements === 'function') {
+        updateAchievements();
+    }
+
     updateUI();
 }
 
@@ -420,8 +461,13 @@ function getFinalClickPower() {
     const resonanceMult = 1 + (resonanceBlessing ? (Number(resonanceBlessing.level) || 0) * 0.10 : 0);
     const temptation = game.shopItems.find(item => item.id === 'buff_pot');
     const temptationMult = 1 + (temptation ? (Number(temptation.level) || 0) * 0.5 : 0);
-    
-    let totalGameMult = (game.multiplier || 1) * resonanceMult * temptationMult;
+
+    // --- ADDED: Calculate current global Achievement Multiplier Bonus pool ---
+    const achievementBonusPool = typeof getAchievementMultiplierBonus === 'function' ? getAchievementMultiplierBonus() : 0;
+    const achievementMult = 1 + achievementBonusPool;
+
+    // --- ADDED: Injected achievementMult directly into the core math line ---
+    let totalGameMult = (game.multiplier || 1) * resonanceMult * temptationMult * achievementMult;
 
     // 4. Get Pet Buffs
     const petBuffs = calculatePetBuffs();

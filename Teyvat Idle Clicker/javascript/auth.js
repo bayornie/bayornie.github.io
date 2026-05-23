@@ -258,11 +258,6 @@ async function loadCloudGame(uid) {
         if (cloudData.seelies === undefined) cloudData.seelies = 0;
         if (cloudData.prestigePoints === undefined) cloudData.prestigePoints = 0;
 
-        // If name is missing, pull from cloud data (now contains dedicated username)
-        if (!cloudData.playerName) {
-            cloudData.playerName = "Traveler";
-        }
-
         // --- SYNC AUDIO PREFERENCES ---
         if (cloudData.currentTrackIndex === undefined) cloudData.currentTrackIndex = 0;
         if (cloudData.bgmVolume === undefined) cloudData.bgmVolume = 0.5;
@@ -271,11 +266,45 @@ async function loadCloudGame(uid) {
         // We refresh the bgmList from the local code to ensure file paths are always correct
         cloudData.bgmList = JSON.parse(JSON.stringify(game.bgmList));
 
+        // ─── INTEGRATED INTEGRATION: METRICS TRACKING VARIABLES ───
+        if (cloudData.clicks === undefined) cloudData.clicks = 0;
+        if (cloudData.totalPrimosEver === undefined) cloudData.totalPrimosEver = cloudData.primos || 0;
+
+        // Ensure historical achievements data tracking container is structured
+        if (!cloudData.completedAchievements || !Array.isArray(cloudData.completedAchievements)) {
+            cloudData.completedAchievements = [];
+        }
+
+        // Force reload raw matrix rules into the game instance object to support code additions
+        if (window.achievementsData) {
+            cloudData.achievementsData = window.achievementsData;
+        }
+
+        // --- STABLE PLAYER NAME RESOLUTION (FROM MOBILE VERSION) ---
+        cloudData.playerName = cloudData.playerName || cloudData.username || cloudData.displayName || "Traveler";
+        if (!cloudData.playerName || cloudData.playerName === "Traveler") {
+            const user = auth.currentUser;
+            const emailName = user && user.email ? user.email.split('@')[0] : "Traveler";
+            cloudData.playerName = emailName;
+        }
+
+        // Commit processed save dataset into your global engine reference
         game = cloudData;
-        calculateOfflineEarnings();
+        isDataLoaded = true;
+
+        // --- INTERFACE ELEMENT BINDINGS ---
+        const tabName = document.getElementById('prof-name-tab');
+        const travelerName = document.querySelector('.traveler-name');
+        if (tabName) tabName.innerText = game.playerName;
+        if (travelerName) travelerName.innerText = game.playerName;
+
+        // --- ENGINE REFRESH PROCESSES ---
+        if (typeof calculateOfflineEarnings === "function") calculateOfflineEarnings();
+        if (typeof updateAchievements === "function") updateAchievements(); // Verification calculation
+
         updateUI();
         saveCloudGame();
-        console.log("Sync Complete!");
+        console.log("Sync Complete! Player: " + game.playerName);
     }
 }
 
@@ -434,4 +463,4 @@ function loadLeaderboard() {
         });
 }
 
-setInterval(saveCloudGame, 30000);
+setInterval(saveCloudGame, 10000);

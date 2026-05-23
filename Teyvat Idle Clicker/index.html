@@ -61,6 +61,7 @@
         <div class="nav-item" onclick="showPanel('prestige')">Ascension</div>
         <div class="nav-item" onclick="showPanel('shop')">Shop</div>
         <div class="nav-item" onclick="showPanel('pets')">Companions</div>
+        <div class="nav-item" onclick="showPanel('achievements')">Achievements</div>
         <div class="nav-item" onclick="showPanel('leaderboard'); loadLeaderboard();">Leaderboard<div>
     </nav>
 
@@ -164,6 +165,20 @@
             </div>
 
             <div id="pets-grid" class="list-container pets-grid">
+            </div>
+        </section>
+
+        <section id="achievements-panel" class="game-panel">
+            <div class="achievement-card">
+                <h2 style="text-align: center; color: #fff; margin-bottom: 5px; letter-spacing: 2px;">JOURNEY MILESTONES
+                </h2>
+                <p
+                    style="text-align: center; color: rgba(255, 255, 255, 0.5); font-size: 0.85rem; margin-bottom: 20px;">
+                    Complete milestones to earn permanent multiplier bonuses!
+                </p>
+
+                <div id="achievements-list" style="width: 100%; display: flex; flex-direction: column; gap: 12px;">
+                </div>
             </div>
         </section>
 
