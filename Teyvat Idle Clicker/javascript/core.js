@@ -1,3 +1,4 @@
+console.log("core.js is loaded and running!");
 // --- HELPER FUNCTIONS ---
 function formatNumbers(num) {
     if (num >= 1000000000000000000000000) return (num / 1000000000000000000000000).toFixed(2) + 'Sp';
@@ -90,6 +91,7 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
 
     let amount = getFinalClickPower();
     const buffs = calculatePetBuffs();
+    const sets = typeof getActiveSetCounts === "function" ? getActiveSetCounts() : {};
 
     clickCounter++;
 
@@ -107,7 +109,16 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
     // 2. Critical Chance Logic
     const critBlessing = game.blessings.find(b => b.id === 'crit');
     const critLevel = critBlessing ? critBlessing.level : 0;
-    const critChanceFromBlessing = critLevel * 0.05;
+    let critChanceFromBlessing = critLevel * 0.05;
+
+    // ARTIFACT STAT POOL ADDITION HOOK
+    if (typeof getArtifactStatModifier === "function") {
+        critChanceFromBlessing += getArtifactStatModifier("critChance");
+    }
+    // MARECHAUSSEE HUNTER STACK HOOK
+    if (game.marechausseeStacks > 0) {
+        critChanceFromBlessing += (game.marechausseeStacks * 0.12);
+    }
 
     const rolledBlessingCrit = Math.random() < critChanceFromBlessing;
     const hasGuaranteedPetCrit = buffs.critChance > 0;
@@ -122,26 +133,53 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
     } else if (isCrit) {
         // --- STACKING MULTIPLIER LOGIC ---
         let totalCritMult = 1;
+        let baseCritMultiplier = 2.0;
+
+        // ARTIFACT CRIT DAMAGE HOOK
+        if (typeof getArtifactStatModifier === "function") {
+            baseCritMultiplier += getArtifactStatModifier("critClickMult");
+        }
 
         if (hasSkirk && hasKaeya) {
-            totalCritMult = 6.0; // 3x (Skirk) * 2x (Kaeya)
+            totalCritMult = baseCritMultiplier * 3.0;
             label = "ABYSSAL FREEZE!";
-            color = "#b7a8ff"; // Light Purple/Ice
+            color = "#b7a8ff";
         } else if (hasSkirk) {
-            totalCritMult = 3.0;
+            totalCritMult = baseCritMultiplier * 1.5;
             label = "ABYSSAL!";
-            color = "#a155ff"; // Deep Void Purple
+            color = "#a155ff";
         } else if (hasKaeya) {
-            totalCritMult = 2.0;
+            totalCritMult = baseCritMultiplier;
             label = "FREEZE!";
-            color = "#8deaff"; // Cryo Blue
+            color = "#8deaff";
         } else if (rolledBlessingCrit) {
-            totalCritMult = 2.0;
+            totalCritMult = baseCritMultiplier;
             label = "CRIT!";
-            color = "#ff4e4e"; // Standard Red Crit
+            color = "#ff4e4e";
         }
 
         amount *= totalCritMult;
+
+        // --- THUNDERING FURY 4-PIECE MECHANIC ---
+        if (sets["thundering_fury"] >= 4 && Math.random() < 0.01) {
+            if (game.timeWarpCooldown > 0) {
+                game.timeWarpCooldown = Math.max(0, game.timeWarpCooldown - 30000);
+                showNotification("Thundering Fury: Time Warp CD Reduced by 30s!", "electro");
+            }
+        }
+    }
+
+    // --- MARECHAUSSEE HUNTER TIMER REFRESH HOOK ---
+    if (sets["marechaussee"] >= 4) {
+        if (!game.marechausseeStacks) game.marechausseeStacks = 0;
+        if (game.marechausseeStacks < 3) {
+            game.marechausseeStacks++;
+            showNotification(`Marechaussee Hunter: Crit Rate +${game.marechausseeStacks * 12}%`, "pyro");
+        }
+        if (game.marechausseeTimer) clearTimeout(game.marechausseeTimer);
+        game.marechausseeTimer = setTimeout(() => {
+            game.marechausseeStacks = 0;
+        }, 5000);
     }
 
     // 4. Update Game State
@@ -157,6 +195,12 @@ document.getElementById('click-area').addEventListener('mousedown', (e) => {
     }
 
     updateUI();
+});
+
+document.addEventListener('click', (e) => {
+    if (e.target.closest('#domain-combat-box')) {
+        handleDomainClick(e);
+    }
 });
 
 // Passive Income Loop
@@ -181,6 +225,11 @@ setInterval(() => {
     // 4. Calculate Final Income 
     let finalPPS = basePPS * petBuffs.ppsMult * (petBuffs.globalMult || 1) * totalGameMult;
 
+    // ARTIFACT PPS MODIFIER HOOK
+    if (typeof getArtifactStatModifier === "function") {
+        finalPPS *= (1 + getArtifactStatModifier("ppsMult"));
+    }
+
     // Divide by 10 because the interval runs every 100ms (10 times per second)
     let income = finalPPS / 10;
 
@@ -203,25 +252,36 @@ function showNotification(message) {
 }
 
 function showPanel(panelId) {
-    // 1. THE GREAT RESET (Fixes Stacking/Bleeding)
-    const allPanels = document.querySelectorAll('.game-panel, .overlay, .auth-overlay, .modal-overlay, #settings-overlay, #music-overlay, #auth-overlay');
+    // 1. HARD RESET: Remove inline display to let CSS control visibility
+    const battleView = document.querySelector('.domain-battle-view');
+    if (battleView) {
+        battleView.style.display = "";
+        battleView.classList.remove('active');
+    }
+
+    // 2. THE GREAT RESET
+    const allPanels = document.querySelectorAll('.game-panel, .overlay, .auth-overlay, .modal-overlay, #settings-overlay, #music-overlay');
     allPanels.forEach(p => {
         p.style.display = 'none';
         p.classList.remove('active');
     });
 
-    // 2. TARGET THE NEW PANEL
+    // 3. TARGET THE NEW PANEL
     let targetId = panelId.includes('-panel') ? panelId : `${panelId}-panel`;
     const targetPanel = document.getElementById(targetId) || document.getElementById(panelId);
 
     if (targetPanel) {
-        targetPanel.style.display = 'flex';
-        targetPanel.style.flexDirection = 'column';
+        if (targetPanel.classList.contains('game-panel')) {
+            targetPanel.style.display = 'block';
+        } else {
+            targetPanel.style.display = 'flex';
+            targetPanel.style.flexDirection = 'column';
+        }
+
         targetPanel.style.alignItems = 'center';
         targetPanel.style.textAlign = 'center';
         targetPanel.classList.add('active');
 
-        // --- THE FIX FOR LABELS & CARDS ---
         const stretchContainers = targetPanel.querySelectorAll('.upgrade-list, .shop-grid, .pet-list, .profile-container, .stats-container, #shop-container, #pet-shop-container, .leaderboard-card');
         stretchContainers.forEach(container => {
             container.style.width = '100%';
@@ -233,12 +293,9 @@ function showPanel(panelId) {
 
     // 3. UPDATE NAV BUTTONS
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-
-    // Safety check for the active nav item
     if (window.event && window.event.currentTarget && window.event.currentTarget.classList.contains('nav-item')) {
         window.event.currentTarget.classList.add('active');
     } else {
-        // Fallback: Find the button by its onclick attribute if event isn't available
         const navBtn = document.querySelector(`nav button[onclick*="'${panelId}'"]`);
         if (navBtn) navBtn.classList.add('active');
     }
@@ -248,16 +305,27 @@ function showPanel(panelId) {
     if (panelId.includes('generators')) renderList('gen-upgrades', game.generators, buyGenerator);
     if (panelId.includes('prestige')) renderPrestigeUpgrades();
     if (panelId.includes('pets')) renderPets();
-    if (panelId.includes('shop')) {
+    if (panelId.includes('shop') || panelId.includes('domain')) {
         renderShopItems();
-        renderPetShop();
+        if (panelId.includes('shop')) renderPetShop();
     }
+
     if (panelId.includes('achievements')) {
         renderAchievements();
     }
     if (panelId === 'fate-shop' || panelId === 'fate-shop-panel') {
-        document.getElementById('fate-shop-panel').style.display = 'block';
+        const fateShopPanel = document.getElementById('fate-shop-panel');
+        if (fateShopPanel) fateShopPanel.style.display = 'block';
         renderFateShop();
+    }
+    if (panelId === 'domain' || panelId === 'domain-panel') {
+        const engine = getDomainEngine();
+        if (engine && engine.isFightActive) {
+            toggleDomainView('battle');
+        } else {
+            toggleDomainView('selection');
+            initDomainMenu();
+        }
     }
 
     // Refresh stats for Profile or Statistics tabs
@@ -320,8 +388,22 @@ function updateUI() {
 
     game.clickPower = (effectiveBaseCP * totalGameMult * temptationMult * (petBuffs.clickMult || 1) * (petBuffs.globalMult || 1)) + (petBuffs.flatClick || 0);
 
+    // ARTIFACT CLICK MODIFIER HOOK
+    if (typeof getArtifactStatModifier === "function") {
+        game.clickPower *= (1 + getArtifactStatModifier("clickPower"));
+    }
+    // SHIMENAWA 4PC BURST STATE HOOK
+    if (game.shimenawaBurstActive) {
+        game.clickPower *= 1.50;
+    }
+
     // Calculate regular passive income with general multipliers
     let finalPPS = basePPS * totalGameMult * temptationMult * (petBuffs.ppsMult || 1) * (petBuffs.globalMult || 1);
+
+    // ARTIFACT PPS MODIFIER HOOK
+    if (typeof getArtifactStatModifier === "function") {
+        finalPPS *= (1 + getArtifactStatModifier("ppsMult"));
+    }
 
     // Abyssal Leyline Shard: Multiplies final generator output by x2.5)
     if (game.abyssalGeneratorMultiplier) {
@@ -399,10 +481,23 @@ function togglePasswordVisibility(inputId) {
 
     if (passwordInput.type === "password") {
         passwordInput.type = "text";
-        toggleIcon.innerText = "👁️";
+        toggleIcon.innerText = "🔒";
     } else {
         passwordInput.type = "password";
-        toggleIcon.innerText = "🔒";
+        toggleIcon.innerText = "👁️";
+    }
+}
+
+function toggleDomainView(view) {
+    const selectionView = document.querySelector('.domain-selection-view');
+    const battleView = document.querySelector('.domain-battle-view');
+
+    if (view === 'battle') {
+        selectionView.style.display = 'none';
+        battleView.style.display = 'block';
+    } else {
+        selectionView.style.display = 'block';
+        battleView.style.display = 'none';
     }
 }
 
@@ -559,70 +654,130 @@ function renderPrestigeUpgrades() {
 }
 
 function renderShopItems() {
+    // --- 1. RENDER STANDARD WANDERER GOODS ---
     const container = document.getElementById('shop-items');
-    if (!container) return;
-    container.innerHTML = '';
+    if (container) {
+        container.innerHTML = '';
 
-    if (!game.shopItems || game.shopItems.length === 0) {
-        game.shopItems = [
-            { id: 'time_warp', name: 'Time Warp', cost: 500, desc: 'Instantly gain 30 minutes of passive income.' },
-            { id: 'seelie', name: 'Follower Seelie', cost: 1000, desc: 'A floating companion. Max 3.' }
-        ];
+        if (!game.shopItems || game.shopItems.length === 0) {
+            game.shopItems = [
+                { id: 'time_warp', name: 'Time Warp', cost: 500, desc: 'Instantly gain 30 minutes of passive income.' },
+                { id: 'seelie', name: 'Follower Seelie', cost: 1000, desc: 'A floating companion. Max 3.' }
+            ];
+        }
+
+        game.shopItems.forEach((item, index) => {
+            const card = document.createElement('div');
+            let isOnCooldown = false;
+            let cooldownText = "";
+
+            if (item.id === 'time_warp' && game.lastWarpTime) {
+                const now = Date.now();
+                const cooldownPeriod = 3600000;
+                const timePassed = now - game.lastWarpTime;
+
+                if (timePassed < cooldownPeriod) {
+                    isOnCooldown = true;
+                    const minsLeft = Math.ceil((cooldownPeriod - timePassed) / 60000);
+                    cooldownText = `Ready in ${minsLeft}m`;
+                }
+            }
+
+            const isMaxSeelie = item.id === 'seelie' && (game.seelies || 0) >= 3;
+            const canAfford = game.primos >= item.cost;
+
+            card.className = `upgrade-card ${(!canAfford || isMaxSeelie || isOnCooldown) ? 'disabled' : ''}`;
+
+            let costDisplay;
+            if (isMaxSeelie) {
+                costDisplay = `<span class="highlight">MAXED</span>`;
+            } else if (isOnCooldown) {
+                costDisplay = `<span class="highlight">${cooldownText}</span>`;
+            } else {
+                costDisplay = `Cost: <span class="highlight">${formatNumbers(item.cost)}</span>`;
+            }
+
+            card.innerHTML = `
+                <div>
+                    <strong>${item.name}</strong><br>
+                    <small>${item.desc}</small>
+                </div>
+                <div>
+                    <span>${costDisplay}</span>
+                </div>
+            `;
+
+            card.onclick = () => {
+                if (isMaxSeelie) {
+                    showNotification("Maximum number of Seelies reached!");
+                } else if (isOnCooldown) {
+                    showNotification("Item is still on cooldown!");
+                } else {
+                    buyShopItem(index);
+                }
+            };
+
+            container.appendChild(card);
+        });
     }
 
-    game.shopItems.forEach((item, index) => {
-        const card = document.createElement('div');
-        let isOnCooldown = false;
-        let cooldownText = "";
+    // --- 2. RENDER SEPARATE DOMAIN TICKET EXCHANGE LINE ---
+    const ticketContainer = document.getElementById('domain-ticket-shop-list');
+    if (ticketContainer) {
+        ticketContainer.innerHTML = '';
 
-        if (item.id === 'time_warp' && game.lastWarpTime) {
-            const now = Date.now();
-            const cooldownPeriod = 3600000;
-            const timePassed = now - game.lastWarpTime;
+        const ticketItem = game.domainTicket && game.domainTicket[0];
 
-            if (timePassed < cooldownPeriod) {
-                isOnCooldown = true;
-                const minsLeft = Math.ceil((cooldownPeriod - timePassed) / 60000);
-                cooldownText = `Ready in ${minsLeft}m`;
+        if (ticketItem) {
+            const canAffordTicket = game.primos >= ticketItem.cost;
+            const ticketCard = document.createElement('div');
+
+            ticketCard.className = `upgrade-card ${(!canAffordTicket || !isLoggedIn) ? 'disabled' : ''}`;
+            ticketCard.style.display = 'flex';
+            ticketCard.style.justifyContent = 'space-between';
+            ticketCard.style.alignItems = 'center';
+            ticketCard.style.textAlign = 'left';
+
+            ticketCard.innerHTML = `
+                <div style="flex-grow: 1; padding-right: 15px;">
+                    <strong style="display: inline-block; text-align: left;">${ticketItem.icon} ${ticketItem.name}</strong><br>
+                    <small style="display: inline-block; text-align: left; margin-top: 4px;">${ticketItem.desc}</small>
+                </div>
+                <div style="text-align: right; flex-shrink: 0;">
+                    <span>Cost: <span class="highlight">${formatNumbers(ticketItem.cost)}</span></span>
+                </div>
+            `;
+
+            ticketCard.onclick = () => {
+                if (!isLoggedIn) {
+                    showNotification("🔒 This feature requires an active account. Please log in first!");
+                    if (typeof openAuth === "function") openAuth();
+                    return;
+                }
+
+                if (game.primos >= ticketItem.cost) {
+                    game.primos -= ticketItem.cost;
+                    game.domainTickets = (game.domainTickets || 0) + 1;
+
+                    showNotification("Successfully purchased 1 Abyssal Domain Ticket! 🎫");
+
+                    updateUI();
+                    saveCloudGame();
+                    renderShopItems();
+                } else {
+                    showNotification(`Insufficient Primogems! Purchasing requires ${formatNumbers(ticketItem.cost)}.`);
+                }
+            };
+
+            if (!isLoggedIn) {
+                ticketCard.style.opacity = '0.35';
+                ticketCard.style.filter = 'grayscale(0.85)';
+                ticketCard.style.cursor = 'not-allowed';
             }
+
+            ticketContainer.appendChild(ticketCard);
         }
-
-        const isMaxSeelie = item.id === 'seelie' && (game.seelies || 0) >= 3;
-        const canAfford = game.primos >= item.cost;
-
-        card.className = `upgrade-card ${(!canAfford || isMaxSeelie || isOnCooldown) ? 'disabled' : ''}`;
-
-        let costDisplay;
-        if (isMaxSeelie) {
-            costDisplay = `<span class="highlight">MAXED</span>`;
-        } else if (isOnCooldown) {
-            costDisplay = `<span class="highlight">${cooldownText}</span>`;
-        } else {
-            costDisplay = `Cost: <span class="highlight">${formatNumbers(item.cost)}</span>`;
-        }
-
-        card.innerHTML = `
-            <div>
-                <strong>${item.name}</strong><br>
-                <small>${item.desc}</small>
-            </div>
-            <div>
-                <span>${costDisplay}</span>
-            </div>
-        `;
-
-        card.onclick = () => {
-            if (isMaxSeelie) {
-                showNotification("Maximum number of Seelies reached!");
-            } else if (isOnCooldown) {
-                showNotification("Item is still on cooldown!");
-            } else {
-                buyShopItem(index);
-            }
-        };
-
-        container.appendChild(card);
-    });
+    }
 }
 
 function renderPetShop() {
@@ -764,17 +919,17 @@ function renderFateShop() {
     // 1. Update the live counter values inside the permanent HTML header structures
     const acquaintCountEl = document.getElementById('fate-shop-acquaint-count');
     const intertwinedCountEl = document.getElementById('fate-shop-intertwined-count');
-    
+
     if (acquaintCountEl) acquaintCountEl.innerText = game.acquaintFates || 0;
     if (intertwinedCountEl) intertwinedCountEl.innerText = game.intertwinedFates || 0;
 
     // 2. Target the exact grid IDs defined inside your index.html panel
     const acquaintGrid = document.getElementById('acquaint-grid');
     const intertwinedGrid = document.getElementById('intertwined-grid');
-    
+
     // Safety exit check to prevent errors if the elements aren't rendered yet
-    if (!acquaintGrid || !intertwinedGrid) return; 
-    
+    if (!acquaintGrid || !intertwinedGrid) return;
+
     // Clear out the cards inside the grids to prevent duplicate duplication loops
     acquaintGrid.innerHTML = '';
     intertwinedGrid.innerHTML = '';
@@ -789,13 +944,13 @@ function renderFateShop() {
     game.fateShopItems.forEach(item => {
         const balance = item.costType === 'intertwined' ? (game.intertwinedFates || 0) : (game.acquaintFates || 0);
         const canAfford = balance >= item.cost;
-        
+
         const textEmoji = item.costType === 'intertwined' ? '✨' : '💫';
         const accentColor = item.costType === 'intertwined' ? '#b7a8ff' : '#8deaff';
 
         const card = document.createElement('div');
         card.className = `upgrade-card ${!canAfford ? 'disabled' : ''}`;
-        
+
         card.style.cssText = `
             display: flex;
             align-items: center;
@@ -861,29 +1016,40 @@ function renderFateShop() {
             </div>
         `;
 
-        if (canAfford) {
-            card.onmouseenter = () => {
-                card.style.background = 'rgba(24, 29, 47, 0.85)';
-                card.style.border = `1px solid ${accentColor}35`;
-                card.style.boxShadow = `0 4px 20px ${accentColor}08`;
-            };
-            card.onmouseleave = () => {
-                card.style.background = 'rgba(18, 22, 35, 0.65)';
-                card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
-                card.style.boxShadow = 'none';
+        // GLOBAL INTERCEPT: Check if player is logged out
+        if (!isLoggedIn) {
+            card.style.opacity = '0.35';
+            card.style.filter = 'grayscale(0.85)';
+            card.style.cursor = 'not-allowed';
+
+            card.onclick = () => {
+                showNotification("🔒 This feature requires an active account. Please log in first!");
             };
         } else {
-            card.style.opacity = '0.35';
-            card.style.cursor = 'not-allowed';
-        }
-
-        card.onclick = () => {
             if (canAfford) {
-                buyFateShopItem(item.id);
+                card.onmouseenter = () => {
+                    card.style.background = 'rgba(24, 29, 47, 0.85)';
+                    card.style.border = `1px solid ${accentColor}35`;
+                    card.style.boxShadow = `0 4px 20px ${accentColor}08`;
+                };
+                card.onmouseleave = () => {
+                    card.style.background = 'rgba(18, 22, 35, 0.65)';
+                    card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+                    card.style.boxShadow = 'none';
+                };
             } else {
-                showNotification("Insufficient Fates for this transaction.");
+                card.style.opacity = '0.35';
+                card.style.cursor = 'not-allowed';
             }
-        };
+
+            card.onclick = () => {
+                if (canAfford) {
+                    buyFateShopItem(item.id);
+                } else {
+                    showNotification("Insufficient Fates for this transaction.");
+                }
+            };
+        }
 
         if (item.costType === 'intertwined') {
             intertwinedGrid.appendChild(card);
@@ -891,7 +1057,67 @@ function renderFateShop() {
             acquaintGrid.appendChild(card);
         }
     });
+
+    // 4. LOCK THE STATION FORGE SLOTS MANUALLY AT THE BOTTOM OF RENDERING
+    const forgeGrid = document.querySelector('.forge-stations-grid');
+    if (forgeGrid) {
+        const buttons = forgeGrid.querySelectorAll('.equip-btn');
+        const inputs = forgeGrid.querySelectorAll('.forge-quantity-input');
+
+        if (!isLoggedIn) {
+            forgeGrid.classList.add('locked-shop');
+            forgeGrid.style.pointerEvents = 'none'; // Locks absolute mouse clicks/hovers
+            buttons.forEach(btn => btn.disabled = true);
+            inputs.forEach(input => input.disabled = true);
+        } else {
+            forgeGrid.classList.remove('locked-shop');
+            forgeGrid.style.pointerEvents = 'auto'; // Restores mouse clicks
+            buttons.forEach(btn => btn.disabled = false);
+            inputs.forEach(input => input.disabled = false);
+        }
+    }
 }
+
+// Call this when your Domain selection screen is generated
+function initDomainMenu() {
+    const container = document.getElementById('domain-selection-container');
+    console.log("Initializing Domain Menu..."); // Debug: Is the function running?
+
+    if (!container) {
+        console.warn("Domain container not found! Check your HTML IDs.");
+        return;
+    }
+
+    container.innerHTML = '';
+
+    DOMAIN_DATABASE.forEach(domain => {
+        const card = document.createElement('div');
+        card.className = 'domain-card';
+        card.innerHTML = `
+            <h3>${domain.name}</h3>
+            <button class="challenge-btn" data-id="${domain.id}">CHALLENGE</button>
+        `;
+
+        // Using addEventListener is more robust than .onclick
+        const btn = card.querySelector('.challenge-btn');
+        btn.addEventListener('click', () => {
+            console.log("CHALLENGE clicked for:", domain.id);
+            // Before launching, ensure the engine exists
+            if (typeof getDomainEngine === 'function') {
+                launchDomainFight(domain.id);
+            } else {
+                console.error("launchDomainFight or getDomainEngine is not defined!");
+            }
+        });
+        container.appendChild(card);
+    });
+}
+
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'domain-boss-image' || e.target.closest('#domain-combat-box')) {
+        handleDomainClick(e);
+    }
+});
 
 function renderAchievements() {
     const container = document.getElementById('achievements-list');
@@ -992,7 +1218,7 @@ function renderAchievements() {
 
 function updateAchievements() {
     if (!game) return;
-    
+
     // Ensure tracker history array is stable
     if (!game.completedAchievements || !Array.isArray(game.completedAchievements)) {
         game.completedAchievements = [];
@@ -1047,7 +1273,7 @@ function updateAchievements() {
         if (stateChanged) {
             if (typeof calculatePPS === 'function') calculatePPS();
             if (typeof saveCloudGame === 'function') saveCloudGame();
-            
+
             const container = document.getElementById('achievements-list');
             if (container && container.parentElement.classList.contains('active')) {
                 if (typeof renderAchievements === 'function') renderAchievements();
@@ -1055,6 +1281,51 @@ function updateAchievements() {
             }
         }
     }
+}
+
+function generateRandomArtifact(rarity = 5) {
+    // 1. Correctly reference keys from the new game config setup
+    const randomSetObj = game.artifactSets[Math.floor(Math.random() * game.artifactSets.length)];
+    const randomSetId = randomSetObj.id; // e.g., 'gladiator'
+    const randomSlot = game.artifactSlots[Math.floor(Math.random() * game.artifactSlots.length)];
+
+    // Choose main stat randomly from pool
+    const mainStatRef = game.statPool[Math.floor(Math.random() * game.statPool.length)];
+
+    // Define base values depending on type
+    let mainValue = mainStatRef.isPercent ? 0.08 : 10;
+    if (mainStatRef.type === "critClickMult") mainValue = 0.15; // Baseline Main Stat CRIT DMG
+    if (rarity === 5) mainValue *= 1.5;
+
+    const artifact = {
+        id: "art_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
+        name: `${randomSetObj.name} ${randomSlot.charAt(0).toUpperCase() + randomSlot.slice(1)}`,
+        set: randomSetId,
+        slot: randomSlot,
+        rarity: rarity,
+        level: 0,
+        mainStat: { type: mainStatRef.type, name: mainStatRef.name, value: mainValue, isPercent: mainStatRef.isPercent },
+        substats: []
+    };
+
+    // Roll 3 distinct random substats
+    let filteredPool = game.statPool.filter(s => s.type !== mainStatRef.type);
+    while (artifact.substats.length < 3 && filteredPool.length > 0) {
+        const idx = Math.floor(Math.random() * filteredPool.length);
+        const subRef = filteredPool.splice(idx, 1)[0];
+
+        let subValue = subRef.isPercent ? 0.02 : 3;
+        if (subRef.type === "critClickMult") subValue = 0.04;
+
+        artifact.substats.push({
+            type: subRef.type,
+            name: subRef.name,
+            value: subValue,
+            isPercent: subRef.isPercent
+        });
+    }
+
+    return artifact;
 }
 
 function updatePartySidebar() {

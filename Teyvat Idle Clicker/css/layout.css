@@ -75,9 +75,19 @@ main {
     width: 100%;
     height: 100%;
     overflow-y: auto;
-    padding: 100px 20px 140px 20px; 
+    padding: 100px 20px 140px 20px;
     -webkit-overflow-scrolling: touch;
     box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+    box-sizing: border-box;
+}
+
+.panel-title {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 50px; 
+    margin-bottom: 20px;
     box-sizing: border-box;
 }
 
@@ -91,9 +101,8 @@ main {
     overflow-y: auto;
 }
 
-.panel-title, 
-.party-slots-info, 
-.prestige-currency, 
+.party-slots-info,
+.prestige-currency,
 .buy-multipliers,
 #ascension-btn {
     width: 100%;
@@ -113,7 +122,8 @@ main {
     margin-top: 10px;
 }
 
-.pets-grid, .shop-grid {
+.pets-grid,
+.shop-grid {
     width: 100%;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -121,30 +131,18 @@ main {
     justify-items: stretch;
 }
 
-.upgrade-item, .shop-item, .pet-card {
+.upgrade-item,
+.shop-item,
+.pet-card {
     text-align: left;
     width: 100%;
 }
 
-/* Inject an extra blank safety zone right at the end of scrollable lists */
 .list-container,
 .forge-stations-grid,
 #smeltery-catalogs,
 .stats-content {
     margin-bottom: 50px !important;
-}
-
-#pets-panel.active,
-#upgrades-panel.active,
-#generators-panel.active,
-#prestige-panel.active,
-#shop-panel.active {
-    justify-content: flex-start !important;
-    padding-top: 110px !important;
-    height: 100%;
-    overflow-y: auto;
-    mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
 }
 
 #home-panel.active {
@@ -330,7 +328,8 @@ main {
 }
 
 .stat-row-large .value.highlight {
-    color: #64ffbf; /* Your signature mint green */
+    color: #64ffbf;
+    /* Your signature mint green */
     text-shadow: 0 0 10px rgba(100, 255, 191, 0.3);
 }
 
@@ -369,4 +368,54 @@ main {
     border-radius: 6px;
     background: rgba(255, 255, 255, 0.05);
     padding: 2px;
+}
+
+/* DOMAIN PANEL RESPONSIVE STYLES */
+.domain-arena {
+    margin: 0 auto;
+    width: 100%;
+}
+
+@media screen and (max-width: 768px) {
+    .domain-arena {
+        padding: 0 10px;
+        gap: 12px !important;
+        box-sizing: border-box;
+    }
+
+    #domain-boss-name {
+        font-size: 1.4rem !important;
+    }
+
+    #domain-timer-text {
+        font-size: 0.95rem !important;
+    }
+
+    #domain-combat-box {
+        height: 280px !important; 
+        border-radius: 12px !important;
+        box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.9) !important;
+    }
+
+    #boss-target-body {
+        font-size: 5.5rem !important;
+    }
+
+    #active-weak-spot {
+        width: 52px !important;
+        height: 52px !important;
+    }
+    
+    #active-weak-spot span {
+        font-size: 1.3rem !important;
+    }
+}
+
+@media screen and (max-width: 380px) {
+    #domain-combat-box {
+        height: 230px !important;
+    }
+    #boss-target-body {
+        font-size: 4.5rem !important;
+    }
 }

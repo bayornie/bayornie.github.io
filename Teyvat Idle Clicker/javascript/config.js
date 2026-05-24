@@ -77,6 +77,16 @@ let game = {
         { id: 'primordial_shard', name: "Primordial Shard", cost: 750000, level: 0, desc: "Permanently increases generator multipliers by 10%." }
     ],
 
+    domainTicket: [
+        {
+            id: "domain_ticket",
+            name: "Abyssal Domain Ticket",
+            desc: "A specialized seal required to challenge Abyssal Domains and claim rare artifact rewards.",
+            cost: 500000,
+            icon: "🎫"
+        }
+    ],
+
     fateShopItems: [
         {
             id: 'adventurer_efficiency',
@@ -113,6 +123,46 @@ let game = {
         }
     ],
 
+    // === ARTIFACT SYSTEM ===
+    artifactSets: [
+        { id: 'gladiator', name: "Gladiator's Finale", twoPieceDesc: "+18% Click Power.", fourPieceDesc: "+35% Manual Click Power." },
+        { id: 'golden_troupe', name: "Golden Troupe", twoPieceDesc: "+20% Passive Income (PPS).", fourPieceDesc: "+50% PPS if you haven't clicked in 10 seconds." },
+        { id: 'berserker', name: "Berserker", twoPieceDesc: "+12% Critical Click Chance.", fourPieceDesc: "+24% Critical Click Chance if Combo > 20." },
+        { id: 'marechaussee', name: "Marechaussee Hunter", twoPieceDesc: "+15% Manual Click Power.", fourPieceDesc: "Clicking increases Critical Click Chance by 12% (Max 36%)." },
+        { id: 'severed_fate', name: "Emblem of Severed Fate", twoPieceDesc: "+20% Active Item Duration.", fourPieceDesc: "+25% PPS of your total Item Duration bonus." },
+        { id: 'noblesse', name: "Noblesse Oblige", twoPieceDesc: "+20% Global Click Power.", fourPieceDesc: "Activating Time Warp boosts PPS by 20% during its duration." },
+        { id: 'thundering_fury', name: "Thundering Fury", twoPieceDesc: "-15% Automated Clicker Intervals.", fourPieceDesc: "Manual clicks have a 10% chance to shave 1 minute off Time Warp CD." },
+        { id: 'shimenawa', name: "Shimenawa's Reminiscence", twoPieceDesc: "+18% Click Power.", fourPieceDesc: "5% chance on click to spend 2000 Primos for a 300% click burst." },
+        { id: 'ocean_clam', name: "Ocean-Hued Clam", twoPieceDesc: "+15% Passive Income (PPS).", fourPieceDesc: "Every 10 seconds, instantly gain 90 seconds of current PPS." },
+        { id: 'the_exile', name: "The Exile", twoPieceDesc: "+15% Stardust/Starglitter acquisition rates.", fourPieceDesc: "Manual clicks have a 5% chance to drop a completely free Fate." }
+    ],
+
+    artifactSlots: ["flower", "plume", "sands", "goblet", "circlet"],
+
+    statPool: [
+        { type: "clickPowerPct", name: "Click Power %", isPercent: true },
+        { type: "clickPowerFlat", name: "Flat Click Power", isPercent: false },
+        { type: "ppsPct", name: "Passive Income % (PPS)", isPercent: true },
+        { type: "critChance", name: "Critical Click Chance", isPercent: true },
+        { type: "critClickMult", name: "Critical Click DMG Bonus", isPercent: true },
+        { type: "itemDuration", name: "Item Duration %", isPercent: true }
+    ],
+
+    domainCombatEngine: {
+        bossName: "",
+        bossImage: "",
+        maxHp: 0,
+        currentHp: 0,
+        timeLimit: 60,
+        timeLeft: 60,
+        mainInterval: null,
+        generatorTimer: 0,
+        weakSpotTimer: 0,
+        isFightActive: false,
+        weakSpotActive: false,
+        activeLootPool: []
+    },
+
     pets: [
         { id: 'sucrose', name: 'Sucrose', rarity: 4, vision: 'Anemo', cost: 50000000, buffType: 'click', buffValue: 0.15, icon: 'img/pets/sucrose_chibi.png' },
         { id: 'bennett', name: 'Bennett', rarity: 4, vision: 'Pyro', cost: 65000000, buffType: 'pps', buffValue: 0.10, icon: 'img/pets/bennett_chibi.png' },
@@ -148,6 +198,46 @@ let game = {
     bgmVolume: 0.5,
     isMusicMuted: false
 };
+
+const GLOBAL_FOUR_STAR_DROPS = ["berserker", "the_exile"];
+const DOMAIN_DATABASE = [
+    {
+        id: "peak-of-vindagnyr",
+        name: "Peak of Vindagnyr",
+        boss: "Cryo Hypostasis",
+        hp: 750000,
+        timeLimit: 60,
+        fiveStarPool: ["ocean_clam", "shimenawa"],
+        image: "img/boss/cryo_hypostasis.webp"
+    },
+    {
+        id: "midsummer-courtyard",
+        name: "Midsummer Courtyard",
+        boss: "Thunder Manifestation",
+        hp: 1000000,
+        timeLimit: 60,
+        fiveStarPool: ["thundering_fury", "gladiator"],
+        image: "img/boss/thunder_manifestation.webp"
+    },
+    {
+        id: "momiji-dyed-court",
+        name: "Momiji Dyed Court",
+        boss: "Perpetual Mechanical Array",
+        hp: 1250000,
+        timeLimit: 60,
+        fiveStarPool: ["severed_fate", "noblesse"],
+        image: "img/boss/pma.webp"
+    },
+    {
+        id: "valley-of-remembrance",
+        name: "Valley of Remembrance",
+        boss: "Maguu Kenki",
+        hp: 1500000,
+        timeLimit: 60,
+        fiveStarPool: ["golden_troupe", "marechaussee"],
+        image: "img/boss/maguu_kenki.webp"
+    },
+];
 
 window.achievementsData = [
     // ─── PATH 1: THE CLICKER'S JOURNEY (10 Achievements) ───
@@ -198,3 +288,5 @@ window.achievementsData = [
     { id: 'primos_100b', title: 'Celestial Capital', desc: 'Earn 100,000,000,000 total Primogems ever.', type: 'totalPrimos', target: 100000000000, bonus: 0.05 },
     { id: 'primos_1t', title: 'Phanes Sovereign Reserve', desc: 'Earn 1,000,000,000,000 total Primogems ever.', type: 'totalPrimos', target: 1000000000000, bonus: 0.06 }
 ];
+
+window.game = game;

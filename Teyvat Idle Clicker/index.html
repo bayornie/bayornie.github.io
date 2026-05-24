@@ -33,6 +33,8 @@
         <button class="nav-item" onclick="showPanel('shop')">Shop</button>
         <button class="nav-item" onclick="showPanel('fate-shop')">Fates Shop</button>
         <button class="nav-item" onclick="showPanel('pets')">Companions</button>
+        <button class="nav-item" onclick="showPanel('artifacts')">Artifacts</button>
+        <button class="nav-item" onclick="showPanel('domain')">Domains</button>
         <button class="nav-item" onclick="showPanel('stats')">Statistics</button>
         <button class="nav-item" onclick="showPanel('achievements')">Achievements</button>
         <button class="nav-item" onclick="showPanel('leaderboard'); loadLeaderboard();">Leaderboard</button>
@@ -87,7 +89,7 @@
         </section>
 
         <section id="stats-panel" class="game-panel">
-            <h2 class="panel-title">Adventurer's Records</h2>
+            <h1 class="panel-title">Adventurer's Records</h1>
             <div class="stats-content">
                 <div class="stats-group">
                     <div class="stats-label">BALANCES</div>
@@ -165,6 +167,10 @@
         <section id="shop-panel" class="game-panel">
             <h1 class="panel-title">Wanderer's Goods</h1>
             <div id="shop-items" class="list-container"></div>
+
+            <h1 class="panel-title">Domain Ticket Exchange</h1>
+            <div id="domain-ticket-shop-list" class="list-container"></div>
+
             <div id="pet-shop-list-4" class="list-container"></div>
             <div id="pet-shop-list-5" class="list-container"></div>
         </section>
@@ -250,6 +256,56 @@
             <h1 class="panel-title">Companions</h1>
             <div class="party-slots-info">Active: <span id="party-count" class="highlight">0</span> / 4</div>
             <div id="pets-grid" class="list-container pets-grid"></div>
+        </section>
+
+        <section id="artifacts-panel" class="game-panel" style="display: none;">
+            <h1 class="panel-title">Artifact Inventory</h1>
+            <div class="artifact-workspace">
+                <div class="artifact-collection-box">
+                    <h3>Your Collection</h3>
+                    <div id="artifacts-grid">
+                    </div>
+                </div>
+
+                <div id="artifact-bench">
+                    <div id="bench-empty-state">
+                        <span class="bench-empty-crown">👑</span>
+                        <p>Select an artifact from your collection to manage or upgrade it.</p>
+                    </div>
+                    <div id="bench-content">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="domain-panel" class="game-panel">
+            <div class="domain-selection-view">
+                <h1 class="panel-title">Abyssal Domains</h1>
+                <p class="panel-subtitle">Select an ancient domain to challenge.</p>
+
+                <div id="domain-selection-container" class="domains-grid"></div>
+            </div>
+
+            <div class="domain-battle-view" style="display: none;">
+                <h1 class="panel-title">Abyssal Domain Challenge</h1>
+
+                <div class="domain-arena">
+                    <div class="boss-header">
+                        <h2 id="domain-boss-name">BOSS_NAME</h2>
+
+                        <div class="hp-bar-container">
+                            <div id="domain-boss-hp-fill"></div>
+                            <span id="domain-boss-hp-text">0 / 0</span>
+                        </div>
+
+                        <div id="domain-timer-text">Time Remaining: 60.0s</div>
+                    </div>
+
+                    <div id="domain-combat-box">
+                        <img id="domain-boss-image" src="" alt="Domain Boss" style="display: none;" />
+                    </div>
+                </div>
+            </div>
         </section>
 
         <section id="achievements-panel" class="game-panel">

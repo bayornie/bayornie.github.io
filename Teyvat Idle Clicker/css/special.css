@@ -614,15 +614,6 @@
 }
 
 /* FATES SHOP STYLES */
-#fate-shop-panel .panel-title {
-    color: #ffffff;
-    text-shadow: 0 0 12px rgba(255, 225, 100, 0.25);
-    margin-top: 50px;
-    padding-top: 10px;
-    font-size: 1.8rem;
-    margin-bottom: 20px;
-}
-
 .smeltery-banner {
     background: linear-gradient(135deg, rgba(18, 22, 35, 0.7) 0%, rgba(10, 12, 22, 0.85) 100%);
     border: 1px solid rgba(255, 255, 255, 0.05);
@@ -757,7 +748,7 @@
 
 @media (max-width: 768px) {
     .forge-stations-grid {
-        grid-template-columns: 0.5fr;
+        grid-template-columns: 1fr;
     }
 }
 
@@ -904,6 +895,29 @@
     border-color: #b7a8ff;
 }
 
+.forge-stations-grid.locked-shop .forge-station-card {
+    opacity: 0.5;
+    filter: grayscale(0.85);
+}
+
+.forge-stations-grid.locked-shop .forge-station-card:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: inherit !important;
+}
+
+.forge-stations-grid.locked-shop .forge-quantity-input,
+.forge-stations-grid.locked-shop .equip-btn {
+    cursor: not-allowed !important;
+}
+
+.forge-stations-grid.locked-shop .equip-btn {
+    background: #2a323d !important;
+    color: #5d6e85 !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+    box-shadow: none !important;
+}
+
 .smeltery-item-catalog-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
@@ -916,4 +930,289 @@
 
 .smeltery-item-catalog-grid.intertwined {
     margin-bottom: 15px;
+}
+
+/* --- ARTIFACT WORKSPACE LAYOUT --- */
+.artifact-workspace {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+    margin-top: 15px;
+}
+
+.artifact-collection-box {
+    flex: 1;
+    background: rgba(18, 22, 35, 0.5);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#artifacts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+#artifact-bench {
+    width: 380px;
+    background: rgba(24, 29, 47, 0.85);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    text-align: left;
+}
+
+#bench-empty-state {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.4);
+    padding: 40px 0;
+}
+
+.bench-empty-crown {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 10px;
+}
+
+#bench-content {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* --- DOMAIN SYSTEM STYLES --- */
+#domain-panel {
+    display: none;
+    padding-bottom: 100px;
+    width: 100%;
+}
+
+.domain-selection-view {
+    display: block;
+    width: 100%;
+}
+
+.domain-battle-view {
+    display: none;
+    width: 100%;
+}
+
+.panel-subtitle {
+    color: #8a9fc2;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 1rem;
+}
+
+.domains-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.domain-card {
+    background: rgba(12, 14, 24, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 22px;
+    text-align: left;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.domain-card:hover {
+    border-color: #64ffbf;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(100, 255, 191, 0.15);
+}
+
+.domain-card h3 {
+    color: #ffe164;
+    margin: 0 0 5px 0;
+    font-size: 1.25rem;
+}
+
+.domain-card .boss-line {
+    margin: 0 0 15px 0;
+    font-size: 0.85rem;
+    color: #ff6464;
+}
+
+.loot-preview {
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+.loot-title {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: #8a9fc2;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.loot-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+}
+
+.five-star-item {
+    color: #ffb13d;
+    font-weight: 500;
+}
+
+.four-star-item {
+    color: #a25fff;
+    font-weight: 500;
+}
+
+.challenge-btn {
+    width: 100%;
+    margin-top: 20px;
+    background: #64ffbf;
+    color: #0c0e18;
+    border: none;
+    padding: 10px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.challenge-btn:hover {
+    background: #4de6a9;
+}
+
+.domain-arena {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+
+.boss-header {
+    width: 100%;
+    text-align: center;
+}
+
+#domain-boss-name {
+    margin-bottom: 5px;
+    color: #ff6464;
+    letter-spacing: 1px;
+    font-weight: bold;
+}
+
+.hp-bar-container {
+    width: 100%;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+}
+
+#domain-boss-hp-fill {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #ff4e4e, #ff7676);
+    transition: width 0.1s linear;
+}
+
+#domain-boss-hp-text {
+    position: absolute;
+    width: 100%;
+    top: 0;
+    left: 0;
+    text-align: center;
+    line-height: 20px;
+    font-weight: bold;
+    font-family: monospace;
+    color: #fff;
+    text-shadow: 1px 1px 2px #000;
+    z-index: 2;
+}
+
+#domain-timer-text {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #ffe164;
+    margin-top: 5px;
+}
+
+#domain-combat-box {
+    width: 100%;
+    height: 400px;
+    background: rgba(12, 14, 24, 0.65);
+    border: 2px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+    cursor: crosshair;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8);
+}
+
+#domain-boss-image {
+    max-height: 75%;
+    max-width: 75%;
+    object-fit: contain;
+    user-select: none;
+    -webkit-user-select: none;
+    pointer-events: none; /* Stops image drag breaking clicks */
+    filter: drop-shadow(0 0 15px rgba(255, 78, 78, 0.2));
+}
+
+#boss-target-body {
+    font-size: 8rem;
+    user-select: none;
+    -webkit-user-select: none;
+    filter: drop-shadow(0 0 15px rgba(255, 78, 78, 0.3));
+    transition: transform 0.1s ease;
+}
+
+.domain-card.locked-domain {
+    opacity: 0.5;
+    filter: grayscale(0.8);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.domain-card.locked-domain:hover {
+    border-color: rgba(255, 255, 255, 0.08);
+    transform: none;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.domain-card.locked-domain .challenge-btn {
+    background: #556b63;
+    color: #444;
+    cursor: not-allowed;
 }
