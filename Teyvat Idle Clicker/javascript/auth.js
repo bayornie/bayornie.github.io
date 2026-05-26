@@ -1,3 +1,4 @@
+
 let isDataLoaded = false;
 
 // --- AUTH & CLOUD SAVE LOGIC ---
@@ -23,7 +24,7 @@ function openProfile() {
         }
 
         // --- DIRECT ENGINE EVALUATION ---
-        
+
         // 1. Calculate Click Power
         const clickPowerEl = document.getElementById('tab-click-power');
         if (clickPowerEl) {
@@ -35,7 +36,7 @@ function openProfile() {
             } else if (Array.isArray(game.clickUpgrades)) {
                 actualClickPower = game.clickUpgrades.reduce((total, up) => total + ((up.level || 0) * (up.power || 0)), 1);
             }
-            
+
             clickPowerEl.innerText = typeof formatNumbers === "function" ? formatNumbers(actualClickPower) : actualClickPower;
         }
 
@@ -50,7 +51,7 @@ function openProfile() {
             } else if (Array.isArray(game.generators)) {
                 actualPPS = game.generators.reduce((total, gen) => total + ((gen.count || gen.level || 0) * (gen.income || 0)), 0);
             }
-            
+
             const formattedPPS = typeof formatNumbers === "function" ? formatNumbers(actualPPS) : actualPPS;
             passiveIncomeEl.innerText = formattedPPS + "/s";
         }
@@ -224,10 +225,12 @@ async function saveCloudGame() {
             return;
         }
 
-        await db.collection("users").doc(user.uid).set(game);
-        console.log("Cloud Saved!");
-    } else {
-        console.log("Save blocked: Data not yet loaded from cloud.");
+        // Ensure artifacts are part of the object being saved
+        const dataToSave = { ...game };
+        dataToSave.artifacts = window.game.artifacts || [];
+
+        await db.collection("users").doc(user.uid).set(dataToSave);
+        console.log("Cloud Saved with Artifacts!");
     }
 }
 
@@ -334,9 +337,13 @@ async function loadCloudGame(uid) {
         if (!cloudData.completedAchievements || !Array.isArray(cloudData.completedAchievements)) {
             cloudData.completedAchievements = [];
         }
-
         if (window.achievementsData) {
             cloudData.achievementsData = window.achievementsData;
+        }
+        if (cloudData.artifacts) {
+            game.artifacts = cloudData.artifacts;
+        } else {
+            game.artifacts = [];
         }
 
         game = cloudData;
@@ -358,12 +365,12 @@ async function loadCloudGame(uid) {
         if (typeof updateAchievements === "function") updateAchievements();
 
         updateUI();
-        
+
         // CRITICAL: Force the Fate Shop items layout to render upon successful login
         if (typeof renderFateShop === "function") {
             renderFateShop();
         }
-        
+
         saveCloudGame();
 
         console.log("Sync Complete! Player: " + game.playerName);
@@ -504,7 +511,7 @@ function loadLeaderboard() {
                 const rawScore = Math.floor(data.totalPrimosEver || 0);
                 const scoreDisplay = typeof formatNumbers === "function" ? formatNumbers(rawScore) : rawScore.toLocaleString();
                 const row = document.createElement('tr');
-                
+
                 if (rank === 1) row.classList.add('rank-1');
                 else if (rank === 2) row.classList.add('rank-2');
                 else if (rank === 3) row.classList.add('rank-3');

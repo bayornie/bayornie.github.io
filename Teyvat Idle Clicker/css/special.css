@@ -939,6 +939,9 @@
     width: 100%;
     max-width: 1200px;
     margin-top: 15px;
+    max-height: calc(100vh - 180px); 
+    height: 100%;
+    padding-bottom: 20px;
 }
 
 .artifact-collection-box {
@@ -947,45 +950,167 @@
     padding: 15px;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 #artifacts-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 10px;
-    margin-top: 10px;
-    max-height: 500px;
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    gap: 12px;
     overflow-y: auto;
+    flex: 1;
+    padding-right: 5px;
 }
 
 #artifact-bench {
     width: 380px;
-    background: rgba(24, 29, 47, 0.85);
+    background: linear-gradient(135deg, #be7839 0%, #935123 100%);
     padding: 20px;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    text-align: left;
-}
-
-#bench-empty-state {
-    text-align: center;
-    color: rgba(255, 255, 255, 0.4);
-    padding: 40px 0;
-}
-
-.bench-empty-crown {
-    font-size: 3rem;
-    display: block;
-    margin-bottom: 10px;
+    color: #2b2b2b;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    overflow-y: auto; 
 }
 
 #bench-content {
     display: none;
     flex-direction: column;
-    height: 100%;
+    min-height: min-content; 
+}
+
+#artifacts-grid::-webkit-scrollbar, 
+#artifact-bench::-webkit-scrollbar {
+    width: 6px;
+}
+#artifacts-grid::-webkit-scrollbar-thumb, 
+#artifact-bench::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+/* --- ARTIFACT FILTER BAR --- */
+.artifact-filter-bar {
+    display: flex;
+    gap: 8px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.filter-type-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: rgba(234, 235, 236, 0.6);
+    font-size: 14px;
+    cursor: pointer;
+    padding: 6px 14px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.filter-type-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.filter-type-btn.active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.card-header-block {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+    padding-bottom: 8px;
+}
+
+.art-title {
+    font-size: 22px;
+    margin: 0;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.art-slot-type {
+    font-size: 13px;
+    color: #ffe0b3;
+    font-weight: 500;
+}
+
+.card-main-stat {
+    margin: 12px 0 4px 0;
+}
+
+.stat-label {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.stat-value {
+    font-size: 34px;
+    margin: 2px 0;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.stars-row {
+    color: #ffcc00;
+    font-size: 15px;
+}
+
+.card-level-badge {
+    background: #2a323d;
+    color: #ffffff;
+    align-self: flex-start;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.card-substats-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1e1e1e;
+}
+
+.card-set-bonus-block {
+    border-top: 1px solid rgba(0, 0, 0, 0.15);
+    padding-top: 12px;
+}
+
+.set-bonus-title {
+    font-size: 14px;
+    color: #245727;
+    margin: 0 0 6px 0;
+    font-weight: bold;
+}
+
+.set-bonus-desc {
+    font-size: 12px;
+    margin: 4px 0;
+    color: #2f2f2f;
+}
+
+.piece-count {
+    font-weight: bold;
 }
 
 /* --- DOMAIN SYSTEM STYLES --- */
@@ -1053,6 +1178,94 @@
     margin: 0 0 15px 0;
     font-size: 0.85rem;
     color: #ff6464;
+}
+
+.domain-ticket-badge {
+    margin: 10px 0;
+    font-size: 14px;
+    font-weight: bold;
+    color: #4caf50;
+}
+
+/* Core victory overlay containers */
+.domain-victory-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 15, 26, 0.85);
+    border-radius: 8px;
+    padding: 20px;
+    box-sizing: border-box;
+    cursor: pointer;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.victory-title {
+    color: #ffd764;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 215, 100, 0.5);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.victory-subtitle {
+    color: #a5b4fc;
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+/* Drops item cards wrapper layout */
+.drops-grid-display {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    max-width: 90%;
+    margin-bottom: 20px;
+}
+
+.loot-drop-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    padding: 10px 6px;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.loot-card-5star {
+    background: linear-gradient(180deg, #bc6725 0%, #503724 100%);
+    border: 1px solid #ffbc58;
+}
+
+.loot-card-4star {
+    background: linear-gradient(180deg, #8c5cc0 0%, #3e2e57 100%);
+    border: 1px solid #d49aff;
+}
+
+.loot-card-slot-icon {
+    font-size: 18px;
+    margin-bottom: 4px;
+}
+
+.loot-card-name {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
 }
 
 .loot-preview {
@@ -1186,7 +1399,8 @@
     object-fit: contain;
     user-select: none;
     -webkit-user-select: none;
-    pointer-events: none; /* Stops image drag breaking clicks */
+    pointer-events: none;
+    /* Stops image drag breaking clicks */
     filter: drop-shadow(0 0 15px rgba(255, 78, 78, 0.2));
 }
 

@@ -266,6 +266,27 @@ function showPanel(panelId) {
         p.classList.remove('active');
     });
 
+    // --- UPDATED DOMAIN RESET VIEW STATE ---
+    if (!panelId.includes('domain')) {
+        if (typeof toggleDomainView === 'function') {
+            toggleDomainView('selection');
+        }
+        if (typeof resetDomainView === 'function') {
+            resetDomainView();
+        }
+
+        // Clear active battle states and intervals from the game engine
+        const engine = typeof getDomainEngine === 'function' ? getDomainEngine() : null;
+        if (engine) {
+            engine.isFightActive = false;
+            if (engine.mainInterval) {
+                clearInterval(engine.mainInterval);
+                engine.mainInterval = null;
+            }
+        }
+        game.activeBoss = null;
+    }
+
     // 3. TARGET THE NEW PANEL
     let targetId = panelId.includes('-panel') ? panelId : `${panelId}-panel`;
     const targetPanel = document.getElementById(targetId) || document.getElementById(panelId);
@@ -318,7 +339,15 @@ function showPanel(panelId) {
         if (fateShopPanel) fateShopPanel.style.display = 'block';
         renderFateShop();
     }
+    if (panelId === 'artifacts') {
+        renderArtifactMenu();
+    }
     if (panelId === 'domain' || panelId === 'domain-panel') {
+        const ticketDisplay = document.getElementById('domain-ticket-count');
+        if (ticketDisplay) {
+            ticketDisplay.innerText = Number(game.domainTickets || 0).toLocaleString();
+        }
+
         const engine = getDomainEngine();
         if (engine && engine.isFightActive) {
             toggleDomainView('battle');
@@ -397,6 +426,12 @@ function updateUI() {
         game.clickPower *= 1.50;
     }
 
+    // --- SYNCHRONIZATION OVERWRITE ---
+    // Safely point to your unified formula function to match the 14k boss damage display
+    if (typeof getFinalClickPower === "function") {
+        game.clickPower = getFinalClickPower();
+    }
+
     // Calculate regular passive income with general multipliers
     let finalPPS = basePPS * totalGameMult * temptationMult * (petBuffs.ppsMult || 1) * (petBuffs.globalMult || 1);
 
@@ -444,6 +479,12 @@ function updateUI() {
 
     const tabPps = document.getElementById('tab-pps');
     if (tabPps) tabPps.innerText = formatNumbers(finalPPS) + "/s";
+
+    // Live sync ticket metrics inside active panels
+    const ticketDisplay = document.getElementById('domain-ticket-count');
+    if (ticketDisplay) {
+        ticketDisplay.innerText = Number(game.domainTickets || 0).toLocaleString();
+    }
 
     const totalEverVal = formatNumbers(game.totalPrimosEver);
     if (document.getElementById('stat-total-ever')) {
@@ -499,6 +540,30 @@ function toggleDomainView(view) {
         selectionView.style.display = 'block';
         battleView.style.display = 'none';
     }
+}
+
+function resetDomainView() {
+    // 1. Target the actual class names from your HTML layout
+    const selectionView = document.querySelector('.domain-selection-view');
+    const battleView = document.querySelector('.domain-battle-view');
+
+    if (selectionView && battleView) {
+        selectionView.style.display = 'block';
+        battleView.style.display = 'none';
+    }
+
+    // 2. Safely tell the engine the battle is no longer active
+    const engine = getDomainEngine();
+    if (engine) {
+        engine.isFightActive = false;
+        // If your engine uses an interval timer loop, clear it here to save memory:
+        if (engine.mainInterval) {
+            clearInterval(engine.mainInterval);
+            engine.mainInterval = null;
+        }
+    }
+
+    game.activeBoss = null;
 }
 
 function calculateOfflineEarnings() {
@@ -1078,6 +1143,53 @@ function renderFateShop() {
     }
 }
 
+// Add this to your UI controller file
+function renderArtifactMenu() {
+    console.log("Attempting to render artifacts...");
+    
+    const grid = document.getElementById('artifacts-grid');
+    if (!grid) {
+        console.error("CRITICAL: Element with id 'artifacts-grid' not found in the DOM!");
+        return;
+    }
+
+    grid.innerHTML = ""; 
+    initArtifactsIfMissing();
+
+    const artifacts = window.game.artifacts || [];
+    
+    // Mapping for icons based on slot
+    const slotIcons = { flower: "🌸", plume: "🪶", sands: "⏳", goblet: "🍷", circlet: "👑" };
+
+    if (artifacts.length === 0) {
+        console.warn("Inventory is empty! No artifacts to render.");
+        return;
+    }
+
+    artifacts.forEach((art, index) => {
+        const tile = document.createElement('div');
+        tile.className = 'artifact-tile';
+        tile.onclick = () => selectArtifact(art);
+
+        // Safely determine level
+        const level = (art.level !== undefined) ? art.level : 0;
+        
+        // Use the artifact's own name, or fallback to a generated one if missing
+        const displayName = art.name || "Unknown Artifact";
+        
+        // Pick icon based on art.slot, default to 🎭 if unknown
+        const icon = slotIcons[art.slot] || "🎭";
+
+        tile.innerHTML = `
+            <div class="tile-icon" style="font-size: 1.5rem;">${icon}</div>
+            <div class="tile-name" style="font-size: 0.7rem; font-weight: bold; margin: 4px 0;">${displayName}</div>
+            <div class="tile-level" style="font-size: 0.8rem;">+${level}</div>
+        `;
+
+        grid.appendChild(tile);
+    });
+}
+
 // Call this when your Domain selection screen is generated
 function initDomainMenu() {
     const container = document.getElementById('domain-selection-container');
@@ -1093,22 +1205,49 @@ function initDomainMenu() {
     DOMAIN_DATABASE.forEach(domain => {
         const card = document.createElement('div');
         card.className = 'domain-card';
+
+        // Clean up internal set IDs (e.g., "thundering_fury" becomes "Thundering Fury")
+        const formatSetName = (id) => {
+            if (!id) return 'Unknown Set';
+            return id.split('_')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        };
+
+        const reward1 = domain.fiveStarPool && domain.fiveStarPool[0] ? formatSetName(domain.fiveStarPool[0]) : 'Gladiator\'s Finale';
+        const reward2 = domain.fiveStarPool && domain.fiveStarPool[1] ? formatSetName(domain.fiveStarPool[1]) : 'Noblesse Oblige';
+
+        // Rebuild full card HTML structure to match your beautiful grid styles
         card.innerHTML = `
-            <h3>${domain.name}</h3>
+            <div>
+                <h3>${domain.name}</h3>
+                <p class="boss-line">👑 Enemy: ${domain.boss}</p>
+                
+                <div class="loot-preview">
+                    <span class="loot-title">Possible Rewards:</span>
+                    <div class="loot-list">
+                        <span class="five-star-item">⭐ 5★ ${reward1}</span>
+                        <span class="five-star-item">⭐ 5★ ${reward2}</span>
+                        <span class="four-star-item">✨ 4★ Berserker</span>
+                        <span class="four-star-item">✨ 4★ The Exile</span>
+                    </div>
+                </div>
+            </div>
             <button class="challenge-btn" data-id="${domain.id}">CHALLENGE</button>
         `;
 
-        // Using addEventListener is more robust than .onclick
         const btn = card.querySelector('.challenge-btn');
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevents nested event bubbling issues
             console.log("CHALLENGE clicked for:", domain.id);
-            // Before launching, ensure the engine exists
+
             if (typeof getDomainEngine === 'function') {
                 launchDomainFight(domain.id);
             } else {
                 console.error("launchDomainFight or getDomainEngine is not defined!");
             }
         });
+
         container.appendChild(card);
     });
 }
@@ -1283,33 +1422,61 @@ function updateAchievements() {
     }
 }
 
-function generateRandomArtifact(rarity = 5) {
-    // 1. Correctly reference keys from the new game config setup
-    const randomSetObj = game.artifactSets[Math.floor(Math.random() * game.artifactSets.length)];
-    const randomSetId = randomSetObj.id; // e.g., 'gladiator'
-    const randomSlot = game.artifactSlots[Math.floor(Math.random() * game.artifactSlots.length)];
+function generateRandomArtifact(rarity = 5, forcedSetId = null, forcedSlot = null) {
+    // 1. Establish robust environment references to prevent undefined crashes
+    const baseGame = window.game || (typeof game !== 'undefined' ? game : {});
+    const setsList = baseGame.artifactSets || [];
+    const slotsList = baseGame.artifactSlots || ["flower", "plume", "sands", "goblet", "circlet"];
+    const statPoolList = baseGame.statPool || [];
 
-    // Choose main stat randomly from pool
-    const mainStatRef = game.statPool[Math.floor(Math.random() * game.statPool.length)];
+    // 2. Resolve the matching Artifact Set object using forcedSetId
+    let randomSetObj = null;
+    if (forcedSetId) {
+        randomSetObj = setsList.find(s => s.id === forcedSetId);
+    }
 
-    // Define base values depending on type
+    // Fallback safeguard in case database IDs mismatch configuration entries
+    if (!randomSetObj) {
+        randomSetObj = setsList.length > 0
+            ? setsList[Math.floor(Math.random() * setsList.length)]
+            : { id: forcedSetId || 'ocean_clam', name: "Mystic Set" };
+    }
+
+    const randomSetId = randomSetObj.id;
+    const randomSlot = forcedSlot || slotsList[Math.floor(Math.random() * slotsList.length)];
+
+    // 3. Roll Main Stat randomly using your exact statPool keys
+    let mainStatRef = statPoolList.length > 0
+        ? statPoolList[Math.floor(Math.random() * statPoolList.length)]
+        : { type: "clickPowerPct", name: "Click Power %", isPercent: true };
+
+    // Set balanced base values using your system specifications
     let mainValue = mainStatRef.isPercent ? 0.08 : 10;
     if (mainStatRef.type === "critClickMult") mainValue = 0.15; // Baseline Main Stat CRIT DMG
     if (rarity === 5) mainValue *= 1.5;
 
+    // 4. Construct structural name capitalization beautifully (e.g., "Ocean-Hued Clam Plume")
+    const cleanSlotName = randomSlot.charAt(0).toUpperCase() + randomSlot.slice(1);
+    const fullArtifactName = `${randomSetObj.name} ${cleanSlotName}`;
+
     const artifact = {
         id: "art_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
-        name: `${randomSetObj.name} ${randomSlot.charAt(0).toUpperCase() + randomSlot.slice(1)}`,
+        name: fullArtifactName,
         set: randomSetId,
         slot: randomSlot,
         rarity: rarity,
         level: 0,
-        mainStat: { type: mainStatRef.type, name: mainStatRef.name, value: mainValue, isPercent: mainStatRef.isPercent },
+        mainStat: {
+            type: mainStatRef.type,
+            name: mainStatRef.name,
+            value: mainValue,
+            isPercent: mainStatRef.isPercent
+        },
         substats: []
     };
 
-    // Roll 3 distinct random substats
-    let filteredPool = game.statPool.filter(s => s.type !== mainStatRef.type);
+    // 5. Roll 3 distinct random substats from your exact pool keys
+    let filteredPool = statPoolList.filter(s => s.type !== mainStatRef.type);
     while (artifact.substats.length < 3 && filteredPool.length > 0) {
         const idx = Math.floor(Math.random() * filteredPool.length);
         const subRef = filteredPool.splice(idx, 1)[0];

@@ -125,7 +125,8 @@ function buyShopItem(index) {
         'time_warp': 1.2,
         'seelie': 3,
         'buff_pot': 2.5,
-        'primordial_shard': 3
+        'primordial_shard': 3,
+        'domain_ticket': 1
     };
     const rate = rates[item.id] || 2;
 
@@ -138,6 +139,12 @@ function buyShopItem(index) {
         game.primos -= item.cost;
         item.level = (item.level || 0) + 1;
 
+        // --- NEW DOMAIN TICKET HANDLING ---
+        if (item.id === 'domain_ticket') {
+            game.domainTickets = (game.domainTickets || 0) + 1;
+            showNotification(`Obtained 1 Abyssal Domain Ticket! Total: ${game.domainTickets}`, "success");
+        }
+
         if (item.id === 'time_warp') {
             const now = Date.now();
             const cooldown = 3600 * 1000;
@@ -147,7 +154,6 @@ function buyShopItem(index) {
             const timePassed = now - (game.lastWarpTime || 0) + game.timeWarpCooldown;
 
             if (timePassed < cooldown) {
-                const minutesLeft = Math.ceil((cooldown - timePassed) / 60000);
                 showNotification(`Time Warp is on cooldown! Wait ${minutesLeft}m.`);
                 game.primos += item.cost;
                 item.level--;
@@ -402,6 +408,7 @@ function ascend() {
     saveCloudGame();
     showNotification(`Ascension Complete! Gained ${Math.floor(pointsGained)} points.`);
 }
+
 function getBaseCost(id) {
     const baseCosts = {
         'hands': 10, 'trowel': 150, 'steel_trowel': 500, 'dull_blade': 2500, 'silver_sword': 5000,
@@ -498,12 +505,28 @@ function updateDomainUI() {
 }
 
 function launchDomainFight(domainId) {
+    // --- TICKET ENTRY GATE VALIDATION ---
+    if (!game.domainTickets || game.domainTickets < 1) {
+        if (typeof showNotification === "function") {
+            showNotification("🔒 Locked! You need an Abyssal Domain Ticket to challenge this domain.", "warning");
+        } else {
+            alert("Locked! You need an Abyssal Domain Ticket to challenge this domain.");
+        }
+        return;
+    }
+
     const domain = DOMAIN_DATABASE.find(d => d.id === domainId);
     const engine = getDomainEngine();
 
     if (!domain || !engine) {
         console.error("Domain or Engine not found! Domain:", domain, "Engine:", engine);
         return;
+    }
+
+    // Ticket verified successfully! Deduct exactly 1 ticket to initialize entry challenge
+    game.domainTickets--;
+    if (typeof showNotification === "function") {
+        showNotification("🎫 Ticket consumed! Entering the Abyssal Domain...", "success");
     }
 
     // 1. Reset state
@@ -514,7 +537,7 @@ function launchDomainFight(domainId) {
     engine.timeLeft = domain.timeLimit;
     engine.activeLootPool = domain.fiveStarPool;
     engine.isFightActive = true;
-    
+
     // Reset internal timers & clean old dynamic targets
     engine.generatorTimer = 0;
     engine.weakSpotTimer = 0;
@@ -542,36 +565,71 @@ function launchDomainFight(domainId) {
 
     // 4. Delay the loop start to ensure the DOM is fully rendered
     if (engine.mainInterval) clearInterval(engine.mainInterval);
-    
+
     setTimeout(() => {
         if (engine.isFightActive) {
             engine.mainInterval = setInterval(domainLoop, 100);
         }
-    }, 200); 
+    }, 200);
 }
 
 function handleDomainClick(event) {
     const engine = getDomainEngine();
-    if (!engine || !engine.isFightActive) return;
 
-    // FIX: Make sure this matches the exact key your game uses for click power!
-    // If it's undefined, we fallback to 103 (from your screenshot) as a test
-    const damage = window.game.clickPower || window.game.clickValue || 103; 
+    // 1. HARD BLOCK: Stop clicks if the fight isn't active, or if the boss is already dead
+    if (!engine || !engine.isFightActive || engine.currentHp <= 0) return;
+
+    // 2. ANTI-DUPLICATION GATE: Prevent browser double-firing (e.g., touchstart + click combo)
+    if (event.detail === 0 && event.type === 'click') {
+        // Blocks ghost clicks triggered by mobile/pointer emulators
+        return;
+    }
+
+    // Alternative debounce check to prevent multi-firing within 15ms
+    const now = Date.now();
+    if (engine.lastClickTime && (now - engine.lastClickTime) < 15) {
+        return;
+    }
+    engine.lastClickTime = now;
+
+    // Hook directly into your true click power formula
+    let damage = 1;
+    if (typeof getFinalClickPower === 'function') {
+        damage = getFinalClickPower();
+    } else if (window.game && window.game.clickPower) {
+        damage = window.game.clickPower;
+    }
+
+    // Safety fallback check to prevent NaN corruption
+    if (isNaN(damage) || damage <= 0) {
+        damage = 103;
+    }
+
     engine.currentHp -= damage;
 
+    // Grab coordinate arrays for damage floating text injection
     const clickX = event.pageX;
     const clickY = event.pageY;
-    
+
     if (typeof spawnText === 'function') {
-        // Use your formatting function so 4.1K displays beautifully
-        const displayDmg = typeof formatNumbers === 'function' ? formatNumbers(damage) : damage.toLocaleString();
+        const displayDmg = typeof formatNumbers === 'function' ? formatNumbers(damage) : Math.floor(damage).toLocaleString();
         spawnText(clickX, clickY, `+${displayDmg}`, "#ffe164");
     }
 
+    // 3. IMMEDIATE STATE LOCK ON DEATH: 
+    // We drop the 200ms delayed timeout completely. Running code on a delay 
+    // while listeners remain active is what allowed background clicks to stack up duplicates.
     if (engine.currentHp <= 0) {
         engine.currentHp = 0;
+        engine.isFightActive = false; // Turn off immediately to lock out further click evaluation
+
+        if (engine.mainInterval) {
+            clearInterval(engine.mainInterval);
+            engine.mainInterval = null;
+        }
+
         updateDomainUI();
-        setTimeout(() => terminateDomainChallenge(true), 200);
+        terminateDomainChallenge(true);
     } else {
         updateDomainUI();
     }
@@ -579,25 +637,52 @@ function handleDomainClick(event) {
 
 function triggerGeneratorAttack() {
     const engine = getDomainEngine();
-    if (!engine || !engine.isFightActive) return;
+    // Stop background generator damage instantly if the fight ended or is inactive
+    if (!engine || !engine.isFightActive || engine.currentHp <= 0) return;
 
-    const genDamage = window.game.pps || window.game.primogemsPerSecond || window.game.generatorIncome;
-    if (genDamage <= 0) return;
-
-    engine.currentHp -= genDamage;
-
-    const combatBox = document.getElementById('domain-combat-box');
-    if (combatBox && typeof spawnText === 'function') {
-        const rect = combatBox.getBoundingClientRect();
-        const centerX = rect.left + window.scrollX + (rect.width / 2);
-        const centerY = rect.top + window.scrollY + (rect.height / 2);
-        
-        const displayGenDmg = typeof formatNumbers === 'function' ? formatNumbers(genDamage) : genDamage.toLocaleString();
-        spawnText(centerX, centerY, `✦ ${displayGenDmg}`, "#a25fff");
+    // Hook directly into your true calculator formula function
+    let totalPPS = 0;
+    if (typeof getFinalPPS === 'function') {
+        totalPPS = getFinalPPS();
+    } else if (window.game) {
+        totalPPS = window.game.pps || window.game.primogemsPerSecond || window.game.generatorIncome || 0;
     }
 
+    if (isNaN(totalPPS) || totalPPS <= 0) return;
+
+    // Apply exactly 1/10th of your total PPS on each individual 100ms tick.
+    const genDamagePerTick = totalPPS / 10;
+    engine.currentHp -= genDamagePerTick;
+
+    // Keep track of time increments using a distinct tracker variable to isolate loop properties
+    if (!engine.visualTextTimer) engine.visualTextTimer = 0;
+    engine.visualTextTimer += 0.1;
+
+    // Spawn the stylized purple float indicator exactly once every 1.0 second (10 ticks)
+    if (engine.visualTextTimer >= 1.0) {
+        engine.visualTextTimer = 0; // Reset accumulator
+
+        const combatBox = document.querySelector('.domain-battle-view') || document.getElementById('domain-combat-box');
+        if (combatBox && typeof spawnText === 'function') {
+            const rect = combatBox.getBoundingClientRect();
+            const centerX = rect.left + window.scrollX + (rect.width / 2);
+            const centerY = rect.top + window.scrollY + (rect.height / 2);
+
+            const displayGenDmg = typeof formatNumbers === 'function' ? formatNumbers(totalPPS) : Math.floor(totalPPS).toLocaleString();
+            spawnText(centerX, centerY, `✦ ${displayGenDmg}`, "#a25fff");
+        }
+    }
+
+    // Victory Check Evaluation
     if (engine.currentHp <= 0) {
         engine.currentHp = 0;
+        engine.isFightActive = false;
+
+        if (engine.mainInterval) {
+            clearInterval(engine.mainInterval);
+            engine.mainInterval = null;
+        }
+
         updateDomainUI();
         terminateDomainChallenge(true);
     }
@@ -609,7 +694,7 @@ function spawnCriticalWeakSpot() {
 
     // 1. Safety: Verify everything exists and is visible
     if (!engine || !engine.isFightActive || !combatBox) return;
-    
+
     // Check if the combat box actually has dimensions
     const rect = combatBox.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return;
@@ -659,122 +744,292 @@ function domainLoop() {
     const engine = getDomainEngine();
     if (!engine || !engine.isFightActive) return;
 
-    // 1. Update Timers
+    // 1. Check for immediate victory before processing increments
+    if (engine.currentHp <= 0) {
+        engine.currentHp = 0;
+        engine.isFightActive = false;
+        if (engine.mainInterval) clearInterval(engine.mainInterval);
+        updateDomainUI();
+        terminateDomainChallenge(true);
+        return;
+    }
+
+    // 2. Progressively update time increments
     engine.timeLeft = Math.max(0, engine.timeLeft - 0.1);
     engine.generatorTimer += 0.1;
     engine.weakSpotTimer += 0.1;
 
-    // 2. Trigger Generator Attack (Passive DPS)
+    // 3. Trigger Generator Attack (Passive DPS ticks)
     if (engine.generatorTimer >= 1.0) {
         triggerGeneratorAttack();
         engine.generatorTimer = 0;
     }
 
-    // 3. Trigger Weak Spot (Burst opportunity)
+    // 4. Trigger Weak Spot (Burst visual updates)
     if (engine.weakSpotTimer >= 10.0) {
-        spawnCriticalWeakSpot();
+        if (typeof spawnCriticalWeakSpot === 'function') spawnCriticalWeakSpot();
         engine.weakSpotTimer = 0;
     }
 
-    // 4. Check Outcomes
+    // 5. Update UI instantly so changes render sequentially
+    updateDomainUI();
+
+    // 6. Evaluate final match outcomes at the tail end of the tick
     if (engine.currentHp <= 0) {
-        // Victory!
         engine.currentHp = 0;
+        engine.isFightActive = false;
+        if (engine.mainInterval) clearInterval(engine.mainInterval);
+        updateDomainUI();
+
         terminateDomainChallenge(true);
     } else if (engine.timeLeft <= 0) {
-        // Defeat!
         engine.timeLeft = 0;
+        engine.isFightActive = false;
+        if (engine.mainInterval) clearInterval(engine.mainInterval);
+        updateDomainUI();
+
         terminateDomainChallenge(false);
     }
-
-    // 5. Update UI
-    // Note: We update the UI every tick (100ms) for smooth animation of the bar
-    updateDomainUI();
-}
-
-function grantDomainRewards(domainId) {
-    const engine = getDomainEngine();
-    if (!window.game || !window.game.inventory) window.game.inventory = [];
-
-    const droppedSummary = [];
-
-    // 1. GUARANTEED 5-STAR DROPS (2 to 3 pieces)
-    const fiveStarCount = Math.floor(Math.random() * 2) + 2;
-    const featuredFiveStarPool = engine?.activeLootPool || DOMAIN_DATABASE[0].fiveStarPool;
-
-    for (let i = 0; i < fiveStarCount; i++) {
-        const selectedSetId = Math.random() < 0.50 ? featuredFiveStarPool[0] : featuredFiveStarPool[1];
-        const randomSlot = window.game.artifactSlots[Math.floor(Math.random() * window.game.artifactSlots.length)];
-
-        if (typeof generateRandomArtifact === 'function') {
-            const dropItem = generateRandomArtifact(5, selectedSetId, randomSlot);
-            window.game.inventory.push(dropItem);
-            droppedSummary.push(`⭐ 5★ ${dropItem.name || selectedSetId}`);
-        } else {
-            const cleanName = window.game.artifactSets?.find(s => s.id === selectedSetId)?.name || selectedSetId;
-            const dummyItem = {
-                id: "_" + Math.random().toString(36).substr(2, 9),
-                setId: selectedSetId,
-                name: `${cleanName} ${randomSlot.toUpperCase()}`,
-                rarity: 5,
-                slot: randomSlot,
-                level: 0
-            };
-            window.game.inventory.push(dummyItem);
-            droppedSummary.push(`⭐ 5★ ${dummyItem.name}`);
-        }
-    }
-
-    // 2. GUARANTEED 4-STAR DROPS (3 to 4 pieces)
-    const fourStarCount = Math.floor(Math.random() * 2) + 3;
-
-    for (let i = 0; i < fourStarCount; i++) {
-        const selectedSetId = Math.random() < 0.50 ? GLOBAL_FOUR_STAR_DROPS[0] : GLOBAL_FOUR_STAR_DROPS[1];
-        const randomSlot = window.game.artifactSlots[Math.floor(Math.random() * window.game.artifactSlots.length)];
-
-        if (typeof generateRandomArtifact === 'function') {
-            const dropItem = generateRandomArtifact(4, selectedSetId, randomSlot);
-            window.game.inventory.push(dropItem);
-            droppedSummary.push(`✨ 4★ ${dropItem.name || selectedSetId}`);
-        } else {
-            const cleanName = window.game.artifactSets?.find(s => s.id === selectedSetId)?.name || selectedSetId;
-            const dummyItem = {
-                id: "_" + Math.random().toString(36).substr(2, 9),
-                setId: selectedSetId,
-                name: `${cleanName} ${randomSlot.toUpperCase()}`,
-                rarity: 4,
-                slot: randomSlot,
-                level: 0
-            };
-            window.game.inventory.push(dummyItem);
-            droppedSummary.push(`✨ 4★ ${dummyItem.name}`);
-        }
-    }
-
-    // 3. DISPLAY SUMMARY
-    if (typeof showNotification === 'function') {
-        showNotification(`Domain Cleared! Obtained ${fiveStarCount}x 5★ and ${fourStarCount}x 4★ Artifacts.`);
-    }
-
-    console.log("--- DOMAIN REWARDS BATCH LOOT ---", droppedSummary);
 }
 
 function terminateDomainChallenge(isVictory) {
     const engine = getDomainEngine();
     engine.isFightActive = false;
-    clearInterval(engine.mainInterval);
+
+    // Hard clear any hanging active intervals
+    if (engine.mainInterval) clearInterval(engine.mainInterval);
+    if (window.domainInterval) clearInterval(window.domainInterval);
 
     if (isVictory) {
-        // We look for the domain the engine was running
-        const domain = DOMAIN_DATABASE.find(d => d.boss === engine.bossName);
+        // Fallback-safe database lookup
+        let domain = null;
+        if (typeof DOMAIN_DATABASE !== 'undefined' && Array.isArray(DOMAIN_DATABASE)) {
+            domain = DOMAIN_DATABASE.find(d =>
+                d.boss && engine.bossName && d.boss.toLowerCase().trim() === engine.bossName.toLowerCase().trim()
+            );
+        }
+
         if (domain) {
+            console.log(`Success! Dropping loot table metrics for: ${domain.name}`);
             grantDomainRewards(domain.id);
+        } else {
+            console.warn(`Loot Table Match failed or database missing for: "${engine.bossName}". Forcing fallback display.`);
+            // If database matching fails, pass a safe fallback index or zero to keep the screen from hanging
+            const fallbackId = (typeof DOMAIN_DATABASE !== 'undefined' && DOMAIN_DATABASE[0]) ? DOMAIN_DATABASE[0].id : 0;
+            grantDomainRewards(fallbackId);
         }
     } else {
+        if (typeof showNotification === 'function') {
+            showNotification("Challenge Failed! Time limit reached.", "error");
+        }
         console.log("Defeat: No rewards.");
+        toggleDomainView('selection');
+    }
+}
+
+function grantDomainRewards(domainId) {
+    const engine = getDomainEngine();
+
+    if (!window.game) window.game = {};
+    if (!window.game.artifacts) window.game.artifacts = [];
+
+    const visualCardsData = [];
+
+    // 1. Safe extraction of drop tables
+    let activeDomain = { fiveStarPool: ['ocean_clam', 'shimenawa'], id: "peak-of-vindagnyr" };
+    if (typeof DOMAIN_DATABASE !== 'undefined' && Array.isArray(DOMAIN_DATABASE)) {
+        activeDomain = DOMAIN_DATABASE.find(d => d.id === domainId) || DOMAIN_DATABASE[0] || activeDomain;
     }
 
-    toggleDomainView('selection');
+    const featuredFiveStarPool = (engine && engine.activeLootPool && engine.activeLootPool.length > 0)
+        ? engine.activeLootPool
+        : (activeDomain.fiveStarPool || ['ocean_clam', 'shimenawa']);
+
+    const globalFourStarPool = typeof GLOBAL_FOUR_STAR_DROPS !== 'undefined' ? GLOBAL_FOUR_STAR_DROPS : ['berserker', 'the_exile'];
+    const slotIcons = { flower: "🌸", plume: "🪶", sands: "⏳", goblet: "🍷", circlet: "👑" };
+
+    const generateAndStore = (rarity, setId) => {
+        const validSlots = (window.game && window.game.artifactSlots) ? window.game.artifactSlots : ['flower', 'plume', 'sands', 'goblet', 'circlet'];
+        const randomSlot = validSlots[Math.floor(Math.random() * validSlots.length)];
+
+        if (typeof generateRandomArtifact === 'function') {
+            const dropItem = generateRandomArtifact(rarity, setId, randomSlot);
+            if (dropItem && typeof dropItem === 'object') {
+                window.game.artifacts.push(dropItem);
+                visualCardsData.push({ rarity, slot: randomSlot, name: dropItem.name, set: setId });
+            } else {
+                console.error(`Generator failed for ${rarity}★. Item:`, dropItem);
+            }
+        }
+    };
+
+    // 2. GENERATE 5-STAR DROPS (2 to 3 pieces)
+    const fiveStarCount = Math.floor(Math.random() * 2) + 2;
+    for (let i = 0; i < fiveStarCount; i++) {
+        const selectedSetId = Math.random() < 0.50 ? featuredFiveStarPool[0] : featuredFiveStarPool[1];
+
+        // Match your artifactSlots mapping safely
+        const validSlots = (window.game && window.game.artifactSlots) ? window.game.artifactSlots : fallbackSlots;
+        const randomSlot = validSlots[Math.floor(Math.random() * validSlots.length)];
+
+        if (typeof generateRandomArtifact === 'function') {
+            try {
+                const dropItem = generateRandomArtifact(5, selectedSetId, randomSlot);
+                window.game.artifacts.push(dropItem);
+                visualCardsData.push({ rarity: 5, slot: randomSlot, name: dropItem.name, set: selectedSetId });
+            } catch (err) {
+                console.error("Error generating 5-Star Artifact:", err);
+                visualCardsData.push({ rarity: 5, slot: randomSlot, name: "Mystic 5★ Piece", set: selectedSetId });
+            }
+        }
+    }
+
+    // 3. GENERATE 4-STAR DROPS (3 to 4 pieces)
+    const fourStarCount = Math.floor(Math.random() * 2) + 3;
+    for (let i = 0; i < fourStarCount; i++) {
+        const selectedSetId = Math.random() < 0.50 ? globalFourStarPool[0] : globalFourStarPool[1];
+
+        const validSlots = (window.game && window.game.artifactSlots) ? window.game.artifactSlots : fallbackSlots;
+        const randomSlot = validSlots[Math.floor(Math.random() * validSlots.length)];
+
+        if (typeof generateRandomArtifact === 'function') {
+            try {
+                const dropItem = generateRandomArtifact(4, selectedSetId, randomSlot);
+                window.game.artifacts.push(dropItem);
+                visualCardsData.push({ rarity: 4, slot: randomSlot, name: dropItem.name, set: selectedSetId });
+            } catch (err) {
+                console.error("Error generating 4-Star Artifact:", err);
+                visualCardsData.push({ rarity: 4, slot: randomSlot, name: "Stellar 4★ Piece", set: selectedSetId });
+            }
+        }
+    }
+
+    // 4. INJECT MODAL INTO THE CORRECT DOM CONTAINER
+    // Fixed: Checking for .domain-battle-view wrapper container
+    let combatBox = document.querySelector('.domain-battle-view');
+
+    if (combatBox) {
+        // Clear out dangling active click damage numbers so they don't overlay
+        const floatingTexts = combatBox.querySelectorAll('.floating-text, [class*="text"]');
+        floatingTexts.forEach(el => {
+            if (el.textContent.includes('+') || el.textContent.includes('✦')) el.remove();
+        });
+
+        const oldOverlay = document.getElementById('active-victory-overlay');
+        if (oldOverlay) oldOverlay.remove();
+
+        let lootItemsHTML = '';
+        visualCardsData.forEach(item => {
+            const icon = slotIcons[item.slot] || "🔮";
+            const bgGradient = item.rarity === 5
+                ? 'linear-gradient(to bottom, #e49a41, #965a25)'
+                : 'linear-gradient(to bottom, #ba89e0, #6c478f)';
+
+            // Clean clean item text names if layout concatenates undefined values
+            let displayName = item.name;
+            if (displayName.includes('undefined')) {
+                const cleanSetName = item.set.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                displayName = `${cleanSetName} ${item.slot.charAt(0).toUpperCase() + item.slot.slice(1)}`;
+            }
+
+            lootItemsHTML += `
+                <div style="
+                    width: 95px;
+                    background: #eae5de;
+                    border-radius: 4px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    border-bottom: 3px solid ${item.rarity === 5 ? '#e49a41' : '#ba89e0'};
+                ">
+                    <div style="
+                        width: 100%;
+                        height: 90px;
+                        background: ${bgGradient};
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        position: relative;
+                    ">
+                        <span style="font-size: 2.5rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">${icon}</span>
+                        <div style="position: absolute; bottom: 2px; right: 5px; color: #fff; font-size: 0.75rem; font-weight: bold; text-shadow: 1px 1px 2px black;">1</div>
+                    </div>
+                    <div style="
+                        width: 100%;
+                        background: #fff;
+                        padding: 6px 4px;
+                        min-height: 42px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-sizing: border-box;
+                    ">
+                        <span style="
+                            color: #3b4249;
+                            font-size: 0.65rem;
+                            font-weight: bold;
+                            text-align: center;
+                            line-height: 1.1;
+                        ">${displayName}</span>
+                    </div>
+                </div>
+            `;
+        });
+
+        const overlay = document.createElement('div');
+        overlay.id = 'active-victory-overlay';
+        overlay.style.cssText = `
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(14, 18, 24, 0.95); z-index: 100; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            box-sizing: border-box; padding: 20px; border-radius: 6px;
+        `;
+
+        overlay.innerHTML = `
+            <div style="color: #f3dfb7; font-size: 1.6rem; font-weight: bold; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 3px; font-family: sans-serif;">Reward Obtained</div>
+            <div style="width: 280px; height: 1px; background: linear-gradient(to right, transparent, #e3c07d, transparent); margin-bottom: 25px;"></div>
+            
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: center; max-width: 95%; margin-bottom: 30px;">
+                ${lootItemsHTML}
+            </div>
+            
+            <div style="color: #a5a9b2; font-size: 0.8rem; font-family: sans-serif; cursor: pointer; border: 1px solid #4a5363; padding: 6px 16px; border-radius: 4px; background: rgba(25,32,45,0.6);" id="confirm-rewards-btn">
+                Click to Confirm
+            </div>
+        `;
+
+        // Ensure relative positioning works cleanly over the box layout context
+        const originalPosition = combatBox.style.position;
+        combatBox.style.position = 'relative';
+        combatBox.appendChild(overlay);
+
+        const cleanupAction = (event) => {
+            event.stopPropagation();
+            overlay.remove();
+            combatBox.style.position = originalPosition;
+
+            toggleDomainView('selection');
+
+            if (typeof renderArtifactMenu === "function") {
+                renderArtifactMenu();
+            }
+
+            if (typeof updateUI === "function") updateUI();
+            if (window.saveGame) window.saveGame();
+            else if (window.save) window.save();
+        };
+
+        document.getElementById('confirm-rewards-btn').onclick = cleanupAction;
+    } else {
+        console.error("CRITICAL: Container view setup missing. Reverting panel states.");
+        toggleDomainView('selection');
+    }
+
+    if (typeof showNotification === 'function') {
+        showNotification(`Domain Cleared! Obtained ${fiveStarCount}x 5★ Artifacts.`, "success");
+    }
 }
 
 function getDiscountedCost(baseCost) {
@@ -925,6 +1180,12 @@ function getFinalClickPower() {
     game.clickUpgrades.forEach(up => {
         base += (Number(up.level) || 0) * (Number(up.power) || 0);
     });
+
+    // --- Katheryne's Directive Multiplier Fix ---
+    // Affects the BASE calculation directly just like generator incomes
+    if (game.katheryneMultiplier) {
+        base *= game.katheryneMultiplier;
+    }
 
     // 2. Add Seelie Blessing and Flat Artifact stats directly to that base
     const seelieBlessing = game.blessings.find(b => b.id === 'strong_start');

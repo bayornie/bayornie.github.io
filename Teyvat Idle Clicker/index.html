@@ -258,11 +258,19 @@
             <div id="pets-grid" class="list-container pets-grid"></div>
         </section>
 
-        <section id="artifacts-panel" class="game-panel" style="display: none;">
+        <section id="artifacts-panel" class="game-panel">
             <h1 class="panel-title">Artifact Inventory</h1>
             <div class="artifact-workspace">
                 <div class="artifact-collection-box">
-                    <h3>Your Collection</h3>
+                    <div class="artifact-filter-bar">
+                        <button class="filter-type-btn active" onclick="filterArtifactSlot('all')">All</button>
+                        <button class="filter-type-btn" onclick="filterArtifactSlot('flower')">🌸</button>
+                        <button class="filter-type-btn" onclick="filterArtifactSlot('plume')">🪶</button>
+                        <button class="filter-type-btn" onclick="filterArtifactSlot('sands')">⏳</button>
+                        <button class="filter-type-btn" onclick="filterArtifactSlot('goblet')">🍷</button>
+                        <button class="filter-type-btn" onclick="filterArtifactSlot('circlet')">👑</button>
+                    </div>
+
                     <div id="artifacts-grid">
                     </div>
                 </div>
@@ -272,7 +280,33 @@
                         <span class="bench-empty-crown">👑</span>
                         <p>Select an artifact from your collection to manage or upgrade it.</p>
                     </div>
+
                     <div id="bench-content">
+                        <div class="card-header-block">
+                            <h2 id="art-display-name" class="art-title">Artifact Name</h2>
+                            <span id="art-display-type" class="art-slot-type">Slot Type</span>
+                        </div>
+
+                        <div class="card-main-stat">
+                            <span id="art-display-main-label" class="stat-label">Main Stat</span>
+                            <h1 id="art-display-main-value" class="stat-value">0%</h1>
+                            <div id="art-display-stars" class="stars-row">★★★★★</div>
+                        </div>
+
+                        <div class="card-level-badge">+<span id="art-display-level">0</span></div>
+
+                        <ul id="art-display-substats" class="card-substats-list">
+                        </ul>
+
+                        <div class="card-set-bonus-block">
+                            <h3 id="art-display-set-name" class="set-bonus-title">Set Name</h3>
+                            <p class="set-bonus-desc" id="art-display-set-2pc">
+                                <span class="piece-count">2-Piece Set:</span> Description
+                            </p>
+                            <p class="set-bonus-desc" id="art-display-set-4pc">
+                                <span class="piece-count">4-Piece Set:</span> Description
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -282,6 +316,10 @@
             <div class="domain-selection-view">
                 <h1 class="panel-title">Abyssal Domains</h1>
                 <p class="panel-subtitle">Select an ancient domain to challenge.</p>
+
+                <div class="domain-ticket-badge">
+                    🎫 Domain Tickets: <span id="domain-ticket-count">0</span>
+                </div>
 
                 <div id="domain-selection-container" class="domains-grid"></div>
             </div>

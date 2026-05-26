@@ -46,6 +46,8 @@ let game = {
     activePets: [],
     intertwinedFates: 0,
     acquaintFates: 0,
+    domainTickets: 0,
+    artifacts: [],
 
     clickUpgrades: [
         { id: 'hands', name: 'Stronger Hands', cost: 10, power: 1, level: 0, rate: 1.2 },
