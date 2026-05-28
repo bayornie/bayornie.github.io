@@ -1,0 +1,93 @@
+:root {
+    --neon-grey: hsl(0, 0%, 63%);
+    --neon-blue: #00f2ff;
+    --neon-red: #ff073a;
+    --neon-green: #39ff14;
+    --neon-yellow: #f8ff00;
+}
+
+body {
+    background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #050505 100%);
+    background-attachment: fixed;
+    color: #e0e0e0;
+    min-height: 100vh;
+}
+
+body::before {
+    content: " ";
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    z-index: 2;
+    background-size: 100% 4px, 3px 100%;
+    pointer-events: none;
+}
+
+.card-body {
+    padding: 1.25rem !important;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-body .mt-3 {
+    margin-top: auto !important;
+    padding-top: 10px;
+}
+
+.card-title {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.quest-card {
+    background: rgba(15, 15, 20, 0.9) !important;
+    border: 2px solid #333;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+    background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%);
+    --glow-color: transparent;
+}
+
+.quest-card.is-active {
+    border-color: var(--glow-color);
+    box-shadow:
+        0 0 10px var(--glow-color),
+        0 0 30px var(--glow-color),
+        inset 0 0 10px var(--glow-color);
+    transform: translateY(-10px) scale(1.02);
+    background: rgba(30, 30, 35, 0.98) !important;
+}
+
+.card-title {
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: text-shadow 0.2s;
+}
+
+.btn {
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border-width: 2px;
+    color: var(--btn-color) !important; 
+    background-color: transparent !important;
+}
+
+.btn-outline-warning { --btn-color: var(--neon-yellow); border-color: var(--neon-yellow); }
+.btn-outline-info { --btn-color: var(--neon-blue); border-color: var(--neon-blue); }
+.btn-outline-success { --btn-color: var(--neon-green); border-color: var(--neon-green); }
+.btn-outline-danger { --btn-color: var(--neon-red); border-color: var(--neon-red); }
+.btn-outline-coming { --btn-color: var(--neon-grey); border-color: var(--neon-grey); }
+
+.btn:hover {
+    color: #111 !important;
+    background-color: var(--btn-color) !important;
+    box-shadow: 0 0 20px var(--btn-color), inset 0 0 5px rgba(0,0,0,0.2);
+    transform: scale(1.05);
+}
